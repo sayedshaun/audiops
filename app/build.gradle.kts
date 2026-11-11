@@ -8,6 +8,10 @@ android {
     compileSdk = 37
     defaultConfig {
         applicationId = "com.audiops.app"
+        providers.gradleProperty("audioOpsAbi").orNull?.let { abi ->
+            ndk { abiFilters += abi }
+        }
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
@@ -21,9 +25,15 @@ android {
 }
 
 dependencies {
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    implementation(files("libs/sherpa-onnx-1.13.8.aar"))
+    implementation("com.google.ai.edge.litert:litert:2.3.0")
+    implementation("com.github.wendykierp:JTransforms:3.1")
     implementation(platform("androidx.compose:compose-bom:2026.09.00"))
     implementation("androidx.activity:activity-compose:1.13.0")
-    implementation("androidx.compose.material3:material3")
+    // Pin the latest stable Material 3 release independently of the Compose BOM.
+    implementation("androidx.compose.material3:material3:1.4.0")
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
