@@ -37,7 +37,12 @@ internal object HubModels {
         else -> throw IllegalArgumentException("dtype must be 'fp32', 'fp16', or 'int8'")
     }
 
-    fun prepare(cacheRoot: File, repoId: String, dtype: String): File = synchronized(lock) {
+    fun prepare(
+        cacheRoot: File,
+        repoId: String,
+        dtype: String,
+        onDownload: (index: Int, total: Int) -> Unit = { _, _ -> },
+    ): File = synchronized(lock) {
         require(Regex("^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$").matches(repoId)) {
             "repoId must be a public Hugging Face repository in the form owner/model"
         }
@@ -46,9 +51,10 @@ internal object HubModels {
             .joinToString("") { "%02x".format(it.toInt() and 0xff) }
         val directory = File(cacheRoot, "resemble-enhance/$hash")
         check(directory.isDirectory || directory.mkdirs()) { "Cannot create model cache: $directory" }
-        for (name in files) {
+        for ((index, name) in files.withIndex()) {
             val destination = File(directory, name)
             if (destination.isFile && destination.length() > 0L) continue
+            onDownload(index + 1, files.size)
             download("https://huggingface.co/$repoId/resolve/main/models/$name", destination)
         }
         directory
@@ -287,7 +293,7 @@ internal object MidpointSolver {
     fun integrate(initial: FloatArray, velocity: (FloatArray, Float) -> FloatArray): FloatArray {
         var state = initial.copyOf()
         for (i in 0 until times.size - 1) {
-            if (Thread.currentThread().isInterrupted) throw InterruptedException("Enhancement cancelled")
+            throwIfCancelled()
             val t = times[i]
             val dt = (times[i + 1] - t).toFloat()
             val k1 = velocity(state, t.toFloat())
@@ -305,7 +311,15 @@ internal object MidpointSolver {
 class ResembleEnhancer(modelDirectory: File, dtype: String = "fp16") : Closeable {
     /** Downloads a public Hub repository on first use. Call on a worker thread. */
     constructor(context: Context, repoId: String, dtype: String = "fp16") :
-        this(HubModels.prepare(context.applicationContext.noBackupFilesDir, repoId, dtype), dtype)
+        this(context, repoId, dtype, ProcessingListener.None)
+
+    internal constructor(context: Context, repoId: String, dtype: String, listener: ProcessingListener) :
+        this(
+            HubModels.prepare(context.applicationContext.noBackupFilesDir, repoId, dtype) { index, total ->
+                listener.onModelDownload(index, total)
+            },
+            dtype,
+        )
 
     companion object {
         private const val FRAMES = 105
@@ -351,7 +365,7 @@ class ResembleEnhancer(modelDirectory: File, dtype: String = "fp16") : Closeable
         val weights = DoubleArray(samples.size)
         val window = FloatArray(size) { i -> maxOf(1e-3f, (0.5 - 0.5 * cos(2.0 * PI * i / (size - 1))).toFloat()) }
         for (chunkIndex in 0 until chunks) {
-            if (Thread.currentThread().isInterrupted) throw InterruptedException("Enhancement cancelled")
+            throwIfCancelled()
             val start = chunkIndex * hop
             val count = minOf(size, samples.size - start)
             val chunk = FloatArray(size)

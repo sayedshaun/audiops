@@ -3,3 +3,10 @@
 local.properties
 **/build/
 *.iml
+
+# Build and local tooling
+.kotlin/
+*.apk
+*.aab
+*.jks
+*.keystore

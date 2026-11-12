@@ -11,10 +11,29 @@ import java.io.File
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.concurrent.CancellationException
 import kotlin.math.roundToInt
 
-/** Decodes device-supported formats into a temporary, mono 44.1 kHz PCM16 file. */
+/** Sample rate of every intermediate file: the enhancement model's native rate. */
+internal const val PIPELINE_RATE = 44_100
+
+private const val ENHANCE_WINDOW = PIPELINE_RATE * 20
+private const val ENHANCE_OVERLAP = PIPELINE_RATE
+
+/**
+ * Throws [CancellationException] once the worker thread has been interrupted.
+ * `runInterruptible` interrupts the thread when its coroutine is cancelled, so long
+ * loops call this between units of work.
+ */
+internal fun throwIfCancelled() {
+    if (Thread.currentThread().isInterrupted) throw CancellationException("Processing cancelled")
+}
+
+/** Decodes device-supported formats into temporary mono 44.1 kHz PCM16 files. */
 internal object AudioDecoder {
+    /**
+     * Returns a raw PCM16 file in the cache directory. The caller owns it and must delete it.
+     */
     fun decode(context: Context, uri: Uri): File {
         val file = File.createTempFile("audio-input-", ".pcm", context.cacheDir)
         val extractor = MediaExtractor()
@@ -46,16 +65,19 @@ internal object AudioDecoder {
                 val bytes = ByteArray(8192)
                 var used = 0
                 fun emit(value: Float) {
-                    // WAV uses 32-bit chunk sizes; reserve header space.
+                    // WAV uses 32-bit chunk sizes; stop before exceeding them.
                     check(written < (0xffff_ffffL - 36L) / 2L) { "Audio is too long to save as WAV." }
                     val v = (value.coerceIn(-1f, 1f) * 32767f).roundToInt()
                     bytes[used++] = v.toByte()
                     bytes[used++] = (v shr 8).toByte()
-                    if (used == bytes.size) { output.write(bytes); used = 0 }
+                    if (used == bytes.size) {
+                        output.write(bytes)
+                        used = 0
+                    }
                     written++
                 }
                 while (!outputEnded) {
-                    if (Thread.currentThread().isInterrupted) throw InterruptedException("Processing cancelled")
+                    throwIfCancelled()
                     if (!inputEnded) {
                         val index = codec.dequeueInputBuffer(10_000)
                         if (index >= 0) {
@@ -76,13 +98,20 @@ internal object AudioDecoder {
                             val out = codec.outputFormat
                             val newChannels = out.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
                             val newRate = out.getInteger(MediaFormat.KEY_SAMPLE_RATE)
-                            check(sourceIndex == 0L || (newChannels == channels && newRate == sampleRate)) { "Audio format changed during playback." }
+                            check(sourceIndex == 0L || (newChannels == channels && newRate == sampleRate)) {
+                                "Audio format changed during playback."
+                            }
                             channels = newChannels
                             sampleRate = newRate
                             require(channels in 1..32 && sampleRate > 0) { "Unsupported audio channel or sample rate." }
-                            encoding = if (out.containsKey(MediaFormat.KEY_PCM_ENCODING)) out.getInteger(MediaFormat.KEY_PCM_ENCODING) else AudioFormat.ENCODING_PCM_16BIT
+                            encoding = if (out.containsKey(MediaFormat.KEY_PCM_ENCODING)) {
+                                out.getInteger(MediaFormat.KEY_PCM_ENCODING)
+                            } else {
+                                AudioFormat.ENCODING_PCM_16BIT
+                            }
                         }
-                        MediaCodec.INFO_TRY_AGAIN_LATER, MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED -> Unit
+                        // INFO_TRY_AGAIN_LATER and other negative codes need no action; the loop retries.
+                        MediaCodec.INFO_TRY_AGAIN_LATER -> Unit
                         else -> if (index >= 0) {
                             val buffer = codec.getOutputBuffer(index) ?: error("Cannot decode audio output.")
                             buffer.position(info.offset)
@@ -97,6 +126,7 @@ internal object AudioDecoder {
                             }
                             require(buffer.remaining() % (sampleBytes * channels) == 0) { "Incomplete decoded audio frame." }
                             while (buffer.remaining() >= sampleBytes * channels) {
+                                // Downmix to mono by averaging the channels of each frame.
                                 var sum = 0f
                                 repeat(channels) {
                                     val value = when (encoding) {
@@ -104,19 +134,25 @@ internal object AudioDecoder {
                                         AudioFormat.ENCODING_PCM_16BIT -> buffer.short / 32768f
                                         AudioFormat.ENCODING_PCM_FLOAT -> buffer.float
                                         AudioFormat.ENCODING_PCM_32BIT -> buffer.int / 2147483648f
-                                        else -> { val x = (buffer.get().toInt() and 255) or ((buffer.get().toInt() and 255) shl 8) or (buffer.get().toInt() shl 16); x / 8388608f }
+                                        else -> {
+                                            val x = (buffer.get().toInt() and 255) or
+                                                ((buffer.get().toInt() and 255) shl 8) or
+                                                (buffer.get().toInt() shl 16)
+                                            x / 8388608f
+                                        }
                                     }
                                     require(value.isFinite()) { "Audio contains invalid samples." }
                                     sum += value / channels
                                 }
+                                // Linear resampling onto the 44.1 kHz output grid.
                                 if (sourceIndex == 0L) {
                                     emit(sum)
-                                    nextOutput = sampleRate.toDouble() / 44_100
+                                    nextOutput = sampleRate.toDouble() / PIPELINE_RATE
                                 } else {
                                     while (nextOutput <= sourceIndex) {
                                         val fraction = (nextOutput - (sourceIndex - 1)).toFloat().coerceIn(0f, 1f)
                                         emit(previous + (sum - previous) * fraction)
-                                        nextOutput += sampleRate.toDouble() / 44_100
+                                        nextOutput += sampleRate.toDouble() / PIPELINE_RATE
                                     }
                                 }
                                 previous = sum
@@ -133,7 +169,8 @@ internal object AudioDecoder {
             return file
         } catch (e: Exception) {
             file.delete()
-            if (e is IllegalArgumentException || e is IllegalStateException) throw e
+            // Cancellation and our own validation messages are passed through unchanged.
+            if (e is CancellationException || e is IllegalArgumentException || e is IllegalStateException) throw e
             throw IllegalArgumentException("Could not decode this audio file on this device: ${e.localizedMessage}", e)
         } finally {
             if (started) runCatching { codec?.stop() }
@@ -142,18 +179,25 @@ internal object AudioDecoder {
         }
     }
 
-    /** Calls [block] with consecutive chunks without holding the whole recording in memory. */
+    /** Number of fixed-length sections [forEachChunk] yields for [file]. */
+    fun sectionCount(file: File, seconds: Int): Int {
+        require(seconds > 0)
+        val window = PIPELINE_RATE.toLong() * seconds
+        return ((file.length() / 2 + window - 1) / window).toInt().coerceAtLeast(1)
+    }
+
+    /** Calls [block] with consecutive sections without holding the whole recording in memory. */
     fun forEachChunk(file: File, seconds: Int, block: (FloatArray) -> Unit) {
         require(seconds > 0)
-        val capacity = 44_100 * seconds * 2
+        val capacity = PIPELINE_RATE * seconds * 2
         val bytes = ByteArray(capacity)
         file.inputStream().buffered().use { input ->
             while (true) {
+                throwIfCancelled()
                 var size = 0
                 while (size < capacity) {
                     val count = input.read(bytes, size, capacity - size)
                     if (count < 0) break
-                    if (count == 0) continue
                     size += count
                 }
                 if (size == 0) break
@@ -163,15 +207,28 @@ internal object AudioDecoder {
             }
         }
     }
-    /** 20-second windows with one second of overlap for smooth enhancement joins. */
+
+    /** Number of overlapping windows [forEachEnhancementChunk] yields for [file]. */
+    fun enhancementSectionCount(file: File): Int {
+        val total = file.length() / 2
+        val window = ENHANCE_WINDOW.toLong()
+        val step = (ENHANCE_WINDOW - ENHANCE_OVERLAP).toLong()
+        if (total <= window) return 1
+        return (1 + (total - window + step - 1) / step).toInt()
+    }
+
+    /**
+     * Calls [block] with 20-second windows that overlap by one second, so the caller can
+     * crossfade the joins. [block] receives `last = true` for the final window.
+     */
     fun forEachEnhancementChunk(file: File, block: (FloatArray, Boolean) -> Unit) {
-        val window = 44_100 * 20
-        val overlap = 44_100
+        val step = ENHANCE_WINDOW - ENHANCE_OVERLAP
         RandomAccessFile(file, "r").use { input ->
             val total = input.length() / 2
             var start = 0L
             while (start < total) {
-                val count = minOf(window.toLong(), total - start).toInt()
+                throwIfCancelled()
+                val count = minOf(ENHANCE_WINDOW.toLong(), total - start).toInt()
                 val bytes = ByteArray(count * 2)
                 input.seek(start * 2)
                 input.readFully(bytes)
@@ -180,9 +237,8 @@ internal object AudioDecoder {
                 val last = start + count >= total
                 block(samples, last)
                 if (last) break
-                start += window - overlap
+                start += step
             }
         }
     }
-
 }
