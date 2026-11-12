@@ -22,12 +22,12 @@ internal object AudioPipelines {
         try {
             val result = File.createTempFile("enhanced-", ".wav", context.cacheDir)
             try {
-                val sections = AudioDecoder.enhancementSectionCount(audio)
+                val sections = AudioChunks.enhancementSectionCount(audio)
                 ResembleEnhancer(context, ENHANCE_REPO, ENHANCE_DTYPE, listener).use { model ->
                     WavWriter(result).use { writer ->
                         var tail: FloatArray? = null
                         var section = 0
-                        AudioDecoder.forEachEnhancementChunk(audio) { samples, last ->
+                        AudioChunks.forEachEnhancementChunk(audio) { samples, last ->
                             section++
                             listener.onSection(section, sections)
                             val enhanced = model.enhance(samples)

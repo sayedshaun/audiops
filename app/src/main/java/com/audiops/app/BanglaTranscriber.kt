@@ -24,7 +24,7 @@ internal object BanglaTranscriber {
     )
 
     fun transcribe(context: Context, audio: File, listener: ProcessingListener): String {
-        val directory = ModelFiles.ensure(context, "bangla-zipformer/$REVISION", BASE_URL, digests, listener)
+        val directory = ModelFiles.ensure(context.noBackupFilesDir, "bangla-zipformer/$REVISION", BASE_URL, digests, listener)
         fun path(name: String) = File(directory, name).absolutePath
         val recognizer = OfflineRecognizer(
             config = OfflineRecognizerConfig(
@@ -44,10 +44,10 @@ internal object BanglaTranscriber {
             ),
         )
         try {
-            val sections = AudioDecoder.sectionCount(audio, SECTION_SECONDS)
+            val sections = AudioChunks.sectionCount(audio, SECTION_SECONDS)
             val parts = mutableListOf<String>()
             var index = 0
-            AudioDecoder.forEachChunk(audio, SECTION_SECONDS) { samples ->
+            AudioChunks.forEachChunk(audio, SECTION_SECONDS) { samples ->
                 throwIfCancelled()
                 listener.onSection(++index, sections)
                 val stream = recognizer.createStream()

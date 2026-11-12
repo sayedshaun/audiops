@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Audiops</string>
+    <string name="back">Back</string>
+    <string name="badge_on_device">On device</string>
+    <string name="badge_soon">Soon</string>
+
+    <!-- Home -->
+    <string name="home_subtitle">On-device audio tools</string>
+    <string name="home_hero_title">Clearer audio, without the cloud.</string>
+    <string name="home_hero_body">Recordings are processed on this device. Nothing you select is uploaded.</string>
+    <string name="home_section_tools">Tools</string>
+    <string name="home_footer">Models download once, then run on this device.</string>
+    <string name="tool_enhance_title">Enhance audio</string>
+    <string name="tool_enhance_description">Improve the clarity of a recording.</string>
+    <string name="tool_denoise_title">Remove noise</string>
+    <string name="tool_denoise_description">Reduce background sound. Coming soon.</string>
+    <string name="tool_transcribe_title">Transcribe speech</string>
+    <string name="tool_transcribe_description">Turn speech into text in Bangla, English or Hindi.</string>
+
+    <!-- Shared -->
+    <string name="step_recording">Recording</string>
+    <string name="step_enhance">Enhance</string>
+    <string name="step_language">Language</string>
+    <string name="step_transcribe">Transcribe</string>
+    <string name="recording_none">No recording selected</string>
+    <string name="recording_ready">Ready to process</string>
+    <string name="recording_pick_hint">Choose an audio file to begin.</string>
+    <string name="recording_fallback_name">Selected recording</string>
+    <string name="action_choose">Choose file</string>
+    <string name="action_change">Change</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_discard">Discard</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_save_text">Save text</string>
+    <string name="action_save_wav">Save WAV</string>
+    <string name="stage_preparing">Preparing audio…</string>
+    <string name="stage_model_download">Downloading model %1$d of %2$d…</string>
+    <string name="stage_enhance_section">Enhancing section %1$d of %2$d…</string>
+    <string name="stage_transcribe_section">Transcribing section %1$d of %2$d…</string>
+    <string name="message_cancelled">Cancelled.</string>
+    <string name="message_saved">Saved.</string>
+    <string name="message_copied">Transcript copied.</string>
+    <string name="error_processing_failed">Processing failed: %1$s</string>
+    <string name="error_unknown">Unknown error</string>
+    <string name="error_out_of_memory">Not enough memory for this recording. Try a shorter file.</string>
+    <string name="error_save">Could not save: %1$s</string>
+    <string name="error_unsupported_platform">This tool is not available on this platform yet.</string>
+    <string name="error_no_speech">No speech was recognized. Try a clearer recording, or choose its language.</string>
+
+    <!-- Enhance -->
+    <string name="enhance_title">Enhance audio</string>
+    <string name="enhance_intro">Improve the clarity of a recording. Processing happens on your device.</string>
+    <string name="enhance_hint">The first run downloads about 360 MB of model files. Longer recordings take more time.</string>
+    <string name="action_enhance">Enhance audio</string>
+    <string name="enhance_result_title">Enhanced audio is ready</string>
+    <string name="enhance_result_body">Save it as a WAV file to keep it.</string>
+    <string name="message_enhanced">Enhancement complete.</string>
+
+    <!-- Transcribe -->
+    <string name="transcribe_title">Transcribe speech</string>
+    <string name="transcribe_intro">Turn speech into text. Longer recordings are transcribed in sections.</string>
+    <string name="transcribe_language_hint">Choose Bangla to use the dedicated Bangla model. Auto uses Whisper, which can misidentify short clips.</string>
+    <string name="transcribe_hint">The first run downloads a model: about 74 MB for Bangla, about 103 MB for other languages.</string>
+    <string name="action_transcribe">Transcribe audio</string>
+    <string name="transcript_title">Transcript</string>
+    <string name="message_transcribed">Transcript ready.</string>
+    <string name="language_auto">Auto</string>
+    <string name="language_bangla">Bangla</string>
+    <string name="language_english">English</string>
+    <string name="language_hindi">Hindi</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_dynamic_color">Dynamic color</string>
+    <string name="settings_dynamic_color_summary">Use colors from your wallpaper</string>
+    <string name="settings_dynamic_color_unsupported">Requires Android 12 or newer</string>
+    <string name="settings_pure_black">Pure black dark theme</string>
+    <string name="settings_pure_black_summary">Black backgrounds in the dark theme. Saves power on OLED screens.</string>
+    <string name="settings_section_transcription">Transcription</string>
+    <string name="settings_default_language">Default spoken language</string>
+    <string name="settings_section_processing">Processing</string>
+    <string name="settings_keep_screen_on">Keep screen on while processing</string>
+    <string name="settings_keep_screen_on_summary">Stops the screen from turning off during long recordings</string>
+    <string name="settings_section_storage">Storage</string>
+    <string name="settings_models">Downloaded models</string>
+    <string name="settings_models_used">%1$s used on this device</string>
+    <string name="settings_models_none">No models downloaded</string>
+    <string name="settings_models_measuring">Calculating…</string>
+    <string name="settings_models_busy">Unavailable while processing</string>
+    <string name="settings_models_delete_title">Delete downloaded models?</string>
+    <string name="settings_models_delete_body">This frees %1$s. Models download again the next time you use a tool.</string>
+    <string name="action_delete">Delete</string>
+    <string name="message_models_deleted">Downloaded models deleted.</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_version">Version</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_privacy_summary">Audio is processed on this device and never uploaded. The internet is used only to download models.</string>
+    <string name="settings_licenses">Open-source licenses</string>
+    <string name="license_resemble">Resemble Enhance</string>
+    <string name="license_resemble_summary">MIT License · Resemble AI</string>
+    <string name="license_sherpa">sherpa-onnx and Whisper models</string>
+    <string name="license_sherpa_summary">Apache License 2.0</string>
+    <string name="license_bangla">Bangla Zipformer</string>
+    <string name="license_bangla_summary">CC BY-SA 4.0 · SayedShaun</string>
+    <string name="license_androidx">AndroidX and Jetpack Compose</string>
+    <string name="license_androidx_summary">Apache License 2.0</string>
+    <string name="open_link">Open link</string>
+</resources>

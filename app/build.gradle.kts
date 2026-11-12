@@ -60,24 +60,20 @@ android {
 }
 
 dependencies {
+    implementation(project(":shared"))
     implementation(files("libs/sherpa-onnx-1.13.8.aar"))
     implementation("com.google.ai.edge.litert:litert:2.3.0")
-    implementation("com.github.wendykierp:JTransforms:3.1")
 
     implementation(platform("androidx.compose:compose-bom:2026.09.00"))
     implementation("androidx.activity:activity-compose:1.13.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
-    implementation("androidx.datastore:datastore-preferences:1.3.0")
     implementation("androidx.core:core-splashscreen:1.2.0")
-    // Material 3 Expressive (MaterialExpressiveTheme, MotionScheme, LoadingIndicator, ButtonGroup,
-    // MaterialShapes) ships in 1.5; pinned ahead of the Compose BOM, which still maps to 1.4.0.
-    implementation("androidx.compose.material3:material3:1.5.0-rc01")
-    implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.compose.ui:ui-tooling-preview")
+    // Material 3 comes from :shared (CMP material3 1.12.0-alpha03 -> Jetpack 1.5.0-alpha22). Do not pin
+    // a different Jetpack Material 3 here: shared code is compiled against that exact API, and the
+    // Expressive APIs still change between pre-releases (a mismatch fails at runtime).
+    implementation("androidx.datastore:datastore-preferences-core:1.3.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
-    testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test:runner:1.7.0")
 }

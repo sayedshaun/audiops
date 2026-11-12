@@ -22,7 +22,7 @@ class AudioDecoderTest {
             try {
                 var count = 0
                 var peak = 0f
-                AudioDecoder.forEachChunk(decoded, 20) { samples ->
+                AudioChunks.forEachChunk(decoded, 20) { samples ->
                     count += samples.size
                     samples.forEach { peak = maxOf(peak, abs(it)) }
                 }
@@ -41,10 +41,10 @@ class AudioDecoderTest {
                 repeat(22) { out.write(second) }
             }
             val transcribeSizes = mutableListOf<Int>()
-            AudioDecoder.forEachChunk(file, 20) { transcribeSizes.add(it.size) }
+            AudioChunks.forEachChunk(file, 20) { transcribeSizes.add(it.size) }
             assertEquals(listOf(20 * 44_100, 2 * 44_100), transcribeSizes)
             val enhanceSizes = mutableListOf<Pair<Int, Boolean>>()
-            AudioDecoder.forEachEnhancementChunk(file) { samples, last -> enhanceSizes.add(samples.size to last) }
+            AudioChunks.forEachEnhancementChunk(file) { samples, last -> enhanceSizes.add(samples.size to last) }
             assertEquals(listOf(20 * 44_100 to false, 3 * 44_100 to true), enhanceSizes)
         } finally { file.delete() }
     }

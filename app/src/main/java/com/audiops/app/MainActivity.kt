@@ -7,18 +7,26 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.platform.LocalView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.audiops.app.ui.AudiopsScreen
-import com.audiops.app.ui.AudiopsTheme
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.audiops.app.ui.AudiopsApp
+import com.audiops.app.ui.isDarkTheme
 
+/** Android host for the shared [AudiopsApp]. */
 class MainActivity : ComponentActivity() {
-    private val viewModel: AudiopsViewModel by viewModels()
+    private val viewModel: AudiopsViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val app = application as AudiopsApplication
+                AudiopsViewModel(createSavedStateHandle(), app.engine, SettingsRepository(app.settingsStore))
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
@@ -29,23 +37,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val settings = viewModel.settings.collectAsStateWithLifecycle().value ?: UserSettings()
-            val state by viewModel.state.collectAsStateWithLifecycle()
-            val darkTheme = when (settings.themeMode) {
-                ThemeMode.SYSTEM -> isSystemInDarkTheme()
-                ThemeMode.LIGHT -> false
-                ThemeMode.DARK -> true
-            }
-
-            SystemBarsFor(darkTheme)
-            KeepScreenOn(settings.keepScreenOn && state.busy)
-
-            AudiopsTheme(
-                darkTheme = darkTheme,
-                dynamicColor = settings.dynamicColor,
-                pureBlack = settings.pureBlack,
-            ) {
-                AudiopsScreen(viewModel)
-            }
+            SystemBarsFor(settings.isDarkTheme())
+            AudiopsApp(viewModel, appVersion = BuildConfig.VERSION_NAME)
         }
     }
 
@@ -57,14 +50,5 @@ class MainActivity : ComponentActivity() {
             enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
             onDispose { }
         }
-    }
-}
-
-@Composable
-private fun KeepScreenOn(enabled: Boolean) {
-    val view = LocalView.current
-    DisposableEffect(view, enabled) {
-        view.keepScreenOn = enabled
-        onDispose { view.keepScreenOn = false }
     }
 }

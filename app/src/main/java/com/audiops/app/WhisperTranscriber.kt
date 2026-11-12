@@ -21,7 +21,7 @@ internal object WhisperTranscriber {
 
     /** [language] is a Whisper language code, or empty for automatic detection. */
     fun transcribe(context: Context, audio: File, language: String, listener: ProcessingListener): String {
-        val directory = ModelFiles.ensure(context, "whisper-tiny/$REVISION", BASE_URL, digests, listener)
+        val directory = ModelFiles.ensure(context.noBackupFilesDir, "whisper-tiny/$REVISION", BASE_URL, digests, listener)
         fun path(name: String) = File(directory, name).absolutePath
         val recognizer = OfflineRecognizer(
             config = OfflineRecognizerConfig(
@@ -42,10 +42,10 @@ internal object WhisperTranscriber {
             ),
         )
         try {
-            val sections = AudioDecoder.sectionCount(audio, SECTION_SECONDS)
+            val sections = AudioChunks.sectionCount(audio, SECTION_SECONDS)
             val parts = mutableListOf<String>()
             var index = 0
-            AudioDecoder.forEachChunk(audio, SECTION_SECONDS) { samples ->
+            AudioChunks.forEachChunk(audio, SECTION_SECONDS) { samples ->
                 throwIfCancelled()
                 listener.onSection(++index, sections)
                 val stream = recognizer.createStream()
