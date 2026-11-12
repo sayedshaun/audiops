@@ -10,12 +10,13 @@ Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine o
 - **Platforms:** `:shared` (Compose Multiplatform), `:app` (Android), `:desktopApp` (Linux/Windows; DEB/RPM/MSI/EXE packaging).
 - **Tools:** Enhance, Transcribe (Android); Noise reduction, Remove silence, Trim, Fade, Volume, Speed and pitch, Equalizer, Convert, Analyze (both platforms).
 - **UX:** bottom navigation / rail, Activity tab with queue and history, waveform preview, playback, save via system dialogs, cancel, haptics, auto-scroll to results, settings (theme, dynamic colour, pure black, default language, keep screen on, storage).
-- **Robustness:** constant-memory streaming DSP; staged AI enhancement (peak 461 MB, was 2.3 GB and killed); cancellable downloads with byte progress; decode 3× faster.
-- **Tests:** 27 shared JVM tests (13 DSP), a throughput test, 3 desktop engine tests; all pass. Lint 0 errors.
+- **Robustness:** constant-memory streaming DSP; staged AI enhancement in an isolated process (a memory kill no longer closes the app); cancellable downloads with byte progress; decode 3× faster; R8 release build verified to run.
+- **Tests:** 28 shared JVM tests (13 DSP + throughput), 3 desktop engine tests, 4 off-screen desktop render tests; all pass. Lint 0 errors.
 - **Emulator end to end:** every DSP tool on a 3-minute 48 kHz stereo file; queue; history across restarts; playback; save; cancel during download; staged enhancement memory.
 
 ### Not yet done
-- **Desktop GUI not launched** in this session (no headless display); the desktop engine is covered by tests and the app compiles.
+- **Completed AI enhancement** not observed: the 4 GB emulator cannot fit the vocoder (it fails gracefully). Needs a phone with more free RAM.
+- **Desktop window not opened interactively** (Wayland session, no capture); the desktop UI is verified by off-screen render tests and the engine by unit tests.
 - **Physical devices:** not tested; the emulator is x86_64 while phones are arm64.
 - **Desktop AI tools:** need sherpa-onnx's JVM build and a broader decoder (FFmpeg/JavaCV) for MP3/AAC input.
 - **Background processing:** jobs stop if the process is killed; a foreground service would keep them alive.
@@ -26,7 +27,7 @@ Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine o
 2. **Target SDK 37** (lint flags 36): needs a device test pass.
 3. **APK size** (~148 MB, all ABIs): publish an App Bundle or add ABI splits.
 4. **LiteRT 2.3.2** is available (using 2.3.0).
-5. **Resemble model digests** for SHA-256 verification.
+5. **Resemble model digests** for SHA-256 verification, and a lighter vocoder export (fp16/int8 activations) so enhancement fits 4 GB phones.
 6. **GitHub repository name:** the remote is still `SayedShaun/audioops`; rename it to `audiops` on GitHub, then update the remote URL.
 
 ## Next steps

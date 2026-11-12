@@ -73,7 +73,7 @@ See [AGENTS.md](AGENTS.md) for architecture, conventions and the design system.
 ## Known limitations
 
 - Jobs run while the app process is alive. If the system stops the app in the background, a running job ends and must be started again.
-- AI enhancement is heavy: it loads one model at a time to fit phones with 4 GB of RAM, and takes several times longer than the recording on most phones.
+- AI enhancement is heavy. It loads one model at a time, but the vocoder alone needs up to ~3 GB, so phones with little free memory cannot finish it; it runs in a separate process, so the app stays open and explains the failure. It also takes several times longer than the recording on most phones.
 - Transcription cuts sections at fixed lengths (30 s, 20 s for Bangla), so a word at a boundary can split.
 - The enhancement models are downloaded without a SHA-256 check; Whisper and Bangla models are verified.
 - Results are mono. Stereo input is mixed down.

@@ -25,5 +25,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- AI enhancement runs in its own process: if the system reclaims its memory, the app survives. -->
+        <service
+            android:name=".EnhanceService"
+            android:exported="false"
+            android:process=":enhance" />
     </application>
 </manifest>

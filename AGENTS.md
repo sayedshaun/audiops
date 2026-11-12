@@ -60,7 +60,7 @@ Requirements: JDK 17 with `javac`, Android SDK Platform 37.
 ./gradlew :desktopApp:packageDistributionForCurrentOS   # DEB/RPM on Linux, MSI/EXE on Windows
 ```
 
-Run the first four before you call work done. CI (`.github/workflows/android.yml`) runs the same checks.
+Run the first four before you call work done. For releases, also install the R8 build on a device and launch it: R8 issues (for example Room/WorkManager reflection, see `app/proguard-rules.pro`) only show at runtime. CI (`.github/workflows/android.yml`) runs the same checks.
 
 ## Architecture
 
@@ -68,6 +68,7 @@ Unidirectional data flow: **ViewModel → immutable `AudiopsState` → stateless
 
 - **Navigation:** `Tab` (Tools, Activity, Settings) at the top level; an open `Tool` screen shows above the tabs. Back closes the tool, then returns to Tools. Phones use `ShortNavigationBar`, wide windows a `NavigationRail`.
 - **Jobs:** `AudiopsViewModel.start(tool, spec)` queues a `Job`. One worker coroutine runs jobs in order through `runOnWorker` (= `runInterruptible(Dispatchers.IO)`). Cancelling interrupts the worker; every loop calls `throwIfCancelled()`, and interrupt-caused I/O errors are reported as cancellation. Finished jobs persist in `HistoryRepository` (DataStore JSON, max 100); their outputs live in the engine's output directory.
+- **AI enhancement process:** `AndroidAudioEngine.enhance` runs `AudioPipelines.enhance` inside `EnhanceService` (process `:enhance`) through `EnhanceClient`. The vocoder can need ~3 GB; if the system kills the worker, the app survives and reports it. Cancel kills the worker. Keep heavy native inference out of the main process.
 - **Engine:** `AudioEngine` (commonMain) is the only platform boundary for audio. `JvmAudioEngine` (jvmShared) implements DSP tools, analysis, waveform, storage and a reference-counted decode cache; `AndroidAudioEngine` and `DesktopAudioEngine` add decoding and AI tools.
 - **DSP:** `AudioProcessor` blocks in `dsp/`; `DspPipeline` chains them over decoded 44.1 kHz mono PCM16, splitting into stages where an operation must measure its input first (normalize, denoise). New operations: add an `AudioOperation` subtype (serializable), map it in `DspPipeline.processorFor`, add UI in `ToolScreen.kt`, and add a test in `DspTest`.
 - **Errors:** pipelines throw with a clear message; the ViewModel records a `FailureKind` and detail; the UI localizes it. One-shot messages go to the snackbar as `UiMessage`.

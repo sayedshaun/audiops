@@ -96,3 +96,22 @@ Entries are appended in order. Newest entries are at the bottom.
 - Saved output checked byte-exact: 1.5× of 3:00 → 2:00.0 (5,292,000 samples).
 - Queue, Activity history across restarts, detail sheet playback, save via the system dialog, cancel during download.
 - Lint 0 errors (3 known warnings); R8 release build succeeds.
+
+## 2026-11-13 (later): Crash-proofing AI enhancement and the release build (`feature/audio-toolkit`)
+
+### Fixed
+- **Release build crashed on launch** (R8): LiteRT pulls in Play asset delivery → WorkManager + Room 2.5, whose generated database is found by reflection. Added keep rules; the R8 build now starts, loads history and runs jobs (verified on the emulator).
+- **AI enhancement could still be killed** while loading the vocoder (~2.4–3 GB peak, more than a 4 GB phone can give one app). Enhancement now runs in an isolated `:enhance` process (`EnhanceService`): if the system reclaims it, the app stays open and shows "The AI model ran out of memory on this device…". Cancel stops the worker process immediately; the worker is stopped after every run to return its memory.
+- Activity sheet selection is reset in an effect instead of during composition.
+
+### Changed
+- On desktop, AI tools show an "Android only" badge and are disabled; Settings hides phone-only sections (keep screen on, transcription default) and words dynamic colour per platform.
+- Desktop ViewModel is created directly in `main()` (no ViewModelStoreOwner dependency).
+
+### Added
+- Off-screen desktop render tests (`DesktopRenderTest`) write PNGs of the Tools, tool, Settings and narrow layouts to `desktopApp/build/screenshots`.
+
+### Verified
+- 28 shared tests, 7 desktop tests, lint 0 errors, androidTest compiles.
+- Emulator: transcription of real English speech is accurate (11 s clip in ~26 s); cancel during enhancement kills the worker within 3 s and the app stays alive; an out-of-memory enhancement fails gracefully with the app open; landscape shows the navigation rail; dark mode checked; R8 release build runs.
+- Not verified: a completed AI enhancement (needs a device with more free RAM than this 4 GB emulator).

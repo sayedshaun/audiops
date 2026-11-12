@@ -48,6 +48,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -130,11 +131,9 @@ fun ActivityTab(jobs: List<Job>, actions: ActivityActions) {
     }
 
     val selected = jobs.firstOrNull { it.id == selectedId }
-    if (selected != null) {
-        JobSheet(selected, actions, onDismiss = { selectedId = null })
-    } else if (selectedId != null) {
-        selectedId = null   // deleted while open
-    }
+    if (selected != null) JobSheet(selected, actions, onDismiss = { selectedId = null })
+    // The job was deleted or cleared while its sheet was open: forget the selection.
+    LaunchedEffect(selectedId, selected == null) { if (selected == null) selectedId = null }
 
     if (confirmClear) {
         AlertDialog(

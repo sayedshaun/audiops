@@ -20,9 +20,10 @@ class AndroidAudioEngine(context: Context) : JvmAudioEngine(
 
     override fun decode(source: String): File = AudioDecoder.decode(context, source.toUri(), workDir)
 
+    /** Runs in the isolated `:enhance` process (see [EnhanceService]) so a memory kill cannot close the app. */
     override fun enhance(source: String, listener: ProcessingListener): String = withDecoded(source) { pcm ->
         val output = newOutput("wav")
-        AudioPipelines.enhance(context, pcm, output, listener)
+        EnhanceClient.run(context, pcm, output, listener)
         output.absolutePath
     }
 
