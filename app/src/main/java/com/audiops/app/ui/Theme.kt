@@ -4,7 +4,9 @@ import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -71,23 +73,58 @@ private val DarkScheme: ColorScheme = darkColorScheme(
     outlineVariant = Color(0xFF47464F),
 )
 
+// Material 3 Expressive shape scale, including the increased and extra-extra-large steps.
 private val AppShapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(24.dp),
-    extraLarge = RoundedCornerShape(32.dp),
+    extraSmall = RoundedCornerShape(4.dp),
+    small = RoundedCornerShape(8.dp),
+    medium = RoundedCornerShape(12.dp),
+    large = RoundedCornerShape(16.dp),
+    largeIncreased = RoundedCornerShape(20.dp),
+    extraLarge = RoundedCornerShape(28.dp),
+    extraLargeIncreased = RoundedCornerShape(32.dp),
+    extraExtraLarge = RoundedCornerShape(48.dp),
 )
 
+/** Whether this device supports wallpaper-based dynamic colour (Android 12+). */
+val supportsDynamicColor: Boolean get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+/**
+ * App theme. [darkTheme] comes from the user's theme setting; [dynamicColor] uses the
+ * wallpaper palette where supported; [pureBlack] darkens dark-theme surfaces to black.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun AudioOpsTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
+fun AudiopsTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    dynamicColor: Boolean = true,
+    pureBlack: Boolean = false,
+    content: @Composable () -> Unit,
+) {
     val context = LocalContext.current
-    val colors = when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-            if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        dark -> DarkScheme
+    val base = when {
+        dynamicColor && supportsDynamicColor ->
+            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        darkTheme -> DarkScheme
         else -> LightScheme
     }
-    MaterialTheme(colorScheme = colors, shapes = AppShapes, content = content)
+    val colors = if (darkTheme && pureBlack) base.toPureBlack() else base
+    // Expressive theme: spring-based motion scheme plus the expressive shape scale.
+    MaterialExpressiveTheme(
+        colorScheme = colors,
+        motionScheme = MotionScheme.expressive(),
+        shapes = AppShapes,
+        content = content,
+    )
 }
+
+/** Black background with tonal surface containers so cards and sheets stay distinguishable. */
+private fun ColorScheme.toPureBlack(): ColorScheme = copy(
+    background = Color.Black,
+    surface = Color.Black,
+    surfaceDim = Color.Black,
+    surfaceContainerLowest = Color.Black,
+    surfaceContainerLow = Color(0xFF0E0E11),
+    surfaceContainer = Color(0xFF141417),
+    surfaceContainerHigh = Color(0xFF1B1B1F),
+    surfaceContainerHighest = Color(0xFF232327),
+)

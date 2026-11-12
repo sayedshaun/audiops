@@ -1,4 +1,4 @@
-# AudioOps
+# Audiops
 
 An Android app for on-device audio operations. Recordings are processed on the phone; audio you select is never uploaded.
 
@@ -21,7 +21,7 @@ Model files are checked against SHA-256 digests (Whisper and Bangla). Downloads 
 
 ## Build and test
 
-Requirements: Android SDK Platform 37 and a JDK 17 with `javac` (Android Studio's bundled JDK works). The app is written in Kotlin with Jetpack Compose and Material 3.
+Requirements: Android SDK Platform 37 and a JDK 17 with `javac` (Android Studio's bundled JDK works). The app is written in Kotlin with Jetpack Compose and Material 3 Expressive. Contributor and agent guidelines are in [AGENTS.md](AGENTS.md).
 
 ```sh
 ./gradlew :app:testDebugUnitTest   # JVM unit tests
@@ -30,7 +30,7 @@ Requirements: Android SDK Platform 37 and a JDK 17 with `javac` (Android Studio'
 ./gradlew :app:connectedDebugAndroidTest   # instrumented decoder tests (device or emulator)
 ```
 
-Set `ANDROID_HOME` or `local.properties` so Gradle can find the SDK. To build for one ABI, pass `-PaudioOpsAbi=arm64-v8a`.
+Set `ANDROID_HOME` or `local.properties` so Gradle can find the SDK. To build for one ABI, pass `-PaudiopsAbi=arm64-v8a`.
 
 ### Release builds
 
@@ -50,7 +50,7 @@ Without these, the release APK is unsigned. Keep keystores out of the repository
 ```
 app/src/main/java/com/audiops/app/
   MainActivity.kt          Edge-to-edge host for the Compose app
-  AudioOpsViewModel.kt     UI state, cancellation, saving, messages
+  AudiopsViewModel.kt     UI state, cancellation, saving, messages
   AudioPipelines.kt        Enhance and transcribe pipelines (run off the main thread)
   AudioDecoder.kt          Device decoding to 44.1 kHz mono PCM, chunking, cancellation checks
   ResembleEnhancer.kt      LiteRT inference, DSP, model download
@@ -76,4 +76,4 @@ Issues and pull requests are welcome. Run the unit tests and lint before opening
 
 ## License
 
-Licensing for AudioOps' own source code has not been chosen yet. Third-party models and runtimes are licensed as described above.
+Licensing for Audiops' own source code has not been chosen yet. Third-party models and runtimes are licensed as described above.

@@ -18,7 +18,7 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        providers.gradleProperty("audioOpsAbi").orNull?.let { abi ->
+        providers.gradleProperty("audiopsAbi").orNull?.let { abi ->
             ndk { abiFilters += abi }
         }
     }
@@ -43,7 +43,10 @@ android {
         }
     }
 
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -65,8 +68,11 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.13.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
-    // Pin the latest stable Material 3 release independently of the Compose BOM.
-    implementation("androidx.compose.material3:material3:1.4.0")
+    implementation("androidx.datastore:datastore-preferences:1.3.0")
+    implementation("androidx.core:core-splashscreen:1.2.0")
+    // Material 3 Expressive (MaterialExpressiveTheme, MotionScheme, LoadingIndicator, ButtonGroup,
+    // MaterialShapes) ships in 1.5; pinned ahead of the Compose BOM, which still maps to 1.4.0.
+    implementation("androidx.compose.material3:material3:1.5.0-rc01")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")

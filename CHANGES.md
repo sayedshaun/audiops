@@ -41,3 +41,27 @@ Entries are appended in order. Newest entries are at the bottom.
 - `./gradlew :app:assembleRelease` succeeds with R8.
 - On an Android emulator: the home, Enhance and Transcribe screens render in light and dark themes. Transcription of the sample clip produced a transcript from the cached Whisper model, and the result survives rotation.
 - Not verified: the enhancement pipeline end to end (it needs a ~360 MB model download), the Bangla model path, and behaviour on physical devices.
+
+## 2026-11-12: Material 3 Expressive redesign, settings, rename to Audiops (`feature/material3-theme-settings`)
+
+### Added
+- Settings screen (Android 16+ grouped style): theme (System / Light / Dark), dynamic colour, pure black dark theme, default spoken language, keep screen on while processing, downloaded-model storage with confirmed delete, version, privacy note, and open-source licence links.
+- Settings persist with Jetpack DataStore. The splash screen (core-splashscreen) stays up until they load, so the first frame already uses the chosen theme.
+- System bar icons follow the in-app theme. Predictive back is enabled (`enableOnBackInvokedCallback`).
+- Haptics: confirm on results, reject on errors, toggle feedback on switches, segment ticks on selections.
+- Component previews (`ui/Previews.kt`) in light and dark.
+- `AGENTS.md` expanded into the full agent guide; `CLAUDE.md` imports it.
+
+### Changed
+- Material 3 Expressive: `MaterialExpressiveTheme` with `MotionScheme.expressive()`, the expressive shape scale, `MaterialShapes` icon containers, `LargeFlexibleTopAppBar`, shape-morphing buttons, connected toggle-button groups, `LoadingIndicator` and wavy progress, emphasized typography, spring-based screen transitions, rounded icons.
+- Screens are stateless: they receive state and `…Actions` callbacks instead of the ViewModel.
+- Renamed the app from "AudioOps" to **Audiops** (app label, Gradle project, classes, styles, docs). The Gradle property is now `audiopsAbi`.
+
+### Dependencies
+- `androidx.compose.material3` 1.4.0 → 1.5.0-rc01 (Expressive APIs).
+- Added `androidx.datastore:datastore-preferences` 1.3.0 and `androidx.core:core-splashscreen` 1.2.0.
+- Enabled `buildConfig` for the version shown in Settings.
+
+### Verified
+- 14 unit tests pass; lint 0 errors (4 warnings, unchanged and intentional); release build passes R8.
+- Emulator: home, Transcribe and Settings render in light and dark; theme and pure-black changes apply instantly and survive an app restart; no crashes in logcat.

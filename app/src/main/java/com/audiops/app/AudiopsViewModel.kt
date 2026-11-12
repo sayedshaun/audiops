@@ -16,9 +16,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
@@ -42,7 +47,7 @@ sealed interface Work {
     data class Running(val status: String, val progress: Float?) : Work
 }
 
-data class AudioOpsState(
+data class AudiopsState(
     val tool: Tool? = null,
     val input: AudioInput? = null,
     val language: SpeechLanguage = SpeechLanguage.AUTO,
@@ -50,6 +55,7 @@ data class AudioOpsState(
     val enhanced: File? = null,
     val transcript: String? = null,
     val error: String? = null,
+    val settingsOpen: Boolean = false,
 ) {
     val busy: Boolean get() = work is Work.Running
 }
@@ -59,17 +65,18 @@ data class AudioOpsState(
  * ViewModel; the selected tool, recording and language survive process death through
  * [SavedStateHandle].
  */
-class AudioOpsViewModel(application: Application, private val savedState: SavedStateHandle) :
+class AudiopsViewModel(application: Application, private val savedState: SavedStateHandle) :
     AndroidViewModel(application) {
 
     private val _state = MutableStateFlow(
-        AudioOpsState(
+        AudiopsState(
             tool = savedState.get<String>(KEY_TOOL)?.let(Tool::valueOf),
             input = savedState.get<String>(KEY_URI)?.let { AudioInput(it, savedState.get<String>(KEY_NAME).orEmpty()) },
             language = savedState.get<String>(KEY_LANGUAGE)?.let(SpeechLanguage::valueOf) ?: SpeechLanguage.AUTO,
+            settingsOpen = savedState.get<Boolean>(KEY_SETTINGS) ?: false,
         ),
     )
-    val state: StateFlow<AudioOpsState> = _state.asStateFlow()
+    val state: StateFlow<AudiopsState> = _state.asStateFlow()
 
     private val _messages = Channel<String>(Channel.BUFFERED)
 
@@ -80,16 +87,89 @@ class AudioOpsViewModel(application: Application, private val savedState: SavedS
 
     private val app: Application get() = getApplication()
 
+    private val settingsRepository = SettingsRepository(application)
+
+    /** Appearance settings; null until DataStore has loaded (the splash screen waits for it). */
+    val settings: StateFlow<UserSettings?> = settingsRepository.settings
+        .map<UserSettings, UserSettings?> { it }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    init {
+        // Apply the saved default language unless this session already chose one.
+        if (savedState.get<String>(KEY_LANGUAGE) == null) {
+            viewModelScope.launch {
+                val loaded = settings.filterNotNull().first()
+                if (savedState.get<String>(KEY_LANGUAGE) == null && !_state.value.busy) {
+                    _state.update { it.copy(language = loaded.defaultLanguage) }
+                }
+            }
+        }
+    }
+
+    private val _modelStorage = MutableStateFlow<Long?>(null)
+
+    /** Bytes used by downloaded models, or null while being measured. */
+    val modelStorage: StateFlow<Long?> = _modelStorage.asStateFlow()
+
     fun open(tool: Tool) {
         if (_state.value.busy) return
         savedState[KEY_TOOL] = tool.name
         _state.update { it.copy(tool = tool, error = null) }
     }
 
+    fun openSettings() {
+        savedState[KEY_SETTINGS] = true
+        _state.update { it.copy(settingsOpen = true) }
+        refreshModelStorage()
+    }
+
     fun back() {
+        if (_state.value.settingsOpen) {
+            savedState[KEY_SETTINGS] = false
+            _state.update { it.copy(settingsOpen = false) }
+            return
+        }
         if (_state.value.busy) return
         savedState[KEY_TOOL] = null
         _state.update { it.copy(tool = null, error = null) }
+    }
+
+    fun setThemeMode(mode: ThemeMode) {
+        viewModelScope.launch { settingsRepository.setThemeMode(mode) }
+    }
+
+    fun setDynamicColor(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setDynamicColor(enabled) }
+    }
+
+    fun setPureBlack(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setPureBlack(enabled) }
+    }
+
+    fun setKeepScreenOn(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setKeepScreenOn(enabled) }
+    }
+
+    /** Saves the default and applies it to the transcription screen when idle. */
+    fun setDefaultLanguage(language: SpeechLanguage) {
+        viewModelScope.launch { settingsRepository.setDefaultLanguage(language) }
+        setLanguage(language)
+    }
+
+    fun refreshModelStorage() {
+        viewModelScope.launch {
+            _modelStorage.value = withContext(Dispatchers.IO) { ModelFiles.storageBytes(app) }
+        }
+    }
+
+    /** Deletes downloaded models. Not allowed while a job may be reading them. */
+    fun deleteModels() {
+        if (_state.value.busy) return
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { ModelFiles.deleteAll(app) }
+            _modelStorage.value = withContext(Dispatchers.IO) { ModelFiles.storageBytes(app) }
+            _messages.trySend(app.getString(R.string.message_models_deleted))
+        }
     }
 
     fun chooseInput(uri: Uri, name: String) {
@@ -254,6 +334,7 @@ class AudioOpsViewModel(application: Application, private val savedState: SavedS
         const val KEY_URI = "input_uri"
         const val KEY_NAME = "input_name"
         const val KEY_LANGUAGE = "language"
+        const val KEY_SETTINGS = "settings_open"
     }
 }
 

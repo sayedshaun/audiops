@@ -1,4 +1,4 @@
-# AudioOps release rules.
+# Audiops release rules.
 # sherpa-onnx and LiteRT are reached through JNI, so their classes and native
 # method names must survive shrinking and obfuscation.
 -keep class com.k2fsa.sherpa.onnx.** { *; }

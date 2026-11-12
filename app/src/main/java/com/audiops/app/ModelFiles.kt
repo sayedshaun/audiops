@@ -17,6 +17,19 @@ internal interface ProcessingListener {
 
 /** Downloads a fixed set of model files once, verifies each SHA-256 digest, and reuses them. */
 internal object ModelFiles {
+    /** Top-level folders in `noBackupFilesDir` that hold downloaded models. */
+    private val FOLDERS = listOf("resemble-enhance", "whisper-tiny", "bangla-zipformer")
+
+    /** Total bytes used by downloaded models. */
+    fun storageBytes(context: Context): Long = FOLDERS.sumOf { folder ->
+        File(context.noBackupFilesDir, folder).walkBottomUp().filter { it.isFile }.sumOf { it.length() }
+    }
+
+    /** Deletes every downloaded model. They are downloaded again on next use. */
+    fun deleteAll(context: Context) {
+        FOLDERS.forEach { File(context.noBackupFilesDir, it).deleteRecursively() }
+    }
+
     /**
      * Returns the directory holding every file in [digests], keyed by relative file name.
      * Files that are missing or fail verification are downloaded from `$baseUrl/$name`.
