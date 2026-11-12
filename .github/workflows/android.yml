@@ -1,4 +1,4 @@
-name: Android
+name: Build and test
 
 on:
   push:
@@ -24,8 +24,11 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Unit tests, lint and debug build
-        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+      - name: Shared and desktop tests
+        run: ./gradlew --no-daemon :shared:desktopTest :desktopApp:test
+
+      - name: Android lint and debug build
+        run: ./gradlew --no-daemon :app:lintDebug :app:assembleDebug
 
       - name: Release build (R8 and resource shrinking)
         run: ./gradlew --no-daemon :app:assembleRelease
@@ -37,5 +40,7 @@ jobs:
           name: reports
           path: |
             app/build/reports/
-            app/build/test-results/
+            shared/build/reports/
+            shared/build/test-results/
+            desktopApp/build/test-results/
           if-no-files-found: ignore

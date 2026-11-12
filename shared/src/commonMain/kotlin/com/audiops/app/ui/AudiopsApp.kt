@@ -2,6 +2,7 @@ package com.audiops.app.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.audiops.app.AudiopsViewModel
@@ -17,14 +18,17 @@ fun AudiopsApp(viewModel: AudiopsViewModel, appVersion: String) {
     val settings = viewModel.settings.collectAsStateWithLifecycle().value ?: UserSettings()
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    KeepScreenOn(settings.keepScreenOn && state.busy)
+    KeepScreenOn(settings.keepScreenOn && state.activeJobs.isNotEmpty())
 
     AudiopsTheme(
         darkTheme = settings.isDarkTheme(),
         dynamicColor = settings.dynamicColor,
         pureBlack = settings.pureBlack,
     ) {
-        AudiopsScreen(viewModel, appVersion)
+        // One player for the whole app: starting another item stops the previous one.
+        CompositionLocalProvider(LocalAudioPlayer provides rememberAudioPlayer()) {
+            AudiopsScreen(viewModel, appVersion)
+        }
     }
 }
 

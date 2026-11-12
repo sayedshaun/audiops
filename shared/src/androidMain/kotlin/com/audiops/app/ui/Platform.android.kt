@@ -60,5 +60,7 @@ actual fun platformDynamicColorScheme(darkTheme: Boolean): ColorScheme? {
 
 actual val supportsDynamicColor: Boolean get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
+actual val isDesktop: Boolean = false
+
 @Composable
 actual fun formatFileSize(bytes: Long): String = Formatter.formatShortFileSize(LocalContext.current, bytes)

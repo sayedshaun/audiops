@@ -4,18 +4,30 @@ import android.content.Context
 import androidx.core.net.toUri
 import java.io.File
 
-/** Android audio engine: MediaCodec decoding, LiteRT enhancement, sherpa-onnx transcription. */
-class AndroidAudioEngine(context: Context) : AudioEngine {
+/**
+ * Android engine: MediaCodec decoding, LiteRT enhancement and sherpa-onnx transcription.
+ * DSP tools, analysis, waveform and storage come from [JvmAudioEngine].
+ */
+class AndroidAudioEngine(context: Context) : JvmAudioEngine(
+    workDir = File(context.applicationContext.cacheDir, "work"),
+    outputDir = File(context.applicationContext.filesDir, "outputs"),
+    modelRoot = context.applicationContext.noBackupFilesDir,
+) {
     private val context = context.applicationContext
 
     override val supportsEnhance: Boolean = true
     override val supportsTranscribe: Boolean = true
 
-    override fun enhance(source: String, listener: ProcessingListener): String =
-        AudioPipelines.enhance(context, source.toUri(), listener).absolutePath
+    override fun decode(source: String): File = AudioDecoder.decode(context, source.toUri(), workDir)
+
+    override fun enhance(source: String, listener: ProcessingListener): String = withDecoded(source) { pcm ->
+        val output = newOutput("wav")
+        AudioPipelines.enhance(context, pcm, output, listener)
+        output.absolutePath
+    }
 
     override fun transcribe(source: String, language: String, listener: ProcessingListener): String =
-        AudioPipelines.transcribe(context, source.toUri(), language, listener)
+        withDecoded(source) { pcm -> storeTranscript(AudioPipelines.transcribe(context, pcm, language, listener)) }
 
     override fun copyFile(path: String, destination: String) {
         context.contentResolver.openOutputStream(destination.toUri())
@@ -29,12 +41,4 @@ class AndroidAudioEngine(context: Context) : AudioEngine {
             ?.use { it.write(text) }
             ?: error("Could not open the destination.")
     }
-
-    override fun deleteTemporary(path: String) {
-        File(path).delete()
-    }
-
-    override fun modelStorageBytes(): Long = ModelFiles.storageBytes(context.noBackupFilesDir)
-
-    override fun deleteModels() = ModelFiles.deleteAll(context.noBackupFilesDir)
 }

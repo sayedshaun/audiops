@@ -6,19 +6,31 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
+import com.audiops.app.dsp.AudioProcessor
+import com.audiops.app.dsp.FilterChain
+import com.audiops.app.dsp.ProcessorChain
+import com.audiops.app.dsp.Resampler
 import java.io.BufferedOutputStream
 import java.io.File
 import java.nio.ByteOrder
 import java.util.concurrent.CancellationException
 import kotlin.math.roundToInt
 
+/** Resampling chain from [rate] to [PIPELINE_RATE], or null when no conversion is needed. */
+private fun resamplerFor(rate: Int): AudioProcessor? = if (rate == PIPELINE_RATE) null else ProcessorChain(
+    listOfNotNull(
+        if (rate > PIPELINE_RATE) FilterChain.antiAlias(rate, PIPELINE_RATE) else null,
+        Resampler(rate.toDouble() / PIPELINE_RATE),
+    ),
+)
+
 /** Decodes device-supported formats into temporary mono 44.1 kHz PCM16 files. */
 object AudioDecoder {
     /**
-     * Returns a raw PCM16 file in the cache directory. The caller owns it and must delete it.
+     * Decodes [uri] into a new raw PCM16 file in [directory]. The caller owns the file.
      */
-    fun decode(context: Context, uri: Uri): File {
-        val file = File.createTempFile("audio-input-", ".pcm", context.cacheDir)
+    fun decode(context: Context, uri: Uri, directory: File = context.cacheDir): File {
+        val file = File.createTempFile("decoded-", ".pcm", directory)
         val extractor = MediaExtractor()
         var codec: MediaCodec? = null
         var started = false
@@ -41,8 +53,7 @@ object AudioDecoder {
             var sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
             var encoding = AudioFormat.ENCODING_PCM_16BIT
             var sourceIndex = 0L
-            var nextOutput = 0.0
-            var previous = 0f
+            var resampler: AudioProcessor? = null
             var written = 0L
             BufferedOutputStream(file.outputStream()).use { output ->
                 val bytes = ByteArray(8192)
@@ -59,25 +70,31 @@ object AudioDecoder {
                     }
                     written++
                 }
+                // Feed every free input buffer and drain every ready output buffer without
+                // waiting; block briefly only when neither side made progress. (Blocking on
+                // each dequeue made long files decode ~10x slower than real time allows.)
                 while (!outputEnded) {
                     throwIfCancelled()
-                    if (!inputEnded) {
-                        val index = codec.dequeueInputBuffer(10_000)
-                        if (index >= 0) {
-                            val buffer = codec.getInputBuffer(index) ?: error("Cannot read audio input.")
-                            buffer.clear()
-                            val size = extractor.readSampleData(buffer, 0)
-                            if (size < 0) {
-                                codec.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
-                                inputEnded = true
-                            } else {
-                                codec.queueInputBuffer(index, 0, size, extractor.sampleTime.coerceAtLeast(0), 0)
-                                extractor.advance()
-                            }
+                    var progressed = false
+                    while (!inputEnded) {
+                        val index = codec.dequeueInputBuffer(0)
+                        if (index < 0) break
+                        val buffer = codec.getInputBuffer(index) ?: error("Cannot read audio input.")
+                        buffer.clear()
+                        val size = extractor.readSampleData(buffer, 0)
+                        if (size < 0) {
+                            codec.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                            inputEnded = true
+                        } else {
+                            codec.queueInputBuffer(index, 0, size, extractor.sampleTime.coerceAtLeast(0), 0)
+                            extractor.advance()
                         }
+                        progressed = true
                     }
-                    when (val index = codec.dequeueOutputBuffer(info, 10_000)) {
-                        MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+                    while (!outputEnded) {
+                        val index = codec.dequeueOutputBuffer(info, if (progressed) 0L else 5_000L)
+                        if (index == MediaCodec.INFO_TRY_AGAIN_LATER) break
+                        if (index == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                             val out = codec.outputFormat
                             val newChannels = out.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
                             val newRate = out.getInteger(MediaFormat.KEY_SAMPLE_RATE)
@@ -92,60 +109,54 @@ object AudioDecoder {
                             } else {
                                 AudioFormat.ENCODING_PCM_16BIT
                             }
+                            continue
                         }
-                        // INFO_TRY_AGAIN_LATER and other negative codes need no action; the loop retries.
-                        MediaCodec.INFO_TRY_AGAIN_LATER -> Unit
-                        else -> if (index >= 0) {
-                            val buffer = codec.getOutputBuffer(index) ?: error("Cannot decode audio output.")
-                            buffer.position(info.offset)
-                            buffer.limit(info.offset + info.size)
-                            buffer.order(ByteOrder.LITTLE_ENDIAN)
-                            val sampleBytes = when (encoding) {
-                                AudioFormat.ENCODING_PCM_8BIT -> 1
-                                AudioFormat.ENCODING_PCM_16BIT -> 2
-                                AudioFormat.ENCODING_PCM_FLOAT, AudioFormat.ENCODING_PCM_32BIT -> 4
-                                AudioFormat.ENCODING_PCM_24BIT_PACKED -> 3
-                                else -> error("This audio encoding is not supported by the device decoder.")
-                            }
-                            require(buffer.remaining() % (sampleBytes * channels) == 0) { "Incomplete decoded audio frame." }
-                            while (buffer.remaining() >= sampleBytes * channels) {
-                                // Downmix to mono by averaging the channels of each frame.
-                                var sum = 0f
-                                repeat(channels) {
-                                    val value = when (encoding) {
-                                        AudioFormat.ENCODING_PCM_8BIT -> ((buffer.get().toInt() and 255) - 128) / 128f
-                                        AudioFormat.ENCODING_PCM_16BIT -> buffer.short / 32768f
-                                        AudioFormat.ENCODING_PCM_FLOAT -> buffer.float
-                                        AudioFormat.ENCODING_PCM_32BIT -> buffer.int / 2147483648f
-                                        else -> {
-                                            val x = (buffer.get().toInt() and 255) or
-                                                ((buffer.get().toInt() and 255) shl 8) or
-                                                (buffer.get().toInt() shl 16)
-                                            x / 8388608f
-                                        }
-                                    }
-                                    require(value.isFinite()) { "Audio contains invalid samples." }
-                                    sum += value / channels
-                                }
-                                // Linear resampling onto the 44.1 kHz output grid.
-                                if (sourceIndex == 0L) {
-                                    emit(sum)
-                                    nextOutput = sampleRate.toDouble() / PIPELINE_RATE
-                                } else {
-                                    while (nextOutput <= sourceIndex) {
-                                        val fraction = (nextOutput - (sourceIndex - 1)).toFloat().coerceIn(0f, 1f)
-                                        emit(previous + (sum - previous) * fraction)
-                                        nextOutput += sampleRate.toDouble() / PIPELINE_RATE
+                        if (index < 0) continue
+                        val buffer = codec.getOutputBuffer(index) ?: error("Cannot decode audio output.")
+                        buffer.position(info.offset)
+                        buffer.limit(info.offset + info.size)
+                        buffer.order(ByteOrder.LITTLE_ENDIAN)
+                        val sampleBytes = when (encoding) {
+                            AudioFormat.ENCODING_PCM_8BIT -> 1
+                            AudioFormat.ENCODING_PCM_16BIT -> 2
+                            AudioFormat.ENCODING_PCM_FLOAT, AudioFormat.ENCODING_PCM_32BIT -> 4
+                            AudioFormat.ENCODING_PCM_24BIT_PACKED -> 3
+                            else -> error("This audio encoding is not supported by the device decoder.")
+                        }
+                        require(buffer.remaining() % (sampleBytes * channels) == 0) { "Incomplete decoded audio frame." }
+                        val frames = buffer.remaining() / (sampleBytes * channels)
+                        val mono = FloatArray(frames)
+                        for (f in 0 until frames) {
+                            // Downmix to mono by averaging the channels of each frame.
+                            var sum = 0f
+                            repeat(channels) {
+                                val value = when (encoding) {
+                                    AudioFormat.ENCODING_PCM_8BIT -> ((buffer.get().toInt() and 255) - 128) / 128f
+                                    AudioFormat.ENCODING_PCM_16BIT -> buffer.short / 32768f
+                                    AudioFormat.ENCODING_PCM_FLOAT -> buffer.float
+                                    AudioFormat.ENCODING_PCM_32BIT -> buffer.int / 2147483648f
+                                    else -> {
+                                        val x = (buffer.get().toInt() and 255) or
+                                            ((buffer.get().toInt() and 255) shl 8) or
+                                            (buffer.get().toInt() shl 16)
+                                        x / 8388608f
                                     }
                                 }
-                                previous = sum
-                                sourceIndex++
+                                require(value.isFinite()) { "Audio contains invalid samples." }
+                                sum += value / channels
                             }
-                            outputEnded = (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0
-                            codec.releaseOutputBuffer(index, false)
+                            mono[f] = sum
                         }
+                        // Anti-aliased cubic resampling onto the 44.1 kHz grid (shared DSP).
+                        if (sourceIndex == 0L) resampler = resamplerFor(sampleRate)
+                        sourceIndex += frames
+                        for (x in resampler?.process(mono) ?: mono) emit(x)
+                        outputEnded = (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0
+                        codec.releaseOutputBuffer(index, false)
+                        progressed = true
                     }
                 }
+                resampler?.flush()?.forEach(::emit)
                 if (used > 0) output.write(bytes, 0, used)
             }
             require(written > 0) { "The selected audio is empty." }

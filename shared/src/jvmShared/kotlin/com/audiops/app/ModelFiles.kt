@@ -39,7 +39,10 @@ object ModelFiles {
             file.delete()
             file.parentFile?.mkdirs()
             listener.onModelDownload(index, digests.size)
-            HubModels.download("$baseUrl/$name", file)
+            val fileIndex = index
+            HubModels.download("$baseUrl/$name", file) { fraction ->
+                listener.onModelDownloadProgress(fileIndex, digests.size, fraction)
+            }
             if (sha256(file) != digest) {
                 file.delete()
                 error("Model file verification failed: $name")

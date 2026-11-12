@@ -43,6 +43,8 @@ actual fun platformDynamicColorScheme(darkTheme: Boolean): ColorScheme? = null
 
 actual val supportsDynamicColor: Boolean = false
 
+actual val isDesktop: Boolean = true
+
 @Composable
 actual fun formatFileSize(bytes: Long): String {
     if (bytes < 1024) return "$bytes B"

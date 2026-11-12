@@ -6,8 +6,8 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.roundToInt
 
-/** Streaming mono PCM16 WAV output. */
-class WavWriter(file: File) : AutoCloseable {
+/** Streaming mono PCM16 WAV output at [sampleRate]. */
+class WavWriter(file: File, private val sampleRate: Int = 44_100) : AutoCloseable {
     private val output = RandomAccessFile(file, "rw")
     private var bytesWritten = 0L
 
@@ -30,7 +30,7 @@ class WavWriter(file: File) : AutoCloseable {
         try {
             val header = ByteBuffer.allocate(44).order(ByteOrder.LITTLE_ENDIAN)
             header.put("RIFF".toByteArray()).putInt((36L + bytesWritten).toInt()).put("WAVEfmt ".toByteArray())
-            header.putInt(16).putShort(1).putShort(1).putInt(44_100).putInt(88_200).putShort(2).putShort(16)
+            header.putInt(16).putShort(1).putShort(1).putInt(sampleRate).putInt(sampleRate * 2).putShort(2).putShort(16)
             header.put("data".toByteArray()).putInt(bytesWritten.toInt())
             output.seek(0)
             output.write(header.array())

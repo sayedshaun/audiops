@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.rounded.AudioFile
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonShapes
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -193,58 +195,6 @@ fun StepTitle(number: Int, title: String) {
     }
 }
 
-/** Shows the selected recording, or an empty state, with a button to pick another. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun RecordingCard(name: String?, enabled: Boolean, onChoose: () -> Unit) {
-    val colors = MaterialTheme.colorScheme
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(containerColor = colors.surfaceContainer),
-    ) {
-        Column(Modifier.padding(20.dp)) {
-            Row(
-                modifier = Modifier.semantics(mergeDescendants = true) { },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                ShapedIcon(
-                    icon = Icons.Rounded.AudioFile,
-                    shape = MaterialShapes.Cookie9Sided.toShape(),
-                    container = colors.primaryContainer,
-                    content = colors.onPrimaryContainer,
-                )
-                Spacer(Modifier.width(16.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        name ?: stringResource(Res.string.recording_none),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.onSurface,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        stringResource(if (name != null) Res.string.recording_ready else Res.string.recording_pick_hint),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.onSurfaceVariant,
-                    )
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-            FilledTonalButton(
-                onClick = onChoose,
-                enabled = enabled,
-                shapes = ButtonDefaults.shapes(),
-                contentPadding = PrimaryButtonPadding,
-                modifier = Modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
-            ) {
-                Text(stringResource(if (name != null) Res.string.action_change else Res.string.action_choose))
-            }
-        }
-    }
-}
-
 /**
  * Progress for running work: the expressive loading indicator next to the status, and a
  * wavy progress bar. Announced to screen readers as it changes.
@@ -383,4 +333,24 @@ fun ToolScaffold(
             )
         }
     }
+}
+
+// Connected pair for plain buttons: pill outer edge, tight inner corners; squarer when pressed.
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+internal val ConnectedLeading = ButtonShapes(
+    shape = RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50, topEndPercent = 15, bottomEndPercent = 15),
+    pressedShape = RoundedCornerShape(12.dp),
+)
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+internal val ConnectedTrailing = ButtonShapes(
+    shape = RoundedCornerShape(topStartPercent = 15, bottomStartPercent = 15, topEndPercent = 50, bottomEndPercent = 50),
+    pressedShape = RoundedCornerShape(12.dp),
+)
+
+/** Shape for item [index] of a connected group: large outer corners, small inner corners. */
+fun groupShape(index: Int, count: Int, outer: Dp = 28.dp, inner: Dp = 6.dp): Shape {
+    val top = if (index == 0) outer else inner
+    val bottom = if (index == count - 1) outer else inner
+    return RoundedCornerShape(topStart = top, topEnd = top, bottomStart = bottom, bottomEnd = bottom)
 }

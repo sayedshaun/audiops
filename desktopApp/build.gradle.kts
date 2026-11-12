@@ -11,6 +11,8 @@ dependencies {
     implementation(compose.desktop.currentOs)
     implementation("org.jetbrains.compose.material3:material3:1.12.0-alpha03")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.11.0")
+
+    testImplementation("junit:junit:4.13.2")
 }
 
 compose.desktop {

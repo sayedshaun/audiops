@@ -1,44 +1,38 @@
 # Progress
 
-Snapshot as of 2026-11-12, branch `feature/material3-theme-settings`. Updated in place; the history is in `CHANGES.md`.
+Snapshot as of 2026-11-13, branch `feature/audio-toolkit`. Updated in place; the history is in `CHANGES.md`.
 
 ## Status
 
-The app is production-ready in structure and UI. It has been compiled, unit-tested, lint-checked, R8-built and exercised on an emulator. It has not been run on physical hardware or through the enhancement pipeline.
+Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine on Linux/Windows desktop, a job queue with persistent history, and a Material 3 Expressive UI. Built, unit-tested, lint-checked, R8-built, and exercised end to end on an Android emulator.
 
 ### Done
-- Architecture: ViewModel-driven state, pipelines separated from the UI, cooperative cancellation, shared model verification.
-- Material 3 Expressive UI: home, Enhance, Transcribe and Settings screens; light, dark and pure-black themes; dynamic colour on Android 12+ (switchable).
-- Settings persisted with DataStore; splash screen; predictive back; haptics.
-- Renamed to Audiops.
-- Bugs fixed: non-cancellable processing, lost state on rotation, leaked cache files, cancellation reported as an error, generic output file names.
-- Tests: 14 JVM unit tests pass.
-- Build: lint has 0 errors. The release build passes R8 with the keep rules in `app/proguard-rules.pro`.
-- CI: GitHub Actions workflow in `.github/workflows/android.yml`.
-- Docs: README, CLAUDE.md, CHANGES.md, this file.
-- Emulator checks: home, Enhance and Transcribe screens render in both themes. Transcription of `mono-16k-test.wav` produced a transcript. Rotation keeps the state.
+- **Platforms:** `:shared` (Compose Multiplatform), `:app` (Android), `:desktopApp` (Linux/Windows; DEB/RPM/MSI/EXE packaging).
+- **Tools:** Enhance, Transcribe (Android); Noise reduction, Remove silence, Trim, Fade, Volume, Speed and pitch, Equalizer, Convert, Analyze (both platforms).
+- **UX:** bottom navigation / rail, Activity tab with queue and history, waveform preview, playback, save via system dialogs, cancel, haptics, auto-scroll to results, settings (theme, dynamic colour, pure black, default language, keep screen on, storage).
+- **Robustness:** constant-memory streaming DSP; staged AI enhancement (peak 461 MB, was 2.3 GB and killed); cancellable downloads with byte progress; decode 3× faster.
+- **Tests:** 27 shared JVM tests (13 DSP), a throughput test, 3 desktop engine tests; all pass. Lint 0 errors.
+- **Emulator end to end:** every DSP tool on a 3-minute 48 kHz stereo file; queue; history across restarts; playback; save; cancel during download; staged enhancement memory.
 
 ### Not yet done
-- Enhancement pipeline: not run end to end (it downloads about 360 MB on first use).
-- Bangla path: not run on the device in this session.
-- Physical devices: not tested. The emulator is an x86_64 image; the released app targets arm64.
-- Remove noise: planned, not implemented. The tile is disabled.
+- **Desktop GUI not launched** in this session (no headless display); the desktop engine is covered by tests and the app compiles.
+- **Physical devices:** not tested; the emulator is x86_64 while phones are arm64.
+- **Desktop AI tools:** need sherpa-onnx's JVM build and a broader decoder (FFmpeg/JavaCV) for MP3/AAC input.
+- **Background processing:** jobs stop if the process is killed; a foreground service would keep them alive.
 
 ## Open questions
 
-1. **Licence for Audiops' own code.** No `LICENSE` file exists yet. Choose one (for example MIT, Apache-2.0 or GPL-3.0) before publishing as open source. Third-party model licences are already in `licenses/` and the README.
-2. **Target SDK.** `targetSdk` is 36 and lint flags it against compile SDK 37. Raising it changes runtime behaviour, so it needs a test pass on a device.
-3. **LiteRT runtime.** Lint reports LiteRT 2.3.2 available (we use 2.3.0). Bump only after the enhancement pipeline is re-verified.
-4. **Enhancement model integrity.** The Resemble model files have no SHA-256 check. Adding one needs the digests from the model repository.
-5. **Background processing.** Work stops if the process is killed. A foreground service would fix that, at the cost of a persistent notification.
-6. **Localisation.** Strings are ready for translation. Bangla UI text is an obvious candidate.
-7. **Release signing.** Decide where the release keystore lives and who holds it.
+1. **Licence** for Audiops' own code (MIT, Apache-2.0, GPL-3.0…). No `LICENSE` file yet.
+2. **Target SDK 37** (lint flags 36): needs a device test pass.
+3. **APK size** (~148 MB, all ABIs): publish an App Bundle or add ABI splits.
+4. **LiteRT 2.3.2** is available (using 2.3.0).
+5. **Resemble model digests** for SHA-256 verification.
+6. **GitHub repository name:** the remote is still `SayedShaun/audioops`; rename it to `audiops` on GitHub, then update the remote URL.
 
 ## Next steps
 
-0. Migrate to Kotlin Multiplatform (Android now; Linux and Windows desktop next) on its own branch.
-
-1. Answer open question 1, then add `LICENSE`.
-2. Run the enhancement pipeline and the Bangla transcription on a physical arm64 phone. Record timings for a 1-minute and a 10-minute recording.
-3. Decide on target SDK 37 and the LiteRT bump, then re-run the device checks.
-4. Add tests for the save paths and the ViewModel state transitions (Robolectric or instrumented).
+1. Pick a licence and add `LICENSE`.
+2. Test on a physical arm64 phone (enhancement speed, memory, long files).
+3. Launch and screenshot the desktop app on Linux and Windows.
+4. Foreground service for long jobs; notifications on completion.
+5. Desktop transcription via sherpa-onnx JVM.

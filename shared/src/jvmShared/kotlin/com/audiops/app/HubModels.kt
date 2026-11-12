@@ -22,7 +22,7 @@ object HubModels {
         cacheRoot: File,
         repoId: String,
         dtype: String,
-        onDownload: (index: Int, total: Int) -> Unit = { _, _ -> },
+        onDownload: (index: Int, total: Int, fileFraction: Float) -> Unit = { _, _, _ -> },
     ): File = synchronized(lock) {
         require(Regex("^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$").matches(repoId)) {
             "repoId must be a public Hugging Face repository in the form owner/model"
@@ -35,13 +35,20 @@ object HubModels {
         for ((index, name) in files.withIndex()) {
             val destination = File(directory, name)
             if (destination.isFile && destination.length() > 0L) continue
-            onDownload(index + 1, files.size)
-            download("https://huggingface.co/$repoId/resolve/main/models/$name", destination)
+            onDownload(index + 1, files.size, 0f)
+            download("https://huggingface.co/$repoId/resolve/main/models/$name", destination) { fraction ->
+                onDownload(index + 1, files.size, fraction)
+            }
         }
         directory
     }
 
-    fun download(url: String, destination: File) {
+    /**
+     * Downloads [url] to [destination] atomically (temporary file, then rename). Reads in
+     * 64 KB chunks so cancellation is noticed quickly; [onProgress] gets 0..1 when the
+     * size is known, at most once per percent.
+     */
+    fun download(url: String, destination: File, onProgress: (Float) -> Unit = {}) {
         val temp = File.createTempFile("download-", ".part", destination.parentFile)
         var connection: HttpURLConnection? = null
         try {
@@ -64,7 +71,27 @@ object HubModels {
                 }
                 check(status in 200..299) { "Model download failed with HTTP $status: ${destination.name}" }
                 val expected = active.contentLengthLong
-                val copied = active.inputStream.use { input -> temp.outputStream().use { input.copyTo(it) } }
+                var copied = 0L
+                var reported = -1
+                active.inputStream.use { input ->
+                    temp.outputStream().buffered(1 shl 16).use { out ->
+                        val buffer = ByteArray(1 shl 16)
+                        while (true) {
+                            throwIfCancelled()
+                            val n = input.read(buffer)
+                            if (n < 0) break
+                            out.write(buffer, 0, n)
+                            copied += n
+                            if (expected > 0) {
+                                val percent = (copied * 100 / expected).toInt()
+                                if (percent != reported) {
+                                    reported = percent
+                                    onProgress(percent / 100f)
+                                }
+                            }
+                        }
+                    }
+                }
                 check(copied > 0L && (expected < 0L || copied == expected)) {
                     "Incomplete model download: ${destination.name}"
                 }

@@ -65,3 +65,34 @@ Entries are appended in order. Newest entries are at the bottom.
 ### Verified
 - 14 unit tests pass; lint 0 errors (4 warnings, unchanged and intentional); release build passes R8.
 - Emulator: home, Transcribe and Settings render in light and dark; theme and pure-black changes apply instantly and survive an app restart; no crashes in logcat.
+
+## 2026-11-13: Kotlin Multiplatform, full audio toolkit, Activity tab (`feature/kotlin-multiplatform`, `feature/audio-toolkit`)
+
+### Added
+- **Kotlin Multiplatform.** New `:shared` module (Compose Multiplatform) holds the UI, ViewModel, settings, history and strings (`commonMain`) and the JVM audio core (`jvmShared`). `:app` is the Android host and engine; new `:desktopApp` runs on Linux and Windows (packages DEB/RPM/MSI/EXE).
+- **Nine DSP tools**, pure Kotlin and streaming (constant memory): Noise reduction (spectral subtraction with a learned noise profile), Remove silence, Trim, Fade, Volume (peak, BS.1770 loudness with look-ahead limiter, gain), Speed and pitch (WSOLA + cubic resampler), Equalizer (six presets), Convert (anti-aliased resampling), Analyze (loudness, peak, RMS, clipping, silence, DC).
+- **Job queue and Activity tab.** Start jobs from any tool and keep working; jobs run in order. The Activity tab shows progress and history (persisted, up to 100), with a detail sheet to play, save, reopen or delete results.
+- **Bottom navigation** (Material 3 Expressive short navigation bar; navigation rail on wide windows) with Tools, Activity and Settings tabs; categorised tool grid with a distinct expressive shape per tool.
+- **Waveform preview and playback** of the input and every result (MediaPlayer on Android, Java Sound on desktop).
+- **Settings:** processed-files storage and clear history.
+- **Tests:** 13 DSP correctness tests (filters, fades, limiter ceiling, STFT reconstruction, denoise SNR, stretch keeps pitch, octave shift, resample length, silence removal, BS.1770 reference loudness, end-to-end pipeline), a throughput test, and 3 desktop engine tests. CI runs them.
+
+### Fixed
+- **AI enhancement was killed by Android's low-memory killer** on a 4 GB device (2.3 GB resident): all five models were loaded at once. It now runs staged, one model at a time; peak memory measured 461 MB.
+- **Decoding was ~10× slower than necessary:** the MediaCodec loop blocked up to 10 ms on every buffer. A 3-minute stereo file went from 45 s to ~16 s on the emulator.
+- **Decoder resampled with linear interpolation and no anti-aliasing;** it now uses the shared anti-aliased cubic resampler.
+- **Cancelling during a model download** reported "Processing failed: thread interrupted" and waited for the file to finish: downloads now read in 64 KB chunks with cancellation checks, and interrupt-caused I/O errors count as cancellation.
+- **Download progress** only moved per file (tens of MB); it now shows byte-level progress.
+- **New results appeared below the fold;** the job card now scrolls into view when a job starts and finishes.
+
+### Changed
+- Compose Multiplatform 1.12.2 with CMP Material 3 1.12.0-alpha03 (Expressive); Android resolves the matching Jetpack Material 3 1.5.0-alpha22 (the rc01 pin was removed to avoid API mismatches at runtime).
+- ViewModel emits typed state, failures and messages; the UI localizes them (Compose resources).
+- Settings and history use multiplatform DataStore; existing Android settings carry over.
+- Sliders are continuous and snap in code (discrete Expressive sliders drew dense tick rows); cancelled jobs show neutral, not error, styling.
+
+### Verified (Android emulator, x86_64, 4 GB)
+- Every DSP tool on a 3-minute 48 kHz stereo WAV: decode ~16 s (cached afterwards); Noise reduction 15 s; others 2–3 s; Speed 1.5× +4 st within ~38 s. Analyze 5 s.
+- Saved output checked byte-exact: 1.5× of 3:00 → 2:00.0 (5,292,000 samples).
+- Queue, Activity history across restarts, detail sheet playback, save via the system dialog, cancel during download.
+- Lint 0 errors (3 known warnings); R8 release build succeeds.

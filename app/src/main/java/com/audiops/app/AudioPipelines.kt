@@ -1,7 +1,6 @@
 package com.audiops.app
 
 import android.content.Context
-import android.net.Uri
 import java.io.File
 
 /**
@@ -14,60 +13,51 @@ internal object AudioPipelines {
     private const val CROSSFADE_SAMPLES = PIPELINE_RATE
 
     /**
-     * Enhances [input] and returns a WAV file in the cache directory. The caller owns the
-     * returned file and must delete it once it is no longer needed.
+     * Enhances decoded [audio] (mono 44.1 kHz PCM16) into the WAV file [result]. On failure
+     * or cancellation [result] is deleted.
      */
-    fun enhance(context: Context, input: Uri, listener: ProcessingListener): File {
-        val audio = AudioDecoder.decode(context, input)
+    fun enhance(context: Context, audio: File, result: File, listener: ProcessingListener) {
         try {
-            val result = File.createTempFile("enhanced-", ".wav", context.cacheDir)
-            try {
-                val sections = AudioChunks.enhancementSectionCount(audio)
-                ResembleEnhancer(context, ENHANCE_REPO, ENHANCE_DTYPE, listener).use { model ->
-                    WavWriter(result).use { writer ->
-                        var tail: FloatArray? = null
-                        var section = 0
-                        AudioChunks.forEachEnhancementChunk(audio) { samples, last ->
-                            section++
-                            listener.onSection(section, sections)
-                            val enhanced = model.enhance(samples)
-                            val previous = tail
-                            val joined = if (previous == null) enhanced else crossfade(previous, enhanced)
-                            if (last) {
-                                writer.append(joined)
-                                tail = null
-                            } else {
-                                // Hold back the overlap; the next window starts with it and crossfades.
-                                val keep = minOf(CROSSFADE_SAMPLES, joined.size)
-                                writer.append(joined.copyOfRange(0, joined.size - keep))
-                                tail = joined.copyOfRange(joined.size - keep, joined.size)
-                            }
+            val sections = AudioChunks.enhancementSectionCount(audio)
+            ResembleEnhancer(context, ENHANCE_REPO, ENHANCE_DTYPE, listener).use { model ->
+                WavWriter(result).use { writer ->
+                    var tail: FloatArray? = null
+                    var section = 0
+                    AudioChunks.forEachEnhancementChunk(audio) { samples, last ->
+                        section++
+                        val current = section
+                        val enhanced = model.enhance(samples) { done, total ->
+                            // One 1..100 scale across all windows and stages.
+                            val within = if (total == 0) 1.0 else done.toDouble() / total
+                            listener.onSection((1 + (current - 1 + within) * 99 / sections).toInt().coerceIn(1, 100), 100)
+                        }
+                        val previous = tail
+                        val joined = if (previous == null) enhanced else crossfade(previous, enhanced)
+                        if (last) {
+                            writer.append(joined)
+                            tail = null
+                        } else {
+                            // Hold back the overlap; the next window starts with it and crossfades.
+                            val keep = minOf(CROSSFADE_SAMPLES, joined.size)
+                            writer.append(joined.copyOfRange(0, joined.size - keep))
+                            tail = joined.copyOfRange(joined.size - keep, joined.size)
                         }
                     }
                 }
-                return result
-            } catch (e: Throwable) {
-                result.delete()
-                throw e
             }
-        } finally {
-            audio.delete()
+        } catch (e: Throwable) {
+            result.delete()
+            throw e
         }
     }
 
-    /** Transcribes [input]. [language] is `bn` for Bangla (dedicated model) or a Whisper code, or empty for auto. */
-    fun transcribe(context: Context, input: Uri, language: String, listener: ProcessingListener): String {
-        val audio = AudioDecoder.decode(context, input)
-        try {
-            return if (language == "bn") {
-                BanglaTranscriber.transcribe(context, audio, listener)
-            } else {
-                WhisperTranscriber.transcribe(context, audio, language, listener)
-            }
-        } finally {
-            audio.delete()
+    /** Transcribes decoded [audio]. [language] is `bn` for Bangla (dedicated model), a Whisper code, or empty for auto. */
+    fun transcribe(context: Context, audio: File, language: String, listener: ProcessingListener): String =
+        if (language == "bn") {
+            BanglaTranscriber.transcribe(context, audio, listener)
+        } else {
+            WhisperTranscriber.transcribe(context, audio, language, listener)
         }
-    }
 
     private fun crossfade(previous: FloatArray, enhanced: FloatArray): FloatArray {
         val overlap = minOf(previous.size, enhanced.size)

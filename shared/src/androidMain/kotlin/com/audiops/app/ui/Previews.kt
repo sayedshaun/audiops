@@ -3,6 +3,8 @@ package com.audiops.app.ui
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -36,7 +38,12 @@ private fun HeroPreview() = PreviewSurface {
 @Composable
 private fun RecordingPreview() = PreviewSurface {
     StepTitle(1, "Recording")
-    RecordingCard(name = "interview.m4a", enabled = true, onChoose = {})
+    WaveformView(
+        peaks = FloatArray(80) { i -> 0.2f + 0.8f * kotlin.math.abs(kotlin.math.sin(i * 0.37f)) },
+        selection = 0.2f..0.7f,
+        playhead = 0.45f,
+        modifier = Modifier.fillMaxWidth().height(64.dp),
+    )
 }
 
 @ThemePreviews

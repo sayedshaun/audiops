@@ -3,6 +3,7 @@ plugins {
     id("com.android.kotlin.multiplatform.library")
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 // Versions shared by the source sets below.
@@ -38,6 +39,7 @@ kotlin {
             api("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:$lifecycle")
             api("androidx.datastore:datastore-preferences-core:1.3.0")
             api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.13.0")
         }
         jvmShared.dependencies {
             api("com.github.wendykierp:JTransforms:3.1")

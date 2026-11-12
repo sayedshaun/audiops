@@ -31,6 +31,9 @@ expect fun platformDynamicColorScheme(darkTheme: Boolean): ColorScheme?
 /** Whether [platformDynamicColorScheme] can return a scheme on this device. */
 expect val supportsDynamicColor: Boolean
 
+/** True on desktop (Linux, Windows); used to hide phone-only settings and wording. */
+expect val isDesktop: Boolean
+
 /** Localized short file size, such as "104 MB". */
 @Composable
 expect fun formatFileSize(bytes: Long): String

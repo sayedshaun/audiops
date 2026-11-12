@@ -4,9 +4,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import androidx.lifecycle.createSavedStateHandle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.SavedStateHandle
 import com.audiops.app.AudiopsViewModel
+import com.audiops.app.HistoryRepository
 import com.audiops.app.SettingsRepository
 import com.audiops.app.createSettingsStore
 import com.audiops.app.ui.AudiopsApp
@@ -26,19 +26,18 @@ private fun dataDirectory(): File {
 
 fun main() {
     val data = dataDirectory()
-    // One DataStore and one engine per process.
+    // One DataStore, engine and ViewModel per process. The ViewModel is created directly
+    // (desktop has no configuration changes), so no ViewModelStoreOwner is needed.
     val settingsStore = createSettingsStore(File(data, "settings.preferences_pb").absolutePath)
-    val engine = DesktopAudioEngine(modelRoot = File(data, "models"))
+    val engine = DesktopAudioEngine(data)
+    val viewModel = AudiopsViewModel(SavedStateHandle(), engine, SettingsRepository(settingsStore), HistoryRepository(settingsStore))
 
     application {
         Window(
             onCloseRequest = ::exitApplication,
             title = "Audiops",
-            state = rememberWindowState(width = 480.dp, height = 900.dp),
+            state = rememberWindowState(width = 1100.dp, height = 800.dp),
         ) {
-            val viewModel = viewModel {
-                AudiopsViewModel(createSavedStateHandle(), engine, SettingsRepository(settingsStore))
-            }
             AudiopsApp(viewModel, appVersion = APP_VERSION)
         }
     }

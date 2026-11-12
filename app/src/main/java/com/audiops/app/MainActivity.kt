@@ -23,7 +23,12 @@ class MainActivity : ComponentActivity() {
         viewModelFactory {
             initializer {
                 val app = application as AudiopsApplication
-                AudiopsViewModel(createSavedStateHandle(), app.engine, SettingsRepository(app.settingsStore))
+                AudiopsViewModel(
+                    createSavedStateHandle(),
+                    app.engine,
+                    SettingsRepository(app.settingsStore),
+                    HistoryRepository(app.settingsStore),
+                )
             }
         }
     }

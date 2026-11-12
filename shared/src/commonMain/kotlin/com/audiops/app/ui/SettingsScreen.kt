@@ -19,12 +19,12 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.BrightnessAuto
 import androidx.compose.material.icons.rounded.Contrast
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Gavel
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Palette
@@ -38,15 +38,12 @@ import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -83,13 +80,13 @@ import com.audiops.app.UserSettings
 
 /** Events from [SettingsScreen]; the screen holds only transient dialog state. */
 data class SettingsActions(
-    val onBack: () -> Unit,
     val onThemeMode: (ThemeMode) -> Unit,
     val onDynamicColor: (Boolean) -> Unit,
     val onPureBlack: (Boolean) -> Unit,
     val onKeepScreenOn: (Boolean) -> Unit,
     val onDefaultLanguage: (SpeechLanguage) -> Unit,
     val onDeleteModels: () -> Unit,
+    val onClearHistory: () -> Unit,
 )
 
 private data class LicenseEntry(val title: StringResource, val summary: StringResource, val url: String)
@@ -107,28 +104,24 @@ fun SettingsScreen(
     settings: UserSettings,
     appVersion: String,
     modelStorage: Long?,
+    outputStorage: Long?,
     busy: Boolean,
-    snackbar: SnackbarHostState,
+    showTranscription: Boolean,
     actions: SettingsActions,
 ) {
     val uriHandler = LocalUriHandler.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
+    var showClearDialog by rememberSaveable { mutableStateOf(false) }
     val storageText = modelStorage?.let { formatFileSize(it) }
     val hasModels = (modelStorage ?: 0L) > 0L
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             LargeFlexibleTopAppBar(
                 title = { Text(stringResource(Res.string.settings_title)) },
-                navigationIcon = {
-                    IconButton(onClick = actions.onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(Res.string.back))
-                    }
-                },
                 scrollBehavior = scrollBehavior,
             )
         },
@@ -139,7 +132,7 @@ fun SettingsScreen(
                 start = 16.dp,
                 end = 16.dp,
                 top = padding.calculateTopPadding(),
-                bottom = padding.calculateBottomPadding() + 24.dp,
+                bottom = 24.dp,
             ),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -171,8 +164,11 @@ fun SettingsScreen(
                             icon = Icons.Rounded.Wallpaper,
                             title = stringResource(Res.string.settings_dynamic_color),
                             summary = stringResource(
-                                if (supportsDynamicColor) Res.string.settings_dynamic_color_summary
-                                else Res.string.settings_dynamic_color_unsupported,
+                                when {
+                                    supportsDynamicColor -> Res.string.settings_dynamic_color_summary
+                                    isDesktop -> Res.string.settings_dynamic_color_desktop
+                                    else -> Res.string.settings_dynamic_color_unsupported
+                                },
                             ),
                             checked = settings.dynamicColor && supportsDynamicColor,
                             enabled = supportsDynamicColor,
@@ -193,53 +189,78 @@ fun SettingsScreen(
                 )
             }
 
-            item { SectionHeader(stringResource(Res.string.settings_section_transcription)) }
-            item {
-                SettingsGroup({ shape ->
-                    SettingsRow(
-                        icon = Icons.Rounded.Translate,
-                        title = stringResource(Res.string.settings_default_language),
-                        summary = stringResource(settings.defaultLanguage.label),
-                        shape = shape,
-                        onClick = { showLanguageDialog = true },
-                    )
-                })
-            }
+            // Phone-only sections: transcription defaults and keeping the screen awake.
+            if (showTranscription) {
+                item { SectionHeader(stringResource(Res.string.settings_section_transcription)) }
+                item {
+                    SettingsGroup({ shape ->
+                        SettingsRow(
+                            icon = Icons.Rounded.Translate,
+                            title = stringResource(Res.string.settings_default_language),
+                            summary = stringResource(settings.defaultLanguage.label),
+                            shape = shape,
+                            onClick = { showLanguageDialog = true },
+                        )
+                    })
+                }
 
-            item { SectionHeader(stringResource(Res.string.settings_section_processing)) }
-            item {
-                SettingsGroup({ shape ->
-                    SwitchRow(
-                        icon = Icons.Rounded.Smartphone,
-                        title = stringResource(Res.string.settings_keep_screen_on),
-                        summary = stringResource(Res.string.settings_keep_screen_on_summary),
-                        checked = settings.keepScreenOn,
-                        shape = shape,
-                        onCheckedChange = actions.onKeepScreenOn,
-                    )
-                })
+            }
+            if (!isDesktop) {
+                item { SectionHeader(stringResource(Res.string.settings_section_processing)) }
+                item {
+                    SettingsGroup({ shape ->
+                        SwitchRow(
+                            icon = Icons.Rounded.Smartphone,
+                            title = stringResource(Res.string.settings_keep_screen_on),
+                            summary = stringResource(Res.string.settings_keep_screen_on_summary),
+                            checked = settings.keepScreenOn,
+                            shape = shape,
+                            onCheckedChange = actions.onKeepScreenOn,
+                        )
+                    })
+                }
             }
 
             item { SectionHeader(stringResource(Res.string.settings_section_storage)) }
             item {
-                SettingsGroup({ shape ->
-                    SettingsRow(
-                        icon = Icons.Rounded.Storage,
-                        title = stringResource(Res.string.settings_models),
-                        summary = when {
-                            busy -> stringResource(Res.string.settings_models_busy)
-                            storageText == null -> stringResource(Res.string.settings_models_measuring)
-                            !hasModels -> stringResource(Res.string.settings_models_none)
-                            else -> stringResource(Res.string.settings_models_used, storageText)
-                        },
-                        shape = shape,
-                        trailing = {
-                            TextButton(onClick = { showDeleteDialog = true }, enabled = hasModels && !busy) {
-                                Text(stringResource(Res.string.action_delete))
-                            }
-                        },
-                    )
-                })
+                val outputText = outputStorage?.let { formatFileSize(it) }
+                SettingsGroup(
+                    { shape ->
+                        SettingsRow(
+                            icon = Icons.Rounded.Storage,
+                            title = stringResource(Res.string.settings_models),
+                            summary = when {
+                                busy -> stringResource(Res.string.settings_models_busy)
+                                storageText == null -> stringResource(Res.string.settings_models_measuring)
+                                !hasModels -> stringResource(Res.string.settings_models_none)
+                                else -> stringResource(Res.string.settings_models_used, storageText)
+                            },
+                            shape = shape,
+                            trailing = {
+                                TextButton(onClick = { showDeleteDialog = true }, enabled = hasModels && !busy) {
+                                    Text(stringResource(Res.string.action_delete))
+                                }
+                            },
+                        )
+                    },
+                    { shape ->
+                        SettingsRow(
+                            icon = Icons.Rounded.History,
+                            title = stringResource(Res.string.settings_outputs),
+                            summary = if (outputText == null) {
+                                stringResource(Res.string.settings_models_measuring)
+                            } else {
+                                stringResource(Res.string.settings_outputs_used, outputText)
+                            },
+                            shape = shape,
+                            trailing = {
+                                TextButton(onClick = { showClearDialog = true }, enabled = (outputStorage ?: 0L) > 0L) {
+                                    Text(stringResource(Res.string.action_clear))
+                                }
+                            },
+                        )
+                    },
+                )
             }
 
             item { SectionHeader(stringResource(Res.string.settings_section_about)) }
@@ -298,6 +319,24 @@ fun SettingsScreen(
                 showLanguageDialog = false
             },
             onDismiss = { showLanguageDialog = false },
+        )
+    }
+
+    if (showClearDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearDialog = false },
+            icon = { Icon(Icons.Rounded.History, contentDescription = null) },
+            title = { Text(stringResource(Res.string.clear_history_title)) },
+            text = { Text(stringResource(Res.string.clear_history_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showClearDialog = false
+                    actions.onClearHistory()
+                }) { Text(stringResource(Res.string.action_clear)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearDialog = false }) { Text(stringResource(Res.string.action_cancel)) }
+            },
         )
     }
 
