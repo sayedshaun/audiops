@@ -19,8 +19,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -61,7 +61,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
@@ -71,7 +70,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.audiops.shared.resources.*
+import com.audiops.shared.resources.Res
+import com.audiops.shared.resources.back
+import org.jetbrains.compose.resources.stringResource
 
 /** Height for primary actions: the Material 3 Expressive medium button size (56 dp). */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -83,14 +84,7 @@ val PrimaryButtonPadding: PaddingValues = ButtonDefaults.contentPaddingFor(Butto
 
 /** An icon inside an expressive shape (cookie, sunny, burst…), as used across the app. */
 @Composable
-fun ShapedIcon(
-    icon: ImageVector,
-    shape: Shape,
-    container: Color,
-    content: Color,
-    modifier: Modifier = Modifier,
-    size: Dp = 56.dp,
-) {
+fun ShapedIcon(icon: ImageVector, shape: Shape, container: Color, content: Color, modifier: Modifier = Modifier, size: Dp = 56.dp) {
     Box(
         modifier
             .size(size)

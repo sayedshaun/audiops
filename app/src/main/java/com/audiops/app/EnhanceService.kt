@@ -110,13 +110,18 @@ internal object EnhanceClient {
             Handler(replies.looper) { m ->
                 when (m.what) {
                     MSG_PID -> workerPid.set(m.arg1)
+
                     MSG_DOWNLOAD_START -> listener.onModelDownload(m.arg1, m.arg2)
+
                     MSG_DOWNLOAD_PROGRESS -> listener.onModelDownloadProgress(m.arg1, m.arg2, m.data.getFloat(KEY_FRACTION))
+
                     MSG_SECTION -> listener.onSection(m.arg1, m.arg2)
+
                     MSG_DONE -> {
                         done.set(true)
                         finished.countDown()
                     }
+
                     MSG_ERROR -> {
                         error.set(m.data.getString(KEY_MESSAGE))
                         finished.countDown()
@@ -132,7 +137,10 @@ internal object EnhanceClient {
         val connection = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, b: IBinder) {
                 binder = b
-                runCatching { b.linkToDeath(death, 0) }.onFailure { died.set(true); finished.countDown() }
+                runCatching { b.linkToDeath(death, 0) }.onFailure {
+                    died.set(true)
+                    finished.countDown()
+                }
                 service = Messenger(b)
                 connected.countDown()
             }

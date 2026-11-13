@@ -3,10 +3,6 @@ package com.audiops.app.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
-import java.io.File
-import javax.sound.sampled.AudioSystem
-import javax.sound.sampled.Clip
-import javax.sound.sampled.LineEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
@@ -19,6 +15,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import javax.sound.sampled.AudioSystem
+import javax.sound.sampled.Clip
+import javax.sound.sampled.LineEvent
 
 /** Java Sound player for WAV/AIFF files. Opening happens off the UI thread. */
 private class DesktopAudioPlayer : AudioPlayer {
@@ -93,7 +93,12 @@ private class DesktopAudioPlayer : AudioPlayer {
     private fun release() {
         loader?.cancel()
         ticker?.cancel()
-        clip?.let { runCatching { it.stop(); it.close() } }
+        clip?.let {
+            runCatching {
+                it.stop()
+                it.close()
+            }
+        }
         clip = null
     }
 

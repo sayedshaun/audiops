@@ -1,5 +1,6 @@
 package com.audiops.app
 
+import com.audiops.app.EqPreset
 import com.audiops.app.dsp.AudioAnalyzer
 import com.audiops.app.dsp.AudioProcessor
 import com.audiops.app.dsp.FilterChain
@@ -10,12 +11,11 @@ import com.audiops.app.dsp.Resampler
 import com.audiops.app.dsp.SilenceRemover
 import com.audiops.app.dsp.noiseReducer
 import com.audiops.app.dsp.speedPitchProcessor
-import com.audiops.app.EqPreset
+import org.junit.Assert.assertTrue
+import org.junit.Test
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.random.Random
-import org.junit.Assert.assertTrue
-import org.junit.Test
 
 /**
  * Throughput guard: every DSP operation must run far faster than real time, so long
@@ -58,9 +58,16 @@ class PerformanceTest {
         realtimeFactor("warm-up") { FilterChain.equalizer(EqPreset.VOICE_CLARITY, rate) }
 
         val factors = mapOf(
-            "equalizer" to realtimeFactor("equalizer") { ProcessorChain(listOf(FilterChain.equalizer(EqPreset.VOICE_CLARITY, rate), Limiter(-0.5f, rate))) },
-            "resample 48k" to realtimeFactor("resample 48k") { ProcessorChain(listOf(FilterChain.antiAlias(rate, 44_100), Resampler(48_000.0 / 44_100))) },
-            "resample 16k" to realtimeFactor("resample 16k") { ProcessorChain(listOf(FilterChain.antiAlias(rate, 16_000), Resampler(rate / 16_000.0))) },
+            "equalizer" to
+                realtimeFactor("equalizer") {
+                    ProcessorChain(listOf(FilterChain.equalizer(EqPreset.VOICE_CLARITY, rate), Limiter(-0.5f, rate)))
+                },
+            "resample 48k" to
+                realtimeFactor("resample 48k") {
+                    ProcessorChain(listOf(FilterChain.antiAlias(rate, 44_100), Resampler(48_000.0 / 44_100)))
+                },
+            "resample 16k" to
+                realtimeFactor("resample 16k") { ProcessorChain(listOf(FilterChain.antiAlias(rate, 16_000), Resampler(rate / 16_000.0))) },
             "speed 1.5x" to realtimeFactor("speed 1.5x") { speedPitchProcessor(1.5f, 0f, rate) },
             "pitch +5 st" to realtimeFactor("pitch +5 st") { speedPitchProcessor(1f, 5f, rate) },
             "silence" to realtimeFactor("silence") { SilenceRemover(-40f, 800, 120, rate) },

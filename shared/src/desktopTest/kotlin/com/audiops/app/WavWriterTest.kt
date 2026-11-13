@@ -1,13 +1,13 @@
 package com.audiops.app
 
-import java.io.File
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.File
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 class WavWriterTest {
     private lateinit var file: File

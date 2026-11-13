@@ -67,5 +67,4 @@ interface ProcessingListener {
 }
 
 /** Thrown by engines for tools or formats the current platform does not support yet. */
-class UnsupportedOnPlatformException(message: String = "Not available on this platform yet.") :
-    UnsupportedOperationException(message)
+class UnsupportedOnPlatformException(message: String = "Not available on this platform yet.") : UnsupportedOperationException(message)

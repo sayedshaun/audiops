@@ -3,10 +3,8 @@ package com.audiops.app.ui
 import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 
-/**
- * Platform UI services. Android uses the system document picker, predictive back and
- * wallpaper colours; desktop uses native file dialogs and the brand palette.
- */
+// Platform UI services. Android uses the system document picker, predictive back and
+// wallpaper colours; desktop uses native file dialogs and the brand palette.
 
 /** Returns a function that opens a picker for audio; [onPicked] receives (document id, display name). */
 @Composable

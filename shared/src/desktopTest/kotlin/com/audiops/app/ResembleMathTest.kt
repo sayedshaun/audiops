@@ -1,11 +1,11 @@
 package com.audiops.app
 
-import java.io.File
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 class ResembleMathTest {
     @Test fun fileNamesFollowTheExportedDtypes() {

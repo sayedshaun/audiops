@@ -4,7 +4,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.unit.dp
-import org.jetbrains.skia.Image
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
@@ -14,6 +13,7 @@ import com.audiops.app.HistoryRepository
 import com.audiops.app.SettingsRepository
 import com.audiops.app.createSettingsStore
 import com.audiops.app.ui.AudiopsApp
+import org.jetbrains.skia.Image
 import java.io.File
 
 /** Set by the packaged app's launcher (see build.gradle.kts); "dev" when run from an IDE. */

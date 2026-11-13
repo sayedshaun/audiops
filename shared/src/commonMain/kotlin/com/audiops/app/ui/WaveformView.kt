@@ -11,10 +11,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -27,7 +27,10 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
-import com.audiops.shared.resources.*
+import com.audiops.shared.resources.Res
+import com.audiops.shared.resources.action_pause
+import com.audiops.shared.resources.action_play
+import com.audiops.shared.resources.player_unavailable
 import org.jetbrains.compose.resources.stringResource
 
 /**

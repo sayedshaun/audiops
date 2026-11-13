@@ -1,6 +1,6 @@
 # Progress
 
-Snapshot as of 2026-11-13, branch `docs/readme-release-pipeline`. Updated in place; the history is in `CHANGES.md`.
+Snapshot as of 2026-11-13, branch `chore/tests-format-hooks`. Updated in place; the history is in `CHANGES.md`.
 
 ## Status
 
@@ -13,7 +13,8 @@ Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine o
 - **Tools:** Enhance, Transcribe (Android); Noise reduction, Remove silence, Trim, Fade, Volume, Speed and pitch, Equalizer, Convert, Analyze (both platforms).
 - **UX:** bottom navigation / rail, Activity tab with queue and history, waveform preview, playback, save via system dialogs, cancel, haptics, auto-scroll to results, settings (theme, dynamic colour, pure black, default language, keep screen on, storage).
 - **Robustness:** constant-memory streaming DSP; staged AI enhancement in an isolated process (a memory kill no longer closes the app); cancellable downloads with byte progress; decode 3× faster; R8 release build verified to run.
-- **Tests:** 28 shared JVM tests (13 DSP + throughput), 3 desktop engine tests, 4 off-screen desktop render tests; all pass. Lint 0 errors.
+- **Tests:** 53 shared JVM tests (DSP, throughput, model serialization, history/settings storage, ViewModel job queue), 3 desktop engine tests, 4 off-screen desktop render tests; all pass. Lint 0 errors.
+- **Code quality:** ktlint via Spotless (`make format` / `make check`), a pre-commit hook (`make hooks`), a Makefile, and CI with three checks (Format and style, Unit tests, Android lint and build) on every pull request to `main`; a branch protection rule makes them required to merge. `CHANGELOG.md` holds user-facing release notes.
 - **Emulator end to end:** every DSP tool on a 3-minute 48 kHz stereo file; queue; history across restarts; playback; save; cancel during download; staged enhancement memory.
 
 ### Not yet done

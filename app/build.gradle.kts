@@ -10,7 +10,7 @@ val audiopsVersionCode: Int = providers.gradleProperty("audiopsVersionCode").map
 
 // Optional release signing. Set all four variables to sign release builds; otherwise
 // the release variant is produced unsigned.
-val releaseKeystore: String? = System.getenv("AUDIOPS_KEYSTORE")?.takeIf { it.isNotBlank() }  // CI passes "" when unset
+val releaseKeystore: String? = System.getenv("AUDIOPS_KEYSTORE")?.takeIf { it.isNotBlank() } // CI passes "" when unset
 
 android {
     namespace = "com.audiops.app"

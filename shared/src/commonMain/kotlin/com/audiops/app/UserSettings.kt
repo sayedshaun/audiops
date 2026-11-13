@@ -1,17 +1,17 @@
 package com.audiops.app
 
 import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import okio.Path.Companion.toPath
-import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import okio.Path.Companion.toPath
+import java.io.IOException
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
@@ -32,8 +32,7 @@ data class UserSettings(
  * DataStore allows only one instance per file. On Android the path matches the file the
  * earlier `preferencesDataStore("settings")` delegate used, so existing settings are kept.
  */
-fun createSettingsStore(path: String): DataStore<Preferences> =
-    PreferenceDataStoreFactory.createWithPath(produceFile = { path.toPath() })
+fun createSettingsStore(path: String): DataStore<Preferences> = PreferenceDataStoreFactory.createWithPath(produceFile = { path.toPath() })
 
 /** Persists user preferences with Jetpack DataStore (multiplatform). */
 class SettingsRepository(private val store: DataStore<Preferences>) {

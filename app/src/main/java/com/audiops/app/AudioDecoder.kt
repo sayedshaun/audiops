@@ -17,12 +17,16 @@ import java.util.concurrent.CancellationException
 import kotlin.math.roundToInt
 
 /** Resampling chain from [rate] to [PIPELINE_RATE], or null when no conversion is needed. */
-private fun resamplerFor(rate: Int): AudioProcessor? = if (rate == PIPELINE_RATE) null else ProcessorChain(
-    listOfNotNull(
-        if (rate > PIPELINE_RATE) FilterChain.antiAlias(rate, PIPELINE_RATE) else null,
-        Resampler(rate.toDouble() / PIPELINE_RATE),
-    ),
-)
+private fun resamplerFor(rate: Int): AudioProcessor? = if (rate == PIPELINE_RATE) {
+    null
+} else {
+    ProcessorChain(
+        listOfNotNull(
+            if (rate > PIPELINE_RATE) FilterChain.antiAlias(rate, PIPELINE_RATE) else null,
+            Resampler(rate.toDouble() / PIPELINE_RATE),
+        ),
+    )
+}
 
 /** Decodes device-supported formats into temporary mono 44.1 kHz PCM16 files. */
 object AudioDecoder {
@@ -132,9 +136,13 @@ object AudioDecoder {
                             repeat(channels) {
                                 val value = when (encoding) {
                                     AudioFormat.ENCODING_PCM_8BIT -> ((buffer.get().toInt() and 255) - 128) / 128f
+
                                     AudioFormat.ENCODING_PCM_16BIT -> buffer.short / 32768f
+
                                     AudioFormat.ENCODING_PCM_FLOAT -> buffer.float
+
                                     AudioFormat.ENCODING_PCM_32BIT -> buffer.int / 2147483648f
+
                                     else -> {
                                         val x = (buffer.get().toInt() and 255) or
                                             ((buffer.get().toInt() and 255) shl 8) or

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Audiops pre-commit hook. Install with `make hooks`.
+# Blocks a commit when Kotlin/Gradle files are badly formatted or the unit tests fail.
+#   AUDIOPS_SKIP_TESTS=1 git commit …   format check only
+#   git commit --no-verify               skip the hook (CI still checks)
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(kt|kts)$|^gradle/|\.editorconfig$' || true)
+if [ -z "$staged" ]; then
+  exit 0
+fi
+
+echo "pre-commit: checking formatting (ktlint via Spotless)…"
+if ! ./gradlew --quiet spotlessCheck; then
+  echo
+  echo "pre-commit: formatting problems found. Run 'make format', review, stage the changes and commit again."
+  exit 1
+fi
+
+if [ "${AUDIOPS_SKIP_TESTS:-0}" != "1" ]; then
+  echo "pre-commit: running unit tests…"
+  if ! ./gradlew --quiet :shared:desktopTest :desktopApp:test; then
+    echo
+    echo "pre-commit: tests failed. Fix them before committing (reports in */build/reports/tests)."
+    exit 1
+  fi
+fi
+
+echo "pre-commit: all checks passed."

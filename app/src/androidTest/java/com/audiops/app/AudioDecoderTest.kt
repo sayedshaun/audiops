@@ -3,12 +3,12 @@ package com.audiops.app
 import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import java.io.File
-import kotlin.math.abs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
+import kotlin.math.abs
 
 @RunWith(AndroidJUnit4::class)
 class AudioDecoderTest {
@@ -28,7 +28,10 @@ class AudioDecoderTest {
                 }
                 assertTrue("$name duration: $count samples", count in 84_000..93_000)
                 assertTrue("$name contains audible signal: $peak", peak > 0.02f)
-            } finally { decoded.delete(); source.delete() }
+            } finally {
+                decoded.delete()
+                source.delete()
+            }
         }
     }
 
@@ -46,6 +49,8 @@ class AudioDecoderTest {
             val enhanceSizes = mutableListOf<Pair<Int, Boolean>>()
             AudioChunks.forEachEnhancementChunk(file) { samples, last -> enhanceSizes.add(samples.size to last) }
             assertEquals(listOf(20 * 44_100 to false, 3 * 44_100 to true), enhanceSizes)
-        } finally { file.delete() }
+        } finally {
+            file.delete()
+        }
     }
 }

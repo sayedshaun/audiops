@@ -15,10 +15,10 @@ import com.audiops.app.Tab
 import com.audiops.app.Tool
 import com.audiops.app.createSettingsStore
 import com.audiops.app.ui.AudiopsApp
-import java.io.File
 import org.jetbrains.skia.EncodedImageFormat
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 /**
  * Renders the real desktop UI off-screen (no display needed) and writes PNGs to
@@ -32,10 +32,14 @@ class DesktopRenderTest {
     }
 
     private fun render(name: String, width: Int, height: Int, setup: (AudiopsViewModel) -> Unit = {}) {
-        val dir = File.createTempFile("audiops-render", "").apply { delete(); mkdirs() }
+        val dir = File.createTempFile("audiops-render", "").apply {
+            delete()
+            mkdirs()
+        }
         try {
             val store = createSettingsStore(File(dir, "settings.preferences_pb").absolutePath)
-            val viewModel = AudiopsViewModel(SavedStateHandle(), DesktopAudioEngine(dir), SettingsRepository(store), HistoryRepository(store))
+            val viewModel =
+                AudiopsViewModel(SavedStateHandle(), DesktopAudioEngine(dir), SettingsRepository(store), HistoryRepository(store))
             setup(viewModel)
             val scene = ImageComposeScene(width, height, Density(1.25f)) {
                 CompositionLocalProvider(LocalLifecycleOwner provides ResumedOwner) {
