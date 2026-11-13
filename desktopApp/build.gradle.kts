@@ -16,7 +16,7 @@ dependencies {
 }
 
 // Release version from the Git tag (see .github/workflows/release.yml); MSI needs MAJOR.MINOR.BUILD.
-val audiopsVersion: String = providers.gradleProperty("audiopsVersion").getOrElse("0.1.0")
+val audiopsVersion: String = providers.gradleProperty("audiopsVersion").getOrElse("0.1.1")
 
 // Installers (DEB, RPM, MSI, EXE) accept only MAJOR.MINOR.PATCH: drop a pre-release suffix such
 // as "-beta.1". The full version is still shown in the app.
