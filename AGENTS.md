@@ -18,7 +18,7 @@ Audiops is an open-source, on-device audio toolkit. Audio never leaves the devic
 
 | Category | Tools | Engine |
 | --- | --- | --- |
-| AI | Enhance speech, Transcribe | Resemble Enhance (LiteRT INT8, ~360 MB); Whisper Tiny and Bangla Zipformer (sherpa-onnx) |
+| AI | Enhance speech, Transcribe | Resemble Enhance (LiteRT "mobile" set: INT8 dynamic + re-exported FP16 vocoder, ~570 MB); Whisper Tiny and Bangla Zipformer (sherpa-onnx) |
 | Clean up | Noise reduction, Remove silence | Spectral subtraction; frame-based silence gate |
 | Edit | Trim, Fade, Volume (peak, loudness BS.1770, gain) | Streaming DSP |
 | Effects | Speed and pitch, Equalizer | WSOLA time-stretch + cubic resampler; RBJ biquads |
@@ -104,7 +104,7 @@ Unidirectional data flow: **ViewModel → immutable `AudiopsState` → stateless
 
 - **Navigation:** `Tab` (Tools, Activity, Settings) at the top level; an open `Tool` screen shows above the tabs. Back closes the tool, then returns to Tools. Phones use `ShortNavigationBar`, wide windows a `NavigationRail`.
 - **Jobs:** `AudiopsViewModel.start(tool, spec)` queues a `Job`. One worker coroutine runs jobs in order through `runOnWorker` (= `runInterruptible(Dispatchers.IO)`). Cancelling interrupts the worker; every loop calls `throwIfCancelled()`, and interrupt-caused I/O errors are reported as cancellation. Finished jobs persist in `HistoryRepository` (DataStore JSON, max 100); their outputs live in the engine's output directory.
-- **AI enhancement process:** `AndroidAudioEngine.enhance` runs `AudioPipelines.enhance` inside `EnhanceService` (process `:enhance`) through `EnhanceClient`. The vocoder can need ~3 GB; if the system kills the worker, the app survives and reports it. Cancel kills the worker. Keep heavy native inference out of the main process.
+- **AI enhancement process:** `AndroidAudioEngine.enhance` runs `AudioPipelines.enhance` inside `EnhanceService` (process `:enhance`) through `EnhanceClient`. Models load one at a time with an XNNPACK weight cache (`noBackupFilesDir/xnnpack-cache`), so the re-exported vocoder peaks at about 1.5 GB of anonymous memory (the old INT8 vocoder needed ~4.7 GB and was killed on an 8 GB phone); if the system kills the worker anyway, the app survives and reports it. Cancel kills the worker. Keep heavy native inference out of the main process.
 - **Engine:** `AudioEngine` (commonMain) is the only platform boundary for audio. `JvmAudioEngine` (jvmShared) implements DSP tools, analysis, waveform, storage and a reference-counted decode cache; `AndroidAudioEngine` and `DesktopAudioEngine` add decoding and AI tools.
 - **DSP:** `AudioProcessor` blocks in `dsp/`; `DspPipeline` chains them over decoded 44.1 kHz mono PCM16, splitting into stages where an operation must measure its input first (normalize, denoise). New operations: add an `AudioOperation` subtype (serializable), map it in `DspPipeline.processorFor`, add UI in `ToolScreen.kt`, and add tests in `DspTest` and `ModelTest`.
 - **Errors:** pipelines throw with a clear message; the ViewModel records a `FailureKind` and detail; the UI localizes it. One-shot messages go to the snackbar as `UiMessage`.

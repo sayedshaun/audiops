@@ -46,6 +46,28 @@ class ModelFilesTest {
         assertTrue("other models kept", other.exists())
     }
 
+    @Test fun unchangedFilesMoveFromTheOldRevisionInsteadOfDownloading() {
+        val old = write("resemble-enhance/old/encoder.tflite", "same weights")
+        val digest = ModelFiles.sha256(old)
+        var downloads = 0
+        val listener = object : ProcessingListener {
+            override fun onModelDownload(index: Int, total: Int) {
+                downloads++
+            }
+        }
+        // An unreachable URL proves the file is reused, not downloaded.
+        val directory = ModelFiles.ensure(
+            root,
+            "resemble-enhance/new",
+            "https://invalid.example",
+            mapOf("encoder.tflite" to digest),
+            listener,
+        )
+        assertEquals(0, downloads)
+        assertEquals("same weights", File(directory, "encoder.tflite").readText())
+        assertFalse("old revision removed", File(root, "resemble-enhance/old").exists())
+    }
+
     @Test fun storageCountsAndDeleteRemovesEveryModel() {
         write("resemble-enhance/rev/a.tflite", "12345")
         write("whisper-tiny/rev/b.onnx", "123")

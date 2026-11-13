@@ -19,7 +19,7 @@ Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine o
 - **Emulator end to end:** every DSP tool on a 3-minute 48 kHz stereo file; queue; history across restarts; playback; save; cancel during download; staged enhancement memory.
 
 ### Not yet done
-- **Completed AI enhancement** not observed: the 4 GB emulator cannot fit the vocoder (it fails gracefully). Needs a phone with more free RAM.
+- **AI enhancement on a phone with the new vocoder** not yet run: confirmed end to end on the 4 GB emulator; the Moto g96 test of the old build showed the low-memory kill that this fixes.
 - **Desktop window not opened interactively** (Wayland session, no capture); the desktop UI is verified by off-screen render tests and the engine by unit tests.
 - **Physical devices:** not tested; the emulator is x86_64 while phones are arm64.
 - **Desktop AI tools:** need sherpa-onnx's JVM build and a broader decoder (FFmpeg/JavaCV) for MP3/AAC input.
