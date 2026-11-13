@@ -23,6 +23,7 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 - **Material 3 Expressive design:** dynamic colour on Android 12+, light, dark and pure-black themes, shape-morphing controls, bottom navigation on phones and a navigation rail on wide screens.
 - **Settings:** theme, dynamic colour, pure black, default transcription language, keep screen on, and storage management for models and processed files.
 - **Desktop apps for Linux and Windows** (DEB, RPM, MSI and EXE installers) with every DSP tool, analysis, playback, history and settings. AI tools are Android-only for now.
+- Audiops is open source under the Apache License 2.0.
 - Input formats: anything Android can decode (MP3, AAC/M4A, OGG, Opus, FLAC, WAV…); WAV, AIFF and AU on desktop. Output is 16-bit WAV.
 
 [Unreleased]: https://github.com/sayedshaun/audiops/commits/main

@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
@@ -24,6 +24,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.Job as CoroutineJob
 
 /** Engine double: records calls and lets each test choose what a job returns. */
 private class FakeEngine(override val supportsEnhance: Boolean = true, override val supportsTranscribe: Boolean = true) : AudioEngine {
@@ -89,7 +90,9 @@ class AudiopsViewModelTest {
     }
 
     @After fun tearDown() {
-        created.forEach { it.viewModelScope.cancel() }
+        // Cancel every ViewModel and wait until its coroutines have finished: a coroutine that
+        // resumes on Main while the next test swaps Main fails in TestMainDispatcher.
+        runBlocking { created.forEach { it.viewModelScope.coroutineContext[CoroutineJob]!!.cancelAndJoin() } }
         Dispatchers.resetMain()
         mainThread.shutdownNow()
         dir.deleteRecursively()

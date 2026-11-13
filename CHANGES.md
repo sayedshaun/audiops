@@ -133,6 +133,11 @@ Entries are appended in order. Newest entries are at the bottom.
 - Locally: a `.deb` builds with the icon and metadata; the CI signing path (base64 keystore → env) produces an APK signed with the given key, versionName 1.2.3 / versionCode 1002003, plus an AAB; desktop tests pass; README rendered through GitHub's Markdown API.
 - Not yet run on GitHub Actions: pushing workflow files needs a token with the `workflow` scope.
 
+## 2026-11-13: README Models section (`docs/readme-models`)
+
+### Added
+- README "Models" section: which model each tool and language option uses (Resemble Enhance for Enhance speech; Whisper Tiny for Auto, English and Hindi; Bangla Zipformer for Bangla; no model for DSP tools), with runtime, files, download size (from the pinned Hugging Face revisions), license, how each pipeline runs, memory needs, verification, storage and deletion.
+
 ## 2026-11-13: Tests, formatter, pre-commit hook, Makefile and changelog (`chore/tests-format-hooks`)
 
 ### Added
@@ -154,3 +159,15 @@ Entries are appended in order. Newest entries are at the bottom.
 - `make ci` passes locally (spotlessCheck, 53 shared + 7 desktop tests, lint 0 errors, R8 release build); androidTest sources compile.
 - The shared suite passed 25 reruns (one earlier run failed once and did not reproduce; ViewModel scopes are now cancelled after each test).
 - The hook passes on clean code and blocks a deliberately misformatted file.
+
+## 2026-11-13: Download table, architecture image and licence (`docs/readme-models`)
+
+### Changed
+- README Download table lists file types and install commands instead of full versioned file names (the release page shows those).
+- README architecture is an SVG image (`docs/images/architecture-{light,dark}.svg`, switched by GitHub's theme) instead of a Mermaid diagram that rendered poorly.
+
+### Added
+- `LICENSE`: Apache License 2.0 (canonical text) for Audiops' own code, and `NOTICE` with the copyright line and third-party attributions. README licence section and badge, AGENTS.md licence rules and `CHANGELOG.md` updated. Desktop installers now pick up `LICENSE` automatically.
+
+### Fixed
+- `AudiopsViewModelTest` failed once on CI (`IllegalStateException` in `TestMainDispatcher`): a cancelled ViewModel from the previous test resumed on `Main` while the next test swapped it. Teardown now cancels each ViewModel and joins its coroutines before resetting `Main`. Passed 8 local reruns and 4 full-suite runs pinned to 2 cores.

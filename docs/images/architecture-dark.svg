@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" width="1200" height="760" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+<title id="t">Audiops architecture</title>
+<desc id="d">The shared Kotlin Multiplatform module holds the Compose UI, the AudiopsViewModel and the AudioEngine interface. JvmAudioEngine in jvmShared implements it with the streaming DSP core. The Android and desktop engines extend JvmAudioEngine and add decoding and, on Android, the AI models.</desc>
+<defs><marker id="head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#A797F5"/></marker></defs>
+<rect width="1200" height="760" rx="28" fill="#141218"/>
+<rect x="32" y="32" width="1136" height="436" rx="24" fill="#1E1A2C" stroke="#3E3666" stroke-width="1.5" stroke-dasharray="7 6"/>
+<text x="60" y="70" font-size="22" font-weight="800" fill="#ECE7F5">shared</text>
+<text x="148" y="70" font-size="16" fill="#B4ADC8">Kotlin Multiplatform · one codebase for Android, Linux and Windows</text>
+<rect x="60" y="96" width="320" height="160" rx="18" fill="#262138" stroke="#433A6B" stroke-width="1.5"/>
+<text x="82" y="126" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="600" fill="#C9BEFF">commonMain / ui</text>
+<text x="82" y="154" font-size="20" font-weight="700" fill="#ECE7F5">Compose UI</text>
+<text x="82" y="182" font-size="15" fill="#B4ADC8">Material 3 Expressive</text>
+<text x="82" y="205" font-size="15" fill="#B4ADC8">Stateless screens</text>
+<text x="82" y="228" font-size="15" fill="#B4ADC8">Tools · Activity · Settings</text>
+<rect x="440" y="96" width="320" height="160" rx="18" fill="#262138" stroke="#433A6B" stroke-width="1.5"/>
+<text x="462" y="126" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="600" fill="#C9BEFF">commonMain</text>
+<text x="462" y="154" font-size="20" font-weight="700" fill="#ECE7F5">AudiopsViewModel</text>
+<text x="462" y="182" font-size="15" fill="#B4ADC8">Immutable AudiopsState</text>
+<text x="462" y="205" font-size="15" fill="#B4ADC8">Job queue, one worker</text>
+<text x="462" y="228" font-size="15" fill="#B4ADC8">History and settings (DataStore)</text>
+<rect x="820" y="96" width="320" height="160" rx="18" fill="#262138" stroke="#433A6B" stroke-width="1.5"/>
+<text x="842" y="126" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="600" fill="#C9BEFF">commonMain</text>
+<text x="842" y="154" font-size="20" font-weight="700" fill="#ECE7F5">AudioEngine</text>
+<text x="842" y="182" font-size="15" fill="#B4ADC8">The only platform boundary</text>
+<text x="842" y="205" font-size="15" fill="#B4ADC8">process · analyze · enhance</text>
+<text x="842" y="228" font-size="15" fill="#B4ADC8">transcribe · waveform</text>
+<line x1="382" y1="160" x2="436" y2="160" stroke="#A797F5" stroke-width="2.5" marker-end="url(#head)"/>
+<line x1="436" y1="196" x2="384" y2="196" stroke="#A797F5" stroke-width="2.5" marker-end="url(#head)"/>
+<text x="409" y="150" text-anchor="middle" font-size="13" font-weight="600" fill="#B4ADC8">events</text>
+<text x="409" y="216" text-anchor="middle" font-size="13" font-weight="600" fill="#B4ADC8">state</text>
+<line x1="762" y1="176" x2="816" y2="176" stroke="#A797F5" stroke-width="2.5" marker-end="url(#head)"/>
+<text x="789" y="166" text-anchor="middle" font-size="13" font-weight="600" fill="#B4ADC8">jobs</text>
+<rect x="60" y="300" width="1080" height="140" rx="18" fill="#2E2650" stroke="#A797F5" stroke-width="1.5"/>
+<text x="82" y="330" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="600" fill="#C9BEFF">jvmShared</text>
+<text x="82" y="358" font-size="20" font-weight="700" fill="#ECE7F5">JvmAudioEngine · streaming DSP core</text>
+<text x="82" y="386" font-size="15" fill="#B4ADC8">Equalizer, noise reduction, WSOLA speed and pitch, resampler, limiter, BS.1770 loudness, silence gate</text>
+<text x="82" y="409" font-size="15" fill="#B4ADC8">WAV and PCM I/O · decode cache · verified model downloads · constant memory, pure Kotlin</text>
+<line x1="980" y1="298" x2="980" y2="260" stroke="#A797F5" stroke-width="2.5" marker-end="url(#head)"/>
+<text x="992" y="285" text-anchor="start" font-size="14" font-weight="600" fill="#B4ADC8">implements</text>
+<rect x="60" y="540" width="520" height="188" rx="18" fill="#262138" stroke="#433A6B" stroke-width="1.5"/>
+<text x="82" y="570" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="600" fill="#C9BEFF">app · Android 8.0+</text>
+<text x="82" y="598" font-size="20" font-weight="700" fill="#ECE7F5">AndroidAudioEngine</text>
+<text x="82" y="626" font-size="15" fill="#B4ADC8">MediaCodec decoder (MP3, AAC, OGG, FLAC…)</text>
+<text x="82" y="649" font-size="15" fill="#B4ADC8">Resemble Enhance (LiteRT) in the :enhance process</text>
+<text x="82" y="672" font-size="15" fill="#B4ADC8">Whisper / Bangla Zipformer (sherpa-onnx)</text>
+<text x="82" y="695" font-size="15" fill="#B4ADC8">System pickers, dynamic colour</text>
+<rect x="620" y="540" width="520" height="188" rx="18" fill="#262138" stroke="#433A6B" stroke-width="1.5"/>
+<text x="642" y="570" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="600" fill="#C9BEFF">desktopApp · Linux, Windows</text>
+<text x="642" y="598" font-size="20" font-weight="700" fill="#ECE7F5">DesktopAudioEngine</text>
+<text x="642" y="626" font-size="15" fill="#B4ADC8">Java Sound decoding (WAV, AIFF, AU)</text>
+<text x="642" y="649" font-size="15" fill="#B4ADC8">AWT file dialogs, Java Sound playback</text>
+<text x="642" y="672" font-size="15" fill="#B4ADC8">DEB · RPM · MSI · EXE installers (jpackage)</text>
+<text x="642" y="695" font-size="15" fill="#B4ADC8">AI tools planned</text>
+<line x1="320" y1="538" x2="320" y2="444" stroke="#A797F5" stroke-width="2.5" marker-end="url(#head)"/>
+<line x1="880" y1="538" x2="880" y2="444" stroke="#A797F5" stroke-width="2.5" marker-end="url(#head)"/>
+<text x="600" y="502" text-anchor="middle" font-size="15" font-weight="600" fill="#B4ADC8">both extend JvmAudioEngine and add decoding</text>
+</svg>

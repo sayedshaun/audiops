@@ -7,13 +7,14 @@ Snapshot as of 2026-11-13, branch `chore/tests-format-hooks`. Updated in place; 
 Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine on Linux/Windows desktop, a job queue with persistent history, and a Material 3 Expressive UI. Built, unit-tested, lint-checked, R8-built, and exercised end to end on an Android emulator.
 
 ### Done
+- **Licence:** Apache 2.0 (`LICENSE`, `NOTICE`).
 - **Repository:** public at github.com/sayedshaun/audiops, with README, logo, banner, CONTRIBUTING, SECURITY, issue and PR templates, and a release workflow that builds and attaches Android, Linux and Windows artifacts on every published release.
 - **Platforms:** `:shared` (Compose Multiplatform), `:app` (Android), `:desktopApp` (Linux/Windows; DEB/RPM/MSI/EXE packaging).
 - **Tools:** Enhance, Transcribe (Android); Noise reduction, Remove silence, Trim, Fade, Volume, Speed and pitch, Equalizer, Convert, Analyze (both platforms).
 - **UX:** bottom navigation / rail, Activity tab with queue and history, waveform preview, playback, save via system dialogs, cancel, haptics, auto-scroll to results, settings (theme, dynamic colour, pure black, default language, keep screen on, storage).
 - **Robustness:** constant-memory streaming DSP; staged AI enhancement in an isolated process (a memory kill no longer closes the app); cancellable downloads with byte progress; decode 3× faster; R8 release build verified to run.
 - **Tests:** 53 shared JVM tests (DSP, throughput, model serialization, history/settings storage, ViewModel job queue), 3 desktop engine tests, 4 off-screen desktop render tests; all pass. Lint 0 errors.
-- **Code quality:** ktlint via Spotless (`make format` / `make check`), a pre-commit hook (`make hooks`), a Makefile, and CI with three checks (Format and style, Unit tests, Android lint and build) on every pull request to `main`. `CHANGELOG.md` holds user-facing release notes.
+- **Code quality:** ktlint via Spotless (`make format` / `make check`), a pre-commit hook (`make hooks`), a Makefile, and CI with three checks (Format and style, Unit tests, Android lint and build) on every pull request to `main`; a branch protection rule makes them required to merge. `CHANGELOG.md` holds user-facing release notes.
 - **Emulator end to end:** every DSP tool on a 3-minute 48 kHz stereo file; queue; history across restarts; playback; save; cancel during download; staged enhancement memory.
 
 ### Not yet done
@@ -25,18 +26,15 @@ Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine o
 
 ## Open questions
 
-1. **Licence** for Audiops' own code (MIT, Apache-2.0, GPL-3.0…). No `LICENSE` file yet.
-2. **Target SDK 37** (lint flags 36): needs a device test pass.
-3. **APK size** (~148 MB, all ABIs): publish an App Bundle or add ABI splits.
-4. **LiteRT 2.3.2** is available (using 2.3.0).
-5. **Resemble model digests** for SHA-256 verification, and a lighter vocoder export (fp16/int8 activations) so enhancement fits 4 GB phones.
-6. **Required checks on `main`:** a branch protection rule that requires the three CI checks has not been set up yet (repository settings).
-7. **Release signing secrets:** add `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD` to publish a signed APK and AAB (see CONTRIBUTING.md).
+1. **Target SDK 37** (lint flags 36): needs a device test pass.
+2. **APK size** (~148 MB, all ABIs): publish an App Bundle or add ABI splits.
+3. **LiteRT 2.3.2** is available (using 2.3.0).
+4. **Resemble model digests** for SHA-256 verification, and a lighter vocoder export (fp16/int8 activations) so enhancement fits 4 GB phones.
+5. **Release signing secrets:** add `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD` to publish a signed APK and AAB (see CONTRIBUTING.md).
 
 ## Next steps
 
-1. Pick a licence and add `LICENSE`.
-2. Test on a physical arm64 phone (enhancement speed, memory, long files).
-3. Launch and screenshot the desktop app on Linux and Windows.
-4. Foreground service for long jobs; notifications on completion.
-5. Desktop transcription via sherpa-onnx JVM.
+1. Test on a physical arm64 phone (enhancement speed, memory, long files).
+2. Launch and screenshot the desktop app on Linux and Windows.
+3. Foreground service for long jobs; notifications on completion.
+4. Desktop transcription via sherpa-onnx JVM.

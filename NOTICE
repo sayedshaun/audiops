@@ -1,0 +1,10 @@
+Audiops
+Copyright 2026 Sayed Shaun
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It uses third-party software and models under their own licenses; see the
+licenses/ directory and Settings > Open-source licenses in the app:
+- Resemble Enhance (MIT)
+- sherpa-onnx (Apache License 2.0)
+- Bangla Zipformer model (CC BY-SA 4.0)
