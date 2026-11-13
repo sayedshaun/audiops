@@ -3,6 +3,7 @@ package com.audiops.app.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,14 +16,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.BrightnessAuto
 import androidx.compose.material.icons.rounded.Contrast
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Gavel
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Info
@@ -51,8 +55,10 @@ import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -69,6 +75,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.audiops.app.SpeechLanguage
@@ -77,6 +84,7 @@ import com.audiops.app.UserSettings
 import com.audiops.shared.resources.Res
 import com.audiops.shared.resources.action_cancel
 import com.audiops.shared.resources.action_clear
+import com.audiops.shared.resources.action_close
 import com.audiops.shared.resources.action_delete
 import com.audiops.shared.resources.clear_history_body
 import com.audiops.shared.resources.clear_history_title
@@ -84,10 +92,18 @@ import com.audiops.shared.resources.license_androidx
 import com.audiops.shared.resources.license_androidx_summary
 import com.audiops.shared.resources.license_bangla
 import com.audiops.shared.resources.license_bangla_summary
+import com.audiops.shared.resources.license_dsp
+import com.audiops.shared.resources.license_dsp_summary
+import com.audiops.shared.resources.license_litert
+import com.audiops.shared.resources.license_litert_summary
+import com.audiops.shared.resources.license_notices
+import com.audiops.shared.resources.license_notices_summary
 import com.audiops.shared.resources.license_resemble
 import com.audiops.shared.resources.license_resemble_summary
 import com.audiops.shared.resources.license_sherpa
 import com.audiops.shared.resources.license_sherpa_summary
+import com.audiops.shared.resources.license_whisper
+import com.audiops.shared.resources.license_whisper_summary
 import com.audiops.shared.resources.open_link
 import com.audiops.shared.resources.settings_default_language
 import com.audiops.shared.resources.settings_dynamic_color
@@ -135,18 +151,31 @@ data class SettingsActions(
     val onClearHistory: () -> Unit,
 )
 
-private data class LicenseEntry(val title: StringResource, val summary: StringResource, val url: String)
+/** [androidOnly]: AI components that are bundled or downloaded only on Android. */
+private data class LicenseEntry(val title: StringResource, val summary: StringResource, val url: String, val androidOnly: Boolean = false)
 
 private val licenses = listOf(
     LicenseEntry(
         Res.string.license_resemble,
         Res.string.license_resemble_summary,
         "https://huggingface.co/SayedShaun/resemble-enhance-litert",
+        androidOnly = true,
     ),
-    LicenseEntry(Res.string.license_sherpa, Res.string.license_sherpa_summary, "https://github.com/k2-fsa/sherpa-onnx"),
-    LicenseEntry(Res.string.license_bangla, Res.string.license_bangla_summary, "https://huggingface.co/SayedShaun/bangla-zipformer-onnx"),
+    LicenseEntry(Res.string.license_whisper, Res.string.license_whisper_summary, "https://github.com/openai/whisper", androidOnly = true),
+    LicenseEntry(Res.string.license_sherpa, Res.string.license_sherpa_summary, "https://github.com/k2-fsa/sherpa-onnx", androidOnly = true),
+    LicenseEntry(
+        Res.string.license_bangla,
+        Res.string.license_bangla_summary,
+        "https://huggingface.co/SayedShaun/bangla-zipformer-onnx",
+        androidOnly = true,
+    ),
+    LicenseEntry(Res.string.license_litert, Res.string.license_litert_summary, "https://ai.google.dev/edge/litert", androidOnly = true),
+    LicenseEntry(Res.string.license_dsp, Res.string.license_dsp_summary, "https://github.com/wendykierp/JTransforms"),
     LicenseEntry(Res.string.license_androidx, Res.string.license_androidx_summary, "https://developer.android.com/jetpack/androidx"),
 )
+
+/** Bundled full licence texts (generated from licenses/; see ThirdPartyNoticesTest). */
+private const val NOTICES_FILE = "files/third_party_notices.txt"
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -164,6 +193,7 @@ fun SettingsScreen(
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
     var showClearDialog by rememberSaveable { mutableStateOf(false) }
+    var showNotices by rememberSaveable { mutableStateOf(false) }
     val storageText = modelStorage?.let { formatFileSize(it) }
     val hasModels = (modelStorage ?: 0L) > 0L
 
@@ -336,8 +366,18 @@ fun SettingsScreen(
 
             item { SectionHeader(stringResource(Res.string.settings_licenses)) }
             item {
+                val notices: @Composable (Shape) -> Unit = { shape ->
+                    SettingsRow(
+                        icon = Icons.Rounded.Description,
+                        title = stringResource(Res.string.license_notices),
+                        summary = stringResource(Res.string.license_notices_summary),
+                        shape = shape,
+                        onClick = { showNotices = true },
+                    )
+                }
                 SettingsGroup(
-                    *licenses.map { entry ->
+                    notices,
+                    *licenses.filter { showTranscription || !it.androidOnly }.map { entry ->
                         @Composable { shape: Shape ->
                             SettingsRow(
                                 icon = Icons.Rounded.Gavel,
@@ -358,6 +398,10 @@ fun SettingsScreen(
                 )
             }
         }
+    }
+
+    if (showNotices) {
+        NoticesDialog(onDismiss = { showNotices = false })
     }
 
     if (showLanguageDialog) {
@@ -523,6 +567,31 @@ private fun ThemeModeSelector(selected: ThemeMode, onSelect: (ThemeMode) -> Unit
             }
         }
     }
+}
+
+@Composable
+private fun NoticesDialog(onDismiss: () -> Unit) {
+    var text by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) {
+        text = runCatching { Res.readBytes(NOTICES_FILE).decodeToString() }.getOrDefault("")
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Rounded.Description, contentDescription = null) },
+        title = { Text(stringResource(Res.string.license_notices)) },
+        text = {
+            Box(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState())) {
+                Text(
+                    text.orEmpty(),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_close)) }
+        },
+    )
 }
 
 @Composable

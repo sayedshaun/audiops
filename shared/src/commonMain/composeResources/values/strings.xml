@@ -61,6 +61,7 @@
     <string name="action_process">Process audio</string>
     <string name="action_analyze">Analyze audio</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
     <string name="action_copy">Copy</string>
     <string name="action_save_text">Save text</string>
     <string name="action_save_wav">Save WAV</string>
@@ -210,12 +211,20 @@
     <string name="settings_privacy">Privacy</string>
     <string name="settings_privacy_summary">Audio is processed on this device and never uploaded. The internet is used only to download AI models.</string>
     <string name="settings_licenses">Open-source licenses</string>
+    <string name="license_notices">Third-party notices</string>
+    <string name="license_notices_summary">Full license text for every component</string>
     <string name="license_resemble">Resemble Enhance</string>
     <string name="license_resemble_summary">MIT License · Resemble AI</string>
-    <string name="license_sherpa">sherpa-onnx and Whisper models</string>
-    <string name="license_sherpa_summary">Apache License 2.0</string>
+    <string name="license_whisper">Whisper Tiny</string>
+    <string name="license_whisper_summary">MIT License · OpenAI (ONNX export: Apache License 2.0)</string>
+    <string name="license_sherpa">sherpa-onnx and ONNX Runtime</string>
+    <string name="license_sherpa_summary">Apache License 2.0 · MIT License</string>
     <string name="license_bangla">Bangla Zipformer</string>
     <string name="license_bangla_summary">CC BY-SA 4.0 · SayedShaun</string>
-    <string name="license_androidx">AndroidX and Jetpack Compose</string>
+    <string name="license_litert">LiteRT</string>
+    <string name="license_litert_summary">Apache License 2.0 · Google</string>
+    <string name="license_dsp">JTransforms, JLargeArrays and Commons Math</string>
+    <string name="license_dsp_summary">BSD 2-Clause License · Apache License 2.0</string>
+    <string name="license_androidx">AndroidX, Compose and Kotlin</string>
     <string name="license_androidx_summary">Apache License 2.0</string>
 </resources>

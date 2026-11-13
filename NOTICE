@@ -3,8 +3,23 @@ Copyright 2026 Sayed Shaun
 
 This product is licensed under the Apache License, Version 2.0 (see LICENSE).
 
-It uses third-party software and models under their own licenses; see the
-licenses/ directory and Settings > Open-source licenses in the app:
-- Resemble Enhance (MIT)
-- sherpa-onnx (Apache License 2.0)
-- Bangla Zipformer model (CC BY-SA 4.0)
+It includes or downloads third-party components under their own licenses. Full texts are
+in the licenses/ directory and in the app (Settings > Open-source licenses > Third-party
+notices).
+
+Bundled:
+- AndroidX, Jetpack Compose, Compose Multiplatform, Kotlin, kotlinx, Okio, Guava (Apache 2.0)
+- LiteRT by Google (Apache 2.0)
+- sherpa-onnx by k2-fsa (Apache 2.0), including ONNX Runtime by Microsoft (MIT)
+- Apache Commons Math 3 (Apache 2.0). This product includes software developed at
+  The Apache Software Foundation (http://www.apache.org/).
+- JTransforms, Copyright (c) 2007 onward, Piotr Wendykier (BSD 2-Clause)
+- JLargeArrays, Copyright (C) 2013 onward University of Warsaw, ICM (BSD 2-Clause)
+- Google Play asset delivery and Play services libraries pulled in by LiteRT
+  (Android Software Development Kit License)
+- Desktop installers: OpenJDK runtime (GPL v2 with the Classpath Exception)
+
+Downloaded on first use (Android):
+- Resemble Enhance by Resemble AI (MIT)
+- Whisper Tiny by OpenAI (MIT); ONNX export by ippocode/indic-asr-onnx (Apache 2.0)
+- Bangla Zipformer by SayedShaun (CC BY-SA 4.0)
