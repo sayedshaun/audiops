@@ -6,7 +6,7 @@ import java.security.MessageDigest
 /** Downloads a fixed set of model files once, verifies each SHA-256 digest, and reuses them. */
 object ModelFiles {
     /** Top-level folders under the model root that hold downloaded models. */
-    private val FOLDERS = listOf("resemble-enhance", "whisper-tiny", "bangla-zipformer")
+    private val FOLDERS = listOf("resemble-enhance", "whisper-tiny", "bangla-zipformer", "xnnpack-cache")
 
     /** Total bytes used by downloaded models. */
     fun storageBytes(root: File): Long = FOLDERS.sumOf { folder ->
@@ -33,6 +33,7 @@ object ModelFiles {
             val file = File(directory, name)
             if (file.isFile && sha256(file) == digest) continue
             file.delete()
+            if (reuseFromOtherRevision(directory, name, digest, file)) continue
             file.parentFile?.mkdirs()
             listener.onModelDownload(index, digests.size)
             val fileIndex = index
@@ -48,6 +49,22 @@ object ModelFiles {
             directory.parentFile?.listFiles()?.filter { it != directory }?.forEach { it.deleteRecursively() }
         }
         return directory
+    }
+
+    /**
+     * When a model moves to a new revision, files that did not change are moved over from
+     * the previous revision's folder instead of being downloaded again.
+     */
+    private fun reuseFromOtherRevision(directory: File, name: String, digest: String, target: File): Boolean {
+        val siblings = directory.parentFile?.listFiles()?.filter { it.isDirectory && it != directory } ?: return false
+        for (sibling in siblings) {
+            val candidate = File(sibling, name)
+            if (candidate.isFile && sha256(candidate) == digest) {
+                target.parentFile?.mkdirs()
+                if (candidate.renameTo(target)) return true
+            }
+        }
+        return false
     }
 
     fun sha256(file: File): String {

@@ -74,7 +74,7 @@
     <string name="action_open_tool">Open in tool</string>
     <string name="player_unavailable">Can\'t play</string>
 
-    <string name="enhance_hint">The first run downloads about 360 MB of model files. Longer recordings take more time.</string>
+    <string name="enhance_hint">The first run downloads about 570 MB of model files. Longer recordings take more time.</string>
     <string name="transcribe_hint">The first run downloads a model: about 74 MB for Bangla, about 103 MB for other languages.</string>
     <string name="transcribe_language_hint">Choose Bangla for the dedicated Bangla model. Auto uses Whisper, which can misidentify short clips.</string>
     <string name="language_auto">Auto</string>

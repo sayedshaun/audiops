@@ -14,6 +14,7 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 ## [Unreleased]
 
 ### Fixed
+- **Enhance speech no longer gets killed on phones.** The AI vocoder needed about 4.7 GB of memory, so Android stopped it (and closed other apps) even on 8 GB phones. It now uses a re-exported vocoder and a file-backed weight cache: about 1.5 GB at peak, it runs about three times faster, and its output matches the original model far more closely. Updating downloads only the new 384 MB vocoder; the other model files are kept.
 - Settings → Open-source licenses now includes the full license text of every bundled and downloaded component ("Third-party notices"), and credits ONNX Runtime, LiteRT, JTransforms, JLargeArrays and Apache Commons Math. Whisper is correctly listed as MIT (OpenAI).
 
 ## [0.1.0] - 2026-11-13

@@ -12,6 +12,8 @@ class ResembleMathTest {
         assertEquals("encoder-fp16weights.tflite", HubModels.fileName("encoder", "fp16"))
         assertEquals("encoder-int8-dynamic.tflite", HubModels.fileName("encoder", "int8"))
         assertEquals("vocoder-int8-weights.tflite", HubModels.fileName("vocoder", "int8"))
+        assertEquals("vocoder-mobile-fp16.tflite", HubModels.fileName("vocoder", "mobile"))
+        assertEquals("encoder-int8-dynamic.tflite", HubModels.fileName("encoder", "mobile"))
     }
 
     @Test(expected = IllegalArgumentException::class)
