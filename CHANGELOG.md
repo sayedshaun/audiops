@@ -13,6 +13,10 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-13
+
+First public release.
+
 ### Added
 - **AI tools (Android):** Enhance speech with Resemble Enhance, and Transcribe with Whisper Tiny (auto, English, Hindi) or a Bangla Zipformer model. Models download once; audio never leaves the device.
 - **Clean up:** Noise reduction (spectral subtraction) and Remove silence.
@@ -24,6 +28,9 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 - **Settings:** theme, dynamic colour, pure black, default transcription language, keep screen on, and storage management for models and processed files.
 - **Desktop apps for Linux and Windows** (DEB, RPM, MSI and EXE installers) with every DSP tool, analysis, playback, history and settings. AI tools are Android-only for now.
 - Audiops is open source under the Apache License 2.0.
+- Every downloaded AI model is pinned to a fixed version and verified with SHA-256 before use.
+- Smaller downloads: an Android APK for each processor type (about 40 MB for most phones) besides the universal APK.
 - Input formats: anything Android can decode (MP3, AAC/M4A, OGG, Opus, FLAC, WAV…); WAV, AIFF and AU on desktop. Output is 16-bit WAV.
 
-[Unreleased]: https://github.com/sayedshaun/audiops/commits/main
+[Unreleased]: https://github.com/sayedshaun/audiops/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/sayedshaun/audiops/releases/tag/v0.1.0

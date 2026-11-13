@@ -4,43 +4,14 @@ package com.audiops.app
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
-import java.security.MessageDigest
 
-/** Download public Hub models once, using an app-private persistent cache. */
+/** Hugging Face model file names and an atomic HTTPS downloader with progress. */
 object HubModels {
-    private val lock = Any()
-    private val components = listOf("denoiser-net", "encoder", "flow-step", "decoder", "vocoder")
-
     fun fileName(name: String, dtype: String): String = when (dtype) {
         "fp32" -> "$name-float32.tflite"
         "fp16" -> "$name-fp16weights.tflite"
         "int8" -> if (name == "vocoder") "$name-int8-weights.tflite" else "$name-int8-dynamic.tflite"
         else -> throw IllegalArgumentException("dtype must be 'fp32', 'fp16', or 'int8'")
-    }
-
-    fun prepare(
-        cacheRoot: File,
-        repoId: String,
-        dtype: String,
-        onDownload: (index: Int, total: Int, fileFraction: Float) -> Unit = { _, _, _ -> },
-    ): File = synchronized(lock) {
-        require(Regex("^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$").matches(repoId)) {
-            "repoId must be a public Hugging Face repository in the form owner/model"
-        }
-        val files = components.map { fileName(it, dtype) } + "mel-filters.f32"
-        val hash = MessageDigest.getInstance("SHA-256").digest(repoId.toByteArray(Charsets.UTF_8))
-            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
-        val directory = File(cacheRoot, "resemble-enhance/$hash")
-        check(directory.isDirectory || directory.mkdirs()) { "Cannot create model cache: $directory" }
-        for ((index, name) in files.withIndex()) {
-            val destination = File(directory, name)
-            if (destination.isFile && destination.length() > 0L) continue
-            onDownload(index + 1, files.size, 0f)
-            download("https://huggingface.co/$repoId/resolve/main/models/$name", destination) { fraction ->
-                onDownload(index + 1, files.size, fraction)
-            }
-        }
-        directory
     }
 
     /**

@@ -3,7 +3,6 @@ package com.audiops.app
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -18,11 +17,6 @@ class ResembleMathTest {
     @Test(expected = IllegalArgumentException::class)
     fun unknownDtypeIsRejected() {
         HubModels.fileName("encoder", "bf16")
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun repositoryIdMustBeOwnerAndModel() {
-        HubModels.prepare(File(System.getProperty("java.io.tmpdir")!!), "../../etc", "int8")
     }
 
     @Test fun midpointSolverIsExactForConstantVelocity() {

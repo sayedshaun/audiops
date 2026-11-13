@@ -66,7 +66,7 @@ Only the two AI tools use machine-learning models. Every other tool is classic s
 ### Download, verification and storage
 
 - Each model downloads **once**, on first use of its tool, over HTTPS from Hugging Face. After that the tool works fully offline.
-- Whisper and Bangla files are pinned to a fixed revision and **verified with SHA-256** before use. Resemble Enhance files are checked for completeness; digests are on the [roadmap](#roadmap).
+- Every model file is pinned to a fixed revision and **verified with SHA-256** before use. When a model is updated, the old revision is deleted.
 - Models live in app-private storage that is excluded from backups. See their size, or delete them, in **Settings → Storage → Downloaded models**; they download again when needed.
 - **Memory:** Whisper and Bangla run comfortably on any supported phone. Resemble Enhance loads one network at a time, but its vocoder needs up to about 3 GB of free memory, so it is best on phones with 8 GB of RAM or more. It runs in a separate process: if a phone runs out of memory, Audiops stays open and says so.
 - **Desktop:** the AI tools are Android-only for now (marked "Android only" in the app).
@@ -96,7 +96,7 @@ Get the latest build from [**Releases**](https://github.com/sayedshaun/audiops/r
 
 | Platform | File | How to install |
 | --- | --- | --- |
-| Android 8.0+ | `.apk` | Open it on your phone (allow installs from your browser or file manager). |
+| Android 8.0+ | `-android-arm64-v8a.apk` (almost every phone since 2017) | Open it on your phone (allow installs from your browser or file manager). Not sure? Take `-android-universal.apk`, which works everywhere but is larger. |
 | Linux (Debian, Ubuntu) | `.deb` | `sudo apt install ./audiops-*.deb` |
 | Linux (Fedora, openSUSE) | `.rpm` | `sudo dnf install ./audiops-*.rpm` |
 | Windows 10/11 | `.msi` or `-setup.exe` | Run the installer. |

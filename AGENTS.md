@@ -109,7 +109,7 @@ Unidirectional data flow: **ViewModel → immutable `AudiopsState` → stateless
 - **DSP:** `AudioProcessor` blocks in `dsp/`; `DspPipeline` chains them over decoded 44.1 kHz mono PCM16, splitting into stages where an operation must measure its input first (normalize, denoise). New operations: add an `AudioOperation` subtype (serializable), map it in `DspPipeline.processorFor`, add UI in `ToolScreen.kt`, and add tests in `DspTest` and `ModelTest`.
 - **Errors:** pipelines throw with a clear message; the ViewModel records a `FailureKind` and detail; the UI localizes it. One-shot messages go to the snackbar as `UiMessage`.
 - **Strings:** all user-visible text is in `shared/src/commonMain/composeResources/values/strings.xml` (Compose resources: write `%` once, not `%%`). Only the launcher label lives in `app/src/main/res`.
-- **Models:** Whisper and Bangla files are verified by SHA-256 (`ModelFiles.ensure`); never change a revision or digest without re-verifying. Resemble Enhance has no digests yet.
+- **Models:** every model (Resemble Enhance, Whisper, Bangla) is pinned to a Hugging Face commit and verified by SHA-256 (`ModelFiles.ensure`); never change a revision or digest without re-verifying. Hugging Face lists LFS digests at `https://huggingface.co/api/models/<repo>/revision/<commit>?blobs=true`.
 
 ## Design system: Material 3 Expressive
 

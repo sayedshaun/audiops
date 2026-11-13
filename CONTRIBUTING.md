@@ -45,11 +45,12 @@ Releases are built and published by [`.github/workflows/release.yml`](.github/wo
 1. Make sure `main` is green. In `CHANGELOG.md`, rename **Unreleased** to the new version and date, add a fresh **Unreleased** section, and merge that change.
 2. Create a GitHub Release with a new tag `vMAJOR.MINOR.PATCH` (for example `v0.2.0`). A `-beta.1` suffix marks a pre-release.
 3. Publishing the release starts the workflow. It runs the tests, then attaches these files to the release:
-   - Android: `audiops-<version>-android.apk` and `.aab` (signed), or `…-android-unsigned.apk`
+   - Android: per-ABI APKs `audiops-<version>-android-{arm64-v8a,armeabi-v7a,x86_64,x86}.apk`, a universal APK `…-android-universal.apk`, and an `.aab` for app stores (all signed). Without signing secrets the APKs end in `-unsigned` and no `.aab` is attached.
    - Linux: `.deb` and `.rpm`
    - Windows: `.msi` and `-setup.exe`
    - `SHA256SUMS.txt`
 4. To rebuild an existing release, run the workflow manually (Actions → Release → Run workflow) with its tag.
+5. To test the pipeline without publishing, run the workflow manually with an **empty** tag: it builds every artifact from the selected branch as version `0.0.0-dryrun` and keeps them as workflow artifacts.
 
 The version name comes from the tag, and the Android version code is `MAJOR×1000000 + MINOR×1000 + PATCH`, so every new tag must be higher than the last.
 
@@ -64,4 +65,4 @@ Add these repository secrets (Settings → Secrets and variables → Actions):
 | `ANDROID_KEY_ALIAS` | Key alias |
 | `ANDROID_KEY_PASSWORD` | Key password |
 
-Without them the workflow still publishes an unsigned APK. Keep the keystore safe and backed up: updates must be signed with the same key.
+Without them the workflow still publishes unsigned APKs, which Android refuses to install. Keep the keystore and its password safe and backed up: every future update must be signed with the same key, and a lost key means users must uninstall and reinstall.

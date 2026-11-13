@@ -171,3 +171,17 @@ Entries are appended in order. Newest entries are at the bottom.
 
 ### Fixed
 - `AudiopsViewModelTest` failed once on CI (`IllegalStateException` in `TestMainDispatcher`): a cancelled ViewModel from the previous test resumed on `Main` while the next test swapped it. Teardown now cancels each ViewModel and joins its coroutines before resetting `Main`. Passed 8 local reruns and 4 full-suite runs pinned to 2 cores.
+
+## 2026-11-13: Prepare release 0.1.0 (`release/prepare-0.1.0`)
+
+### Added
+- Resemble Enhance downloads are pinned to commit `d74080f` and every file is verified by SHA-256 through `ModelFiles.ensure` (digests from the Hugging Face API; `mel-filters.f32` also checked by download). `ModelFiles.ensure` deletes older revisions of a model once the new one is complete, so the previous unversioned Resemble cache (~360 MB) is reclaimed. `HubModels.prepare` (unpinned, unverified) removed. New `ModelFilesTest`.
+- Per-ABI release APKs (`-PaudiopsSplitApks=true`): arm64-v8a 40 MB, armeabi-v7a 28 MB, x86_64 47 MB, x86 39 MB, plus the 148 MB universal APK.
+- Release workflow: builds the AAB and the split APKs in separate Gradle runs (AGP cannot do both at once), names them `audiops-<v>-android-<abi>.apk`, has a dry-run mode (manual run with an empty tag builds everything without publishing), and fills empty release notes from the matching `CHANGELOG.md` section.
+- `CHANGELOG.md`: `0.1.0` section cut.
+- Release signing key (RSA 4096, valid to 2056, alias `audiops`) created outside the repository in `~/.audiops-release/` with an upload script for the GitHub secrets.
+
+### Verified
+- Locally signed release build: every APK and the AAB verify with the new certificate (SHA-256 `c147c216…`); `aapt2` reports versionName 0.1.0 and only arm64-v8a native code in the arm64 APK.
+- Compose's Windows version check accepts MAJOR = 0, so `v0.1.0` packages on Windows.
+- Not verified on the emulator: it has an older build signed with a different key, and replacing it would wipe its data.

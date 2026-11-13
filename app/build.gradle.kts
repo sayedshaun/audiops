@@ -10,6 +10,10 @@ val audiopsVersionCode: Int = providers.gradleProperty("audiopsVersionCode").map
 
 // Optional release signing. Set all four variables to sign release builds; otherwise
 // the release variant is produced unsigned.
+// Per-ABI APKs (about 40 MB each instead of one ~150 MB APK with every ABI) plus a universal
+// APK. Enabled by the release workflow with -PaudiopsSplitApks=true; normal builds keep one APK.
+val splitApks: Boolean = providers.gradleProperty("audiopsSplitApks").map(String::toBoolean).getOrElse(false)
+
 val releaseKeystore: String? = System.getenv("AUDIOPS_KEYSTORE")?.takeIf { it.isNotBlank() } // CI passes "" when unset
 
 android {
@@ -25,6 +29,17 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         providers.gradleProperty("audiopsAbi").orNull?.let { abi ->
             ndk { abiFilters += abi }
+        }
+    }
+
+    if (splitApks) {
+        splits {
+            abi {
+                isEnable = true
+                reset()
+                include("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
+                isUniversalApk = true
+            }
         }
     }
 

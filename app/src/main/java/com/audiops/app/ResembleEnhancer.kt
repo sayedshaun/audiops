@@ -79,19 +79,6 @@ internal class LiteModel(
  * Android's low-memory killer; staged, peak memory is about one model.
  */
 class ResembleEnhancer(private val modelDirectory: File, private val dtype: String = "fp16") : Closeable {
-    /** Downloads a public Hub repository on first use. Call on a worker thread. */
-    constructor(context: Context, repoId: String, dtype: String = "fp16") :
-        this(context, repoId, dtype, ProcessingListener.None)
-
-    internal constructor(context: Context, repoId: String, dtype: String, listener: ProcessingListener) :
-        this(
-            HubModels.prepare(context.applicationContext.noBackupFilesDir, repoId, dtype) { index, total, fraction ->
-                if (fraction == 0f) listener.onModelDownload(index, total)
-                listener.onModelDownloadProgress(index, total, fraction)
-            },
-            dtype,
-        )
-
     private class ModelSpec(val name: String, val inputs: List<String>, val output: String, val inputSizes: IntArray, val outputSize: Int)
 
     private class Chunk(val start: Int, val count: Int, val peak: Float, val seed: Long) {

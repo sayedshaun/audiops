@@ -21,6 +21,8 @@ object ModelFiles {
     /**
      * Returns the directory holding every file in [digests], keyed by relative file name.
      * Files that are missing or fail verification are downloaded from `$baseUrl/$name`.
+     * When [folder] is versioned (`name/revision`), other revisions of the same model are
+     * deleted once this one is complete, so an update does not leave old files behind.
      */
     fun ensure(root: File, folder: String, baseUrl: String, digests: Map<String, String>, listener: ProcessingListener): File {
         val directory = File(root, folder)
@@ -41,6 +43,9 @@ object ModelFiles {
                 file.delete()
                 error("Model file verification failed: $name")
             }
+        }
+        if (folder.contains('/')) {
+            directory.parentFile?.listFiles()?.filter { it != directory }?.forEach { it.deleteRecursively() }
         }
         return directory
     }
