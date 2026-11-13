@@ -15,8 +15,13 @@ import kotlin.math.abs
 import kotlin.math.cos
 
 /** A single-threaded CPU model. Calls must not overlap. */
-internal class LiteModel(file: File, private val inputNames: List<String>, private val outputName: String,
-                         private val inputSizes: IntArray, private val outputSize: Int) : Closeable {
+internal class LiteModel(
+    file: File,
+    private val inputNames: List<String>,
+    private val outputName: String,
+    private val inputSizes: IntArray,
+    private val outputSize: Int,
+) : Closeable {
     private val model: CompiledModel
     private val inputs: List<TensorBuffer>
     private val outputs: List<TensorBuffer>
@@ -111,7 +116,11 @@ class ResembleEnhancer(private val modelDirectory: File, private val dtype: Stri
         private val FLOW = ModelSpec("flow-step", listOf("state", "condition", "time"), "velocity", intArrayOf(LATENT, MEL, 1), LATENT)
         private val DECODER = ModelSpec("decoder", listOf("input"), "output", intArrayOf(LATENT), VOCODER_INPUT)
         private val VOCODER = ModelSpec(
-            "vocoder", listOf("conditioning", "noise"), "waveform", intArrayOf(VOCODER_INPUT, VOCODER_NOISE), AudioFeatures.SAMPLES,
+            "vocoder",
+            listOf("conditioning", "noise"),
+            "waveform",
+            intArrayOf(VOCODER_INPUT, VOCODER_NOISE),
+            AudioFeatures.SAMPLES,
         )
 
         // Relative cost of each stage per chunk, for smooth progress (flow runs the model 32 times).

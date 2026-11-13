@@ -22,13 +22,7 @@ object ModelFiles {
      * Returns the directory holding every file in [digests], keyed by relative file name.
      * Files that are missing or fail verification are downloaded from `$baseUrl/$name`.
      */
-    fun ensure(
-        root: File,
-        folder: String,
-        baseUrl: String,
-        digests: Map<String, String>,
-        listener: ProcessingListener,
-    ): File {
+    fun ensure(root: File, folder: String, baseUrl: String, digests: Map<String, String>, listener: ProcessingListener): File {
         val directory = File(root, folder)
         check(directory.isDirectory || directory.mkdirs()) { "Could not create model storage." }
         var index = 0

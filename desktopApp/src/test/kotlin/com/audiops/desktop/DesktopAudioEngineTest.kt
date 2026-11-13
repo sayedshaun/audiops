@@ -3,6 +3,12 @@ package com.audiops.desktop
 import com.audiops.app.AudioOperation
 import com.audiops.app.ProcessingListener
 import com.audiops.app.UnsupportedOnPlatformException
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.nio.ByteBuffer
@@ -15,18 +21,15 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.log10
 import kotlin.math.sin
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertThrows
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
 
 class DesktopAudioEngineTest {
     private lateinit var dir: File
 
     @Before fun setUp() {
-        dir = File.createTempFile("audiops-desktop", "").apply { delete(); mkdirs() }
+        dir = File.createTempFile("audiops-desktop", "").apply {
+            delete()
+            mkdirs()
+        }
     }
 
     @After fun tearDown() {

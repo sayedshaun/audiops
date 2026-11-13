@@ -3,9 +3,7 @@ package com.audiops.app
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlin.random.Random
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job as CoroutineJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +18,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.random.Random
+import kotlinx.coroutines.Job as CoroutineJob
 
 enum class Tab { TOOLS, ACTIVITY, SETTINGS }
 
@@ -210,7 +210,9 @@ class AudiopsViewModel(
                 finish(jobId) { it.copy(status = JobStatus.CANCELLED, finishedAt = currentTimeMillis(), progress = null) }
                 _messages.trySend(UiMessage.Cancelled)
             }
+
             JobStatus.RUNNING -> if (runningId == jobId) runningJob?.cancel()
+
             else -> Unit
         }
     }
@@ -282,6 +284,7 @@ class AudiopsViewModel(
             val done = runOnWorker {
                 when (val spec = job.spec) {
                     JobSpec.Enhance -> job.copy(outputPath = engine.enhance(job.inputId, listener))
+
                     is JobSpec.Transcribe -> {
                         val path = engine.transcribe(job.inputId, spec.language.code, listener)
                         val text = engine.readText(path)
@@ -292,7 +295,9 @@ class AudiopsViewModel(
                             job.copy(outputPath = path, preview = text.take(PREVIEW_LENGTH))
                         }
                     }
+
                     is JobSpec.Process -> job.copy(outputPath = engine.process(job.inputId, spec.operations, listener))
+
                     JobSpec.Analyze -> job.copy(report = engine.analyze(job.inputId, listener))
                 }
             }
@@ -311,7 +316,13 @@ class AudiopsViewModel(
                 else -> FailureKind.PROCESSING
             }
             finish(job.id) {
-                it.copy(status = JobStatus.FAILED, finishedAt = currentTimeMillis(), progress = null, failure = kind, failureDetail = e.message)
+                it.copy(
+                    status = JobStatus.FAILED,
+                    finishedAt = currentTimeMillis(),
+                    progress = null,
+                    failure = kind,
+                    failureDetail = e.message,
+                )
             }
             _messages.trySend(UiMessage.JobFailed(job.tool))
         }

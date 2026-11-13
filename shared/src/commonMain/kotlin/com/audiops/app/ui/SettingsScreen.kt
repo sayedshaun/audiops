@@ -65,18 +65,64 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalUriHandler
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.audiops.shared.resources.*
-import org.jetbrains.compose.resources.StringResource
 import com.audiops.app.SpeechLanguage
 import com.audiops.app.ThemeMode
 import com.audiops.app.UserSettings
+import com.audiops.shared.resources.Res
+import com.audiops.shared.resources.action_cancel
+import com.audiops.shared.resources.action_clear
+import com.audiops.shared.resources.action_delete
+import com.audiops.shared.resources.clear_history_body
+import com.audiops.shared.resources.clear_history_title
+import com.audiops.shared.resources.license_androidx
+import com.audiops.shared.resources.license_androidx_summary
+import com.audiops.shared.resources.license_bangla
+import com.audiops.shared.resources.license_bangla_summary
+import com.audiops.shared.resources.license_resemble
+import com.audiops.shared.resources.license_resemble_summary
+import com.audiops.shared.resources.license_sherpa
+import com.audiops.shared.resources.license_sherpa_summary
+import com.audiops.shared.resources.open_link
+import com.audiops.shared.resources.settings_default_language
+import com.audiops.shared.resources.settings_dynamic_color
+import com.audiops.shared.resources.settings_dynamic_color_desktop
+import com.audiops.shared.resources.settings_dynamic_color_summary
+import com.audiops.shared.resources.settings_dynamic_color_unsupported
+import com.audiops.shared.resources.settings_keep_screen_on
+import com.audiops.shared.resources.settings_keep_screen_on_summary
+import com.audiops.shared.resources.settings_licenses
+import com.audiops.shared.resources.settings_models
+import com.audiops.shared.resources.settings_models_busy
+import com.audiops.shared.resources.settings_models_delete_body
+import com.audiops.shared.resources.settings_models_delete_title
+import com.audiops.shared.resources.settings_models_measuring
+import com.audiops.shared.resources.settings_models_none
+import com.audiops.shared.resources.settings_models_used
+import com.audiops.shared.resources.settings_outputs
+import com.audiops.shared.resources.settings_outputs_used
+import com.audiops.shared.resources.settings_privacy
+import com.audiops.shared.resources.settings_privacy_summary
+import com.audiops.shared.resources.settings_pure_black
+import com.audiops.shared.resources.settings_pure_black_summary
+import com.audiops.shared.resources.settings_section_about
+import com.audiops.shared.resources.settings_section_appearance
+import com.audiops.shared.resources.settings_section_processing
+import com.audiops.shared.resources.settings_section_storage
+import com.audiops.shared.resources.settings_section_transcription
+import com.audiops.shared.resources.settings_theme
+import com.audiops.shared.resources.settings_title
+import com.audiops.shared.resources.settings_version
+import com.audiops.shared.resources.theme_dark
+import com.audiops.shared.resources.theme_light
+import com.audiops.shared.resources.theme_system
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 /** Events from [SettingsScreen]; the screen holds only transient dialog state. */
 data class SettingsActions(
@@ -92,7 +138,11 @@ data class SettingsActions(
 private data class LicenseEntry(val title: StringResource, val summary: StringResource, val url: String)
 
 private val licenses = listOf(
-    LicenseEntry(Res.string.license_resemble, Res.string.license_resemble_summary, "https://huggingface.co/SayedShaun/resemble-enhance-litert"),
+    LicenseEntry(
+        Res.string.license_resemble,
+        Res.string.license_resemble_summary,
+        "https://huggingface.co/SayedShaun/resemble-enhance-litert",
+    ),
     LicenseEntry(Res.string.license_sherpa, Res.string.license_sherpa_summary, "https://github.com/k2-fsa/sherpa-onnx"),
     LicenseEntry(Res.string.license_bangla, Res.string.license_bangla_summary, "https://huggingface.co/SayedShaun/bangla-zipformer-onnx"),
     LicenseEntry(Res.string.license_androidx, Res.string.license_androidx_summary, "https://developer.android.com/jetpack/androidx"),
@@ -203,7 +253,6 @@ fun SettingsScreen(
                         )
                     })
                 }
-
             }
             if (!isDesktop) {
                 item { SectionHeader(stringResource(Res.string.settings_section_processing)) }

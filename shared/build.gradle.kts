@@ -7,8 +7,8 @@ plugins {
 }
 
 // Versions shared by the source sets below.
-val cmp = "1.12.2"                 // Compose Multiplatform, stable (maps to Jetpack Compose 1.12.1)
-val material3 = "1.12.0-alpha03"   // CMP Material 3 with the Expressive APIs (Jetpack 1.5.0-alpha22)
+val cmp = "1.12.2" // Compose Multiplatform, stable (maps to Jetpack Compose 1.12.1)
+val material3 = "1.12.0-alpha03" // CMP Material 3 with the Expressive APIs (Jetpack 1.5.0-alpha22)
 val lifecycle = "2.11.0"
 
 kotlin {
@@ -52,6 +52,7 @@ kotlin {
         }
         desktopTest.dependencies {
             implementation("junit:junit:4.13.2")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
         }
     }
 }

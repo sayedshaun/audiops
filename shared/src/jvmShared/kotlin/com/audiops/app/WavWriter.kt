@@ -11,7 +11,10 @@ class WavWriter(file: File, private val sampleRate: Int = 44_100) : AutoCloseabl
     private val output = RandomAccessFile(file, "rw")
     private var bytesWritten = 0L
 
-    init { output.setLength(0); output.write(ByteArray(44)) }
+    init {
+        output.setLength(0)
+        output.write(ByteArray(44))
+    }
 
     fun append(samples: FloatArray) {
         val newSize = bytesWritten + samples.size.toLong() * 2
@@ -19,7 +22,10 @@ class WavWriter(file: File, private val sampleRate: Int = 44_100) : AutoCloseabl
         val buffer = ByteBuffer.allocate(8192).order(ByteOrder.LITTLE_ENDIAN)
         for (sample in samples) {
             require(sample.isFinite()) { "Enhanced audio contains invalid samples." }
-            if (buffer.remaining() < 2) { output.write(buffer.array(), 0, buffer.position()); buffer.clear() }
+            if (buffer.remaining() < 2) {
+                output.write(buffer.array(), 0, buffer.position())
+                buffer.clear()
+            }
             buffer.putShort((sample.coerceIn(-1f, 1f) * 32767f).roundToInt().toShort())
         }
         output.write(buffer.array(), 0, buffer.position())
@@ -34,6 +40,8 @@ class WavWriter(file: File, private val sampleRate: Int = 44_100) : AutoCloseabl
             header.put("data".toByteArray()).putInt(bytesWritten.toInt())
             output.seek(0)
             output.write(header.array())
-        } finally { output.close() }
+        } finally {
+            output.close()
+        }
     }
 }

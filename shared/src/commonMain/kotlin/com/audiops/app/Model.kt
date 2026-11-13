@@ -43,59 +43,79 @@ val SupportedSampleRates = listOf(8_000, 16_000, 22_050, 44_100, 48_000)
  */
 @Serializable
 sealed interface AudioOperation {
-    @Serializable @SerialName("trim")
+    @Serializable
+    @SerialName("trim")
     data class Trim(val startMs: Long, val endMs: Long) : AudioOperation
 
-    @Serializable @SerialName("gain")
+    @Serializable
+    @SerialName("gain")
     data class Gain(val db: Float) : AudioOperation
 
     /** Peak normalization to [peakDb] dBFS. */
-    @Serializable @SerialName("normalize_peak")
+    @Serializable
+    @SerialName("normalize_peak")
     data class NormalizePeak(val peakDb: Float = -1f) : AudioOperation
 
     /** Integrated-loudness normalization (ITU-R BS.1770) with a peak limiter. */
-    @Serializable @SerialName("normalize_loudness")
+    @Serializable
+    @SerialName("normalize_loudness")
     data class NormalizeLoudness(val target: LoudnessTarget) : AudioOperation
 
-    @Serializable @SerialName("fade")
+    @Serializable
+    @SerialName("fade")
     data class Fade(val inMs: Long, val outMs: Long) : AudioOperation
 
-    @Serializable @SerialName("equalizer")
+    @Serializable
+    @SerialName("equalizer")
     data class Equalizer(val preset: EqPreset) : AudioOperation
 
     /** Tempo and pitch. [speed] 1 = unchanged; [semitones] 0 = unchanged. */
-    @Serializable @SerialName("speed_pitch")
+    @Serializable
+    @SerialName("speed_pitch")
     data class SpeedPitch(val speed: Float, val semitones: Float) : AudioOperation
 
     /** Spectral noise reduction. [strength] in 0..1. */
-    @Serializable @SerialName("denoise")
+    @Serializable
+    @SerialName("denoise")
     data class Denoise(val strength: Float) : AudioOperation
 
-    @Serializable @SerialName("remove_silence")
+    @Serializable
+    @SerialName("remove_silence")
     data class RemoveSilence(val thresholdDb: Float, val minSilenceMs: Long, val paddingMs: Long) : AudioOperation
 
-    @Serializable @SerialName("resample")
+    @Serializable
+    @SerialName("resample")
     data class Resample(val sampleRate: Int) : AudioOperation
 }
 
 /** What a job does. */
 @Serializable
 sealed interface JobSpec {
-    @Serializable @SerialName("enhance")
+    @Serializable
+    @SerialName("enhance")
     data object Enhance : JobSpec
 
-    @Serializable @SerialName("transcribe")
+    @Serializable
+    @SerialName("transcribe")
     data class Transcribe(val language: SpeechLanguage) : JobSpec
 
-    @Serializable @SerialName("process")
+    @Serializable
+    @SerialName("process")
     data class Process(val operations: List<AudioOperation>) : JobSpec
 
-    @Serializable @SerialName("analyze")
+    @Serializable
+    @SerialName("analyze")
     data object Analyze : JobSpec
 }
 
 @Serializable
-enum class JobStatus { QUEUED, RUNNING, DONE, FAILED, CANCELLED;
+enum class JobStatus {
+    QUEUED,
+    RUNNING,
+    DONE,
+    FAILED,
+    CANCELLED,
+    ;
 
     val active: Boolean get() = this == QUEUED || this == RUNNING
 }
@@ -153,8 +173,7 @@ data class AudioInput(val id: String, val name: String)
 
 /** Downsampled peaks for drawing a waveform, plus the recording length. */
 data class WaveformData(val peaks: FloatArray, val durationMs: Long) {
-    override fun equals(other: Any?): Boolean =
-        other is WaveformData && durationMs == other.durationMs && peaks.contentEquals(other.peaks)
+    override fun equals(other: Any?): Boolean = other is WaveformData && durationMs == other.durationMs && peaks.contentEquals(other.peaks)
 
     override fun hashCode(): Int = 31 * peaks.contentHashCode() + durationMs.hashCode()
 }

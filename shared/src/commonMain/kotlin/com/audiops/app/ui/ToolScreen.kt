@@ -81,11 +81,63 @@ import com.audiops.app.SpeechLanguage
 import com.audiops.app.SupportedSampleRates
 import com.audiops.app.Tool
 import com.audiops.app.WaveformData
-import com.audiops.shared.resources.*
-import kotlin.math.roundToInt
-import kotlin.math.roundToLong
+import com.audiops.shared.resources.Res
+import com.audiops.shared.resources.action_cancel
+import com.audiops.shared.resources.action_change
+import com.audiops.shared.resources.action_choose
+import com.audiops.shared.resources.action_copy
+import com.audiops.shared.resources.action_reset
+import com.audiops.shared.resources.action_save_text
+import com.audiops.shared.resources.action_save_wav
+import com.audiops.shared.resources.convert_hint
+import com.audiops.shared.resources.denoise_hint
+import com.audiops.shared.resources.enhance_hint
+import com.audiops.shared.resources.level_light
+import com.audiops.shared.resources.level_medium
+import com.audiops.shared.resources.level_strong
+import com.audiops.shared.resources.option_fade_in
+import com.audiops.shared.resources.option_fade_out
+import com.audiops.shared.resources.option_gain
+import com.audiops.shared.resources.option_min_pause
+import com.audiops.shared.resources.option_pitch
+import com.audiops.shared.resources.option_silence_threshold
+import com.audiops.shared.resources.option_speed
+import com.audiops.shared.resources.option_strength
+import com.audiops.shared.resources.option_trim_range
+import com.audiops.shared.resources.recording_none
+import com.audiops.shared.resources.recording_pick_hint
+import com.audiops.shared.resources.recording_reading
+import com.audiops.shared.resources.recording_ready
+import com.audiops.shared.resources.report_clipping
+import com.audiops.shared.resources.report_dc
+import com.audiops.shared.resources.report_duration
+import com.audiops.shared.resources.report_hint
+import com.audiops.shared.resources.report_loudness
+import com.audiops.shared.resources.report_peak
+import com.audiops.shared.resources.report_rms
+import com.audiops.shared.resources.report_silence
+import com.audiops.shared.resources.report_title
+import com.audiops.shared.resources.result_ready_body
+import com.audiops.shared.resources.result_ready_title
+import com.audiops.shared.resources.sample_rate_khz
+import com.audiops.shared.resources.status_cancelled
+import com.audiops.shared.resources.step_language
+import com.audiops.shared.resources.step_options
+import com.audiops.shared.resources.step_recording
+import com.audiops.shared.resources.transcribe_hint
+import com.audiops.shared.resources.transcribe_language_hint
+import com.audiops.shared.resources.transcript_title
+import com.audiops.shared.resources.unit_dbfs
+import com.audiops.shared.resources.unit_lufs
+import com.audiops.shared.resources.volume_gain
+import com.audiops.shared.resources.volume_loudness
+import com.audiops.shared.resources.volume_loudness_hint
+import com.audiops.shared.resources.volume_peak
+import com.audiops.shared.resources.volume_peak_hint
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 /** Everything a tool screen needs, hoisted out of the ViewModel. */
 data class ToolScreenState(
@@ -124,7 +176,7 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
     val jobCardRequester = remember { BringIntoViewRequester() }
     LaunchedEffect(job?.id, job?.status) {
         if (job != null) {
-            delay(120)   // let the card enter the layout first
+            delay(120) // let the card enter the layout first
             jobCardRequester.bringIntoView()
         }
     }
@@ -272,7 +324,9 @@ private fun InputCard(
                             },
                             modifier = Modifier.fillMaxWidth().height(64.dp),
                         )
+
                         loading -> LoadingIndicator(Modifier.size(48.dp))
+
                         problem != null -> Text(
                             problem.text(),
                             style = MaterialTheme.typography.bodyMedium,
@@ -299,14 +353,14 @@ private fun InputCard(
 
 /** Tool option values. One instance holds every tool's settings; each tool reads its own. */
 data class ToolOptions(
-    val denoiseLevel: Int = 1,             // 0 light, 1 medium, 2 strong
+    val denoiseLevel: Int = 1, // 0 light, 1 medium, 2 strong
     val silenceThresholdDb: Float = -40f,
     val silenceMinSeconds: Float = 0.8f,
     val trimStart: Float = 0f,
     val trimEnd: Float = 1f,
     val fadeInSeconds: Float = 2f,
     val fadeOutSeconds: Float = 3f,
-    val volumeMode: Int = 0,               // 0 peak, 1 loudness, 2 gain
+    val volumeMode: Int = 0, // 0 peak, 1 loudness, 2 gain
     val loudnessTarget: LoudnessTarget = LoudnessTarget.PODCAST,
     val gainDb: Float = 3f,
     val speed: Float = 1f,
@@ -316,15 +370,22 @@ data class ToolOptions(
 ) {
     fun toSpec(tool: Tool, language: SpeechLanguage, durationMs: Long?): JobSpec = when (tool) {
         Tool.ENHANCE -> JobSpec.Enhance
+
         Tool.TRANSCRIBE -> JobSpec.Transcribe(language)
+
         Tool.ANALYZE -> JobSpec.Analyze
+
         Tool.DENOISE -> process(AudioOperation.Denoise(listOf(0.35f, 0.6f, 0.85f)[denoiseLevel]))
+
         Tool.SILENCE -> process(AudioOperation.RemoveSilence(silenceThresholdDb, (silenceMinSeconds * 1000).roundToLong(), 120))
+
         Tool.TRIM -> {
             val total = durationMs ?: 0L
             process(AudioOperation.Trim((trimStart * total).roundToLong(), (trimEnd * total).roundToLong()))
         }
+
         Tool.FADE -> process(AudioOperation.Fade((fadeInSeconds * 1000).roundToLong(), (fadeOutSeconds * 1000).roundToLong()))
+
         Tool.VOLUME -> process(
             when (volumeMode) {
                 0 -> AudioOperation.NormalizePeak(-1f)
@@ -332,8 +393,11 @@ data class ToolOptions(
                 else -> AudioOperation.Gain(gainDb)
             },
         )
+
         Tool.SPEED -> process(AudioOperation.SpeedPitch(speed, semitones))
+
         Tool.EQUALIZER -> process(AudioOperation.Equalizer(eqPreset))
+
         Tool.CONVERT -> process(AudioOperation.Resample(sampleRate))
     }
 
@@ -381,6 +445,7 @@ private fun ToolOptionsEditor(
             )
             Hint(stringResource(Res.string.transcribe_language_hint))
         }
+
         Tool.DENOISE -> {
             OptionLabel(stringResource(Res.string.option_strength))
             ConnectedChoice(
@@ -391,6 +456,7 @@ private fun ToolOptionsEditor(
             )
             Hint(stringResource(Res.string.denoise_hint))
         }
+
         Tool.SILENCE -> {
             LabeledSlider(
                 label = stringResource(Res.string.option_silence_threshold, signed(options.silenceThresholdDb)),
@@ -407,6 +473,7 @@ private fun ToolOptionsEditor(
                 onChange = { onChange(options.copy(silenceMinSeconds = it)) },
             )
         }
+
         Tool.TRIM -> {
             val total = durationMs ?: 0L
             OptionLabel(
@@ -427,6 +494,7 @@ private fun ToolOptionsEditor(
                 enabled = durationMs != null,
             )
         }
+
         Tool.FADE -> {
             LabeledSlider(
                 label = stringResource(Res.string.option_fade_in, decimal(options.fadeInSeconds, 1)),
@@ -443,6 +511,7 @@ private fun ToolOptionsEditor(
                 onChange = { onChange(options.copy(fadeOutSeconds = it)) },
             )
         }
+
         Tool.VOLUME -> {
             ConnectedChoice(
                 options = listOf(0, 1, 2),
@@ -452,6 +521,7 @@ private fun ToolOptionsEditor(
             )
             when (options.volumeMode) {
                 0 -> Hint(stringResource(Res.string.volume_peak_hint))
+
                 1 -> {
                     ConnectedChoice(
                         options = LoudnessTarget.entries,
@@ -461,6 +531,7 @@ private fun ToolOptionsEditor(
                     )
                     Hint(stringResource(Res.string.volume_loudness_hint, options.loudnessTarget.lufs.roundToInt()))
                 }
+
                 else -> LabeledSlider(
                     label = stringResource(Res.string.option_gain, signed(options.gainDb)),
                     value = options.gainDb,
@@ -470,6 +541,7 @@ private fun ToolOptionsEditor(
                 )
             }
         }
+
         Tool.SPEED -> {
             LabeledSlider(
                 label = stringResource(Res.string.option_speed, decimal(options.speed, 2)),
@@ -491,6 +563,7 @@ private fun ToolOptionsEditor(
                 Text(stringResource(Res.string.action_reset))
             }
         }
+
         Tool.EQUALIZER -> FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             EqPreset.entries.forEach { preset ->
                 ToggleButton(
@@ -500,6 +573,7 @@ private fun ToolOptionsEditor(
                 ) { Text(stringResource(preset.title)) }
             }
         }
+
         Tool.CONVERT -> {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SupportedSampleRates.forEach { rate ->
@@ -512,6 +586,7 @@ private fun ToolOptionsEditor(
             }
             Hint(stringResource(Res.string.convert_hint))
         }
+
         Tool.ENHANCE, Tool.ANALYZE -> Unit
     }
 }
@@ -531,13 +606,7 @@ private fun Hint(text: String) {
  * with many steps draw a dense row of tick marks in Material 3 Expressive.)
  */
 @Composable
-private fun LabeledSlider(
-    label: String,
-    value: Float,
-    range: ClosedFloatingPointRange<Float>,
-    step: Float,
-    onChange: (Float) -> Unit,
-) {
+private fun LabeledSlider(label: String, value: Float, range: ClosedFloatingPointRange<Float>, step: Float, onChange: (Float) -> Unit) {
     Column {
         OptionLabel(label)
         Slider(
@@ -608,7 +677,9 @@ fun JobCard(job: Job, actions: JobCardActions, modifier: Modifier = Modifier) {
                 }
             }
         }
+
         JobStatus.FAILED -> ErrorCard(job.failureText())
+
         // Cancelling was the user's choice, not a failure: neutral styling, not the error colours.
         JobStatus.CANCELLED -> Card(
             modifier = modifier.fillMaxWidth(),
@@ -621,6 +692,7 @@ fun JobCard(job: Job, actions: JobCardActions, modifier: Modifier = Modifier) {
                 Text(stringResource(Res.string.status_cancelled), color = colors.onSurfaceVariant)
             }
         }
+
         JobStatus.DONE -> when {
             job.report != null -> ReportCard(job.report)
             job.spec is JobSpec.Transcribe -> TranscriptCard(job, actions)

@@ -1,0 +1,27 @@
+# Formatting rules shared by editors and ktlint (run through Spotless: `make format`).
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{kt,kts}]
+max_line_length = 140
+ktlint_code_style = intellij_idea
+# Composable functions are PascalCase by convention.
+ktlint_function_naming_ignore_when_annotated_with = Composable
+# Top-level constants such as `SupportedSampleRates` and `PrimaryButtonHeight` follow Compose naming.
+ktlint_standard_property-naming = disabled
+
+[*.{yml,yaml,json,xml}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab
+
+[*.md]
+trim_trailing_whitespace = false

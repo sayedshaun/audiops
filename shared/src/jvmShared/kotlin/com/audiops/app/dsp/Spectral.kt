@@ -1,12 +1,12 @@
 package com.audiops.app.dsp
 
 import com.audiops.app.throwIfCancelled
+import org.jtransforms.fft.FloatFFT_1D
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.sqrt
-import org.jtransforms.fft.FloatFFT_1D
 
 /** STFT frame size and hop used by the spectral tools (46 ms frames, 75% overlap at 44.1 kHz). */
 internal const val STFT_SIZE = 2048
@@ -114,7 +114,9 @@ internal fun packedMagnitude(spectrum: FloatArray, k: Int): Float = when (k) {
 internal fun scaleBin(spectrum: FloatArray, k: Int, gain: Float) {
     when (k) {
         0 -> spectrum[0] *= gain
+
         STFT_SIZE / 2 -> spectrum[1] *= gain
+
         else -> {
             spectrum[2 * k] *= gain
             spectrum[2 * k + 1] *= gain

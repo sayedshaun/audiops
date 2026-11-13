@@ -1,6 +1,7 @@
 /* Resemble Enhance signal processing (MIT, Resemble AI): pure JVM, no inference runtime. */
 package com.audiops.app
 
+import org.jtransforms.fft.FloatFFT_1D
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.PI
@@ -10,7 +11,6 @@ import kotlin.math.hypot
 import kotlin.math.log10
 import kotlin.math.max
 import kotlin.math.sin
-import org.jtransforms.fft.FloatFFT_1D
 
 /** Fixed-shape DSP matching the experimental one-second exports. */
 class AudioFeatures(filterBytes: ByteArray) {
@@ -149,9 +149,11 @@ class AudioFeatures(filterBytes: ByteArray) {
 
 /** Upstream's exponential time mapping with 16 midpoint steps / 32 evaluations. */
 object MidpointSolver {
-    private val times = doubleArrayOf(0.0, 0.15483690, 0.28779418, 0.40196359, 0.5,
+    private val times = doubleArrayOf(
+        0.0, 0.15483690, 0.28779418, 0.40196359, 0.5,
         0.58418312, 0.65647053, 0.71854319, 0.77184451, 0.81761395, 0.85691582,
-        0.89066404, 0.91964338, 0.94452772, 0.96589571, 0.98424425, 1.0)
+        0.89066404, 0.91964338, 0.94452772, 0.96589571, 0.98424425, 1.0,
+    )
 
     fun integrate(initial: FloatArray, velocity: (FloatArray, Float) -> FloatArray): FloatArray {
         var state = initial.copyOf()
@@ -169,4 +171,3 @@ object MidpointSolver {
         return state
     }
 }
-

@@ -21,18 +21,18 @@ import javax.sound.sampled.UnsupportedAudioFileException
  * decoding uses Java Sound, which reads WAV, AIFF and AU. AI enhancement and transcription
  * are Android-only for now (next: sherpa-onnx's JVM build, an FFmpeg-based decoder).
  */
-class DesktopAudioEngine(dataDir: File) : JvmAudioEngine(
-    workDir = File(System.getProperty("java.io.tmpdir"), "audiops-work"),
-    outputDir = File(dataDir, "outputs"),
-    modelRoot = File(dataDir, "models"),
-) {
+class DesktopAudioEngine(dataDir: File) :
+    JvmAudioEngine(
+        workDir = File(System.getProperty("java.io.tmpdir"), "audiops-work"),
+        outputDir = File(dataDir, "outputs"),
+        modelRoot = File(dataDir, "models"),
+    ) {
     override val supportsEnhance: Boolean = false
     override val supportsTranscribe: Boolean = false
 
     override fun enhance(source: String, listener: ProcessingListener): String = throw UnsupportedOnPlatformException()
 
-    override fun transcribe(source: String, language: String, listener: ProcessingListener): String =
-        throw UnsupportedOnPlatformException()
+    override fun transcribe(source: String, language: String, listener: ProcessingListener): String = throw UnsupportedOnPlatformException()
 
     override fun decode(source: String): File {
         val stream = try {
@@ -42,18 +42,27 @@ class DesktopAudioEngine(dataDir: File) : JvmAudioEngine(
         }
         val sourceFormat = stream.format
         val pcmFormat = AudioFormat(
-            AudioFormat.Encoding.PCM_SIGNED, sourceFormat.sampleRate, 16, sourceFormat.channels,
-            sourceFormat.channels * 2, sourceFormat.sampleRate, false,
+            AudioFormat.Encoding.PCM_SIGNED,
+            sourceFormat.sampleRate,
+            16,
+            sourceFormat.channels,
+            sourceFormat.channels * 2,
+            sourceFormat.sampleRate,
+            false,
         )
         val pcm = AudioSystem.getAudioInputStream(pcmFormat, stream)
         val channels = pcmFormat.channels
         val rate = pcmFormat.sampleRate.toInt()
-        val resample = if (rate == PIPELINE_RATE) null else ProcessorChain(
-            listOfNotNull(
-                if (rate > PIPELINE_RATE) FilterChain.antiAlias(rate, PIPELINE_RATE) else null,
-                Resampler(rate.toDouble() / PIPELINE_RATE),
-            ),
-        )
+        val resample = if (rate == PIPELINE_RATE) {
+            null
+        } else {
+            ProcessorChain(
+                listOfNotNull(
+                    if (rate > PIPELINE_RATE) FilterChain.antiAlias(rate, PIPELINE_RATE) else null,
+                    Resampler(rate.toDouble() / PIPELINE_RATE),
+                ),
+            )
+        }
         val output = File.createTempFile("decoded-", ".pcm", workDir)
         try {
             PcmFile.Writer(output).use { writer ->

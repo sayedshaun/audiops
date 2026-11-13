@@ -97,13 +97,19 @@ cd audiops
 
 Point Gradle at the SDK with `ANDROID_HOME` or `local.properties`. Pass `-PaudiopsAbi=arm64-v8a` to build Android for a single ABI.
 
-### Tests
+### Tests and code style
 
 ```sh
-./gradlew :shared:desktopTest   # DSP correctness and performance, WAV, chunking, model maths
-./gradlew :desktopApp:test      # desktop engine and off-screen UI renders
-./gradlew :app:lintDebug        # Android lint
+make hooks          # once per clone: format check and unit tests before every commit
+make format         # format Kotlin and Gradle files (ktlint via Spotless)
+make check          # format check + unit tests
+make ci             # everything CI checks before a merge to main
+make help           # all commands
 ```
+
+The unit tests cover DSP correctness and speed, the job queue (ViewModel), history and settings storage, the history file format, WAV output, AI pre-processing maths, the desktop engine and off-screen UI renders. Every pull request to `main` must pass formatting, the unit tests, Android lint and the release build.
+
+See [CHANGELOG.md](CHANGELOG.md) for what changed in each release.
 
 ## Architecture
 

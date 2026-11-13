@@ -132,3 +132,25 @@ Entries are appended in order. Newest entries are at the bottom.
 ### Verified
 - Locally: a `.deb` builds with the icon and metadata; the CI signing path (base64 keystore → env) produces an APK signed with the given key, versionName 1.2.3 / versionCode 1002003, plus an AAB; desktop tests pass; README rendered through GitHub's Markdown API.
 - Not yet run on GitHub Actions: pushing workflow files needs a token with the `workflow` scope.
+
+## 2026-11-13: Tests, formatter, pre-commit hook, Makefile and changelog (`chore/tests-format-hooks`)
+
+### Added
+- **Formatter:** Spotless 8.9 with ktlint 1.8 (`intellij_idea` style, 140 columns) for every `.kt` and `.gradle.kts` file; rules in the new `.editorconfig`. The whole codebase was reformatted once (formatting only, no behaviour change).
+- **Unit tests** (shared tests 28 → 53):
+  - `ModelTest`: JSON round trip of every `AudioOperation` and `JobSpec`, stable stored type names, unknown fields and transient progress; progress maths; `latestJob`; waveform equality.
+  - `RepositoryTest`: history save/load order, active jobs excluded, 100-job cap, corrupt history; settings defaults, round trip and unknown enum values.
+  - `AudiopsViewModelTest` with a fake engine: success saved to history, waveform, failures, blank transcript → no speech, unsupported tools, one job at a time in queue order, cancelling running and queued jobs, delete and clear history, back navigation, snackbar message.
+- **`Makefile`:** `format`, `format-check`, `test`, `lint`, `build`, `release`, `check` (format + unit tests), `ci` (everything CI runs), `hooks`, `run-desktop`, `install`, `clean`, `help`.
+- **Pre-commit hook** (`.githooks/pre-commit`, installed with `make hooks`): when Kotlin or Gradle files are staged, runs `spotlessCheck` and the unit tests and blocks the commit on failure (`AUDIOPS_SKIP_TESTS=1` for format only).
+- **`CHANGELOG.md`:** user-facing release notes in Keep a Changelog format, with everything so far under Unreleased.
+
+### Changed
+- CI (`android.yml`) runs on pull requests to `main` and pushes to `main` as three jobs, Format and style, Unit tests, and Android lint and build, which can be made required checks for merging. Superseded runs of the same PR are cancelled. The release workflow also runs `spotlessCheck`.
+- `History.kt` → `HistoryRepository.kt` and `WavAudio.kt` → `WavWriter.kt` (ktlint file naming); Compose resource wildcard imports replaced by explicit imports.
+- AGENTS.md: agents must run `make check` before every commit, must not bypass the hook or weaken rules or tests, and must keep `CHANGELOG.md`; new code style and test map sections. CLAUDE.md, CONTRIBUTING.md, README and the PR template point to the Makefile.
+
+### Verified
+- `make ci` passes locally (spotlessCheck, 53 shared + 7 desktop tests, lint 0 errors, R8 release build); androidTest sources compile.
+- The shared suite passed 25 reruns (one earlier run failed once and did not reproduce; ViewModel scopes are now cancelled after each test).
+- The hook passes on clean code and blocks a deliberately misformatted file.

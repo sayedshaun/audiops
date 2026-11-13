@@ -8,11 +8,12 @@ import java.io.File
  * Android engine: MediaCodec decoding, LiteRT enhancement and sherpa-onnx transcription.
  * DSP tools, analysis, waveform and storage come from [JvmAudioEngine].
  */
-class AndroidAudioEngine(context: Context) : JvmAudioEngine(
-    workDir = File(context.applicationContext.cacheDir, "work"),
-    outputDir = File(context.applicationContext.filesDir, "outputs"),
-    modelRoot = context.applicationContext.noBackupFilesDir,
-) {
+class AndroidAudioEngine(context: Context) :
+    JvmAudioEngine(
+        workDir = File(context.applicationContext.cacheDir, "work"),
+        outputDir = File(context.applicationContext.filesDir, "outputs"),
+        modelRoot = context.applicationContext.noBackupFilesDir,
+    ) {
     private val context = context.applicationContext
 
     override val supportsEnhance: Boolean = true
