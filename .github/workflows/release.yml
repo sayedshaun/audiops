@@ -1,0 +1,197 @@
+name: Release
+
+# Builds and publishes Audiops when a GitHub Release is published.
+# Tag format: v<MAJOR>.<MINOR>.<PATCH>, for example v1.2.0 (an optional -suffix marks a pre-release).
+#
+# Optional repository secrets for a signed Android release:
+#   ANDROID_KEYSTORE_BASE64   base64 of the .jks keystore
+#   ANDROID_KEYSTORE_PASSWORD keystore password
+#   ANDROID_KEY_ALIAS         key alias
+#   ANDROID_KEY_PASSWORD      key password
+# Without them the APK is published unsigned (marked "unsigned" in its name).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to build, for example v1.2.0"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ github.event.release.tag_name || inputs.tag }}
+
+jobs:
+  version:
+    name: Resolve version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      numeric: ${{ steps.v.outputs.numeric }}
+      code: ${{ steps.v.outputs.code }}
+    steps:
+      - id: v
+        name: Parse tag
+        run: |
+          if [[ ! "$TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Tag '$TAG' must look like v1.2.3 (optionally v1.2.3-beta.1)"
+            exit 1
+          fi
+          major=${BASH_REMATCH[1]}; minor=${BASH_REMATCH[2]}; patch=${BASH_REMATCH[3]}
+          if (( major > 255 || minor > 255 || patch > 65535 )); then
+            echo "::error::Windows installers need MAJOR<=255, MINOR<=255, PATCH<=65535"
+            exit 1
+          fi
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "numeric=$major.$minor.$patch" >> "$GITHUB_OUTPUT"
+          # Android versionCode must increase with every release.
+          echo "code=$(( major * 1000000 + minor * 1000 + patch ))" >> "$GITHUB_OUTPUT"
+
+  android:
+    name: Android
+    needs: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # The runner image ships an Android SDK (ANDROID_HOME); Gradle installs missing platforms.
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Decode signing keystore
+        id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+            echo "keystore=$RUNNER_TEMP/release.jks" >> "$GITHUB_OUTPUT"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::No signing secrets: the APK will be unsigned."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Test and build release APK and App Bundle
+        env:
+          AUDIOPS_KEYSTORE: ${{ steps.signing.outputs.keystore }}
+          AUDIOPS_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          AUDIOPS_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          AUDIOPS_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: >
+          ./gradlew --no-daemon
+          -PaudiopsVersion=${{ needs.version.outputs.version }}
+          -PaudiopsVersionCode=${{ needs.version.outputs.code }}
+          :shared:desktopTest :app:lintRelease :app:assembleRelease :app:bundleRelease
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p dist
+          v=${{ needs.version.outputs.version }}
+          if [ "${{ steps.signing.outputs.signed }}" = "true" ]; then
+            cp app/build/outputs/apk/release/app-release.apk "dist/audiops-$v-android.apk"
+            cp app/build/outputs/bundle/release/app-release.aab "dist/audiops-$v-android.aab"
+          else
+            cp app/build/outputs/apk/release/app-release-unsigned.apk "dist/audiops-$v-android-unsigned.apk"
+          fi
+          ls -la dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: dist/*
+          if-no-files-found: error
+
+  desktop:
+    name: Desktop (${{ matrix.name }})
+    needs: version
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-latest
+            tasks: :desktopApp:packageDeb :desktopApp:packageRpm
+          - name: Windows
+            os: windows-latest
+            tasks: :desktopApp:packageMsi :desktopApp:packageExe
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install RPM tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y rpm fakeroot
+
+      - name: Test and package
+        shell: bash
+        run: ./gradlew --no-daemon -PaudiopsVersion=${{ needs.version.outputs.numeric }} :desktopApp:test ${{ matrix.tasks }}
+
+      - name: Collect artifacts
+        shell: bash
+        run: |
+          mkdir -p dist
+          v=${{ needs.version.outputs.version }}
+          shopt -s nullglob
+          for f in desktopApp/build/compose/binaries/main/*/*.{deb,rpm,msi,exe}; do
+            ext="${f##*.}"
+            case "$ext" in
+              deb) name="audiops-$v-linux-amd64.deb" ;;
+              rpm) name="audiops-$v-linux-x86_64.rpm" ;;
+              msi) name="audiops-$v-windows-x64.msi" ;;
+              exe) name="audiops-$v-windows-x64-setup.exe" ;;
+            esac
+            cp "$f" "dist/$name"
+          done
+          ls -la dist
+          [ -n "$(ls dist)" ] || { echo "::error::No installers were produced"; exit 1; }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.name }}
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish to the release
+    needs: [version, android, desktop]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum * | tee SHA256SUMS.txt
+
+      - name: Upload to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" dist/* --clobber --repo "$GITHUB_REPOSITORY"
