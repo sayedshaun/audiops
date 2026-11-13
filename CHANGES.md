@@ -203,3 +203,14 @@ Entries are appended in order. Newest entries are at the bottom.
 - Built the 0.1.0 `.deb` (96 MB; Depends lists ALSA, X11 and GL libraries) and unpacked it: menu entry `Name=Audiops`, launcher `/opt/audiops/bin/Audiops`, icon. The packaged app opens its window (screenshot: Tools tab, dark theme, navigation rail, AI tools marked "Android only") and closes cleanly.
 - Ran every DSP tool through the packaged runtime and jars (a test main class swapped into the launcher config, on a 20 s 48 kHz stereo WAV): denoise, remove silence (20 s → 14.5 s), trim (5.000 s), fade, loudness (−16.0 LUFS), peak (−1.0 dB), gain, speed 1.5× (13.3 s), equalizer, resample; waveform and analysis. The trimmed Java runtime has every module the engine needs.
 - `packageRpm` cannot run here (no `rpmbuild`); the release dry run builds it on CI.
+
+## 2026-11-13: Release v0.1.0 (`docs/release-0.1.0`)
+
+### Released
+- Published https://github.com/sayedshaun/audiops/releases/tag/v0.1.0 from `79069a4`. The release workflow built and attached the Linux DEB/RPM, Windows MSI/EXE, checksums and release notes from `CHANGELOG.md`.
+- The signing secrets could not be uploaded to GitHub from this session, so CI produced unsigned APKs. The Android APKs (arm64-v8a, armeabi-v7a, x86_64, x86, universal) and the AAB were built locally from the same commit with the release key, uploaded in their place, and `SHA256SUMS.txt` was regenerated. CONTRIBUTING.md documents this procedure.
+
+### Verified
+- Downloaded every asset from the release: all ten checksums match; the APK certificate is the release key (`c147c216…`), versionName 0.1.0, versionCode 1000.
+- Installed the released x86_64 APK on the emulator as an update over the locally tested build: launches, history kept, no crashes. Before the release, the same signed build passed English transcription (accurate), noise reduction and the pinned, digest-verified download of all six Resemble files (enhancement itself runs out of memory on the 4 GB emulator and fails gracefully).
+- The released `.deb` unpacks with `Name=Audiops` and the app opens.
