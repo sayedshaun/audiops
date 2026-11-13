@@ -137,3 +137,12 @@ Entries are appended in order. Newest entries are at the bottom.
 
 ### Added
 - README "Models" section: which model each tool and language option uses (Resemble Enhance for Enhance speech; Whisper Tiny for Auto, English and Hindi; Bangla Zipformer for Bangla; no model for DSP tools), with runtime, files, download size (from the pinned Hugging Face revisions), license, how each pipeline runs, memory needs, verification, storage and deletion.
+
+## 2026-11-13: Download table, architecture image and licence (`docs/readme-models`)
+
+### Changed
+- README Download table lists file types and install commands instead of full versioned file names (the release page shows those).
+- README architecture is an SVG image (`docs/images/architecture-{light,dark}.svg`, switched by GitHub's theme) instead of a Mermaid diagram that rendered poorly.
+
+### Added
+- `LICENSE`: Apache License 2.0 (canonical text) for Audiops' own code, and `NOTICE` with the copyright line and third-party attributions. README licence section and badge, AGENTS.md licence rules and `CHANGELOG.md` updated. Desktop installers now pick up `LICENSE` automatically.

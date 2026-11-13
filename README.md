@@ -4,7 +4,7 @@
 
 <br>
 
-[![Build and test](https://github.com/sayedshaun/audiops/actions/workflows/android.yml/badge.svg)](https://github.com/sayedshaun/audiops/actions/workflows/android.yml) [![Release](https://img.shields.io/github/v/release/sayedshaun/audiops?include_prereleases&sort=semver&label=release)](https://github.com/sayedshaun/audiops/releases) ![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20Linux%20%7C%20Windows-5B47C8) ![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin-Multiplatform-7F52FF?logo=kotlin&logoColor=white) ![Material 3 Expressive](https://img.shields.io/badge/Material%203-Expressive-6750A4?logo=materialdesign&logoColor=white)
+[![Build and test](https://github.com/sayedshaun/audiops/actions/workflows/android.yml/badge.svg)](https://github.com/sayedshaun/audiops/actions/workflows/android.yml) [![Release](https://img.shields.io/github/v/release/sayedshaun/audiops?include_prereleases&sort=semver&label=release)](https://github.com/sayedshaun/audiops/releases) [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE) ![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20Linux%20%7C%20Windows-5B47C8) ![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin-Multiplatform-7F52FF?logo=kotlin&logoColor=white) ![Material 3 Expressive](https://img.shields.io/badge/Material%203-Expressive-6750A4?logo=materialdesign&logoColor=white)
 
 **Clean up, edit, transcribe and analyze audio, entirely on your device.**<br>
 Nothing you open is uploaded. AI models download once, then run offline.
@@ -92,14 +92,14 @@ Only the two AI tools use machine-learning models. Every other tool is classic s
 
 ## Download
 
-Get the latest build from [**Releases**](https://github.com/sayedshaun/audiops/releases/latest). Each release contains:
+Get the latest build from [**Releases**](https://github.com/sayedshaun/audiops/releases/latest) and pick the file for your system:
 
-| Platform | File | Notes |
+| Platform | File | How to install |
 | --- | --- | --- |
-| Android 8.0+ | `audiops-<version>-android.apk` | Install directly (allow installs from your browser or file manager). |
-| Linux (Debian, Ubuntu) | `audiops-<version>-linux-amd64.deb` | `sudo apt install ./audiops-<version>-linux-amd64.deb` |
-| Linux (Fedora, openSUSE) | `audiops-<version>-linux-x86_64.rpm` | `sudo dnf install ./audiops-<version>-linux-x86_64.rpm` |
-| Windows 10/11 | `audiops-<version>-windows-x64.msi` or `…-setup.exe` | Standard installer. |
+| Android 8.0+ | `.apk` | Open it on your phone (allow installs from your browser or file manager). |
+| Linux (Debian, Ubuntu) | `.deb` | `sudo apt install ./audiops-*.deb` |
+| Linux (Fedora, openSUSE) | `.rpm` | `sudo dnf install ./audiops-*.rpm` |
+| Windows 10/11 | `.msi` or `-setup.exe` | Run the installer. |
 
 Every release includes `SHA256SUMS.txt`. Verify a download with `sha256sum -c SHA256SUMS.txt --ignore-missing`.
 
@@ -136,18 +136,10 @@ Point Gradle at the SDK with `ANDROID_HOME` or `local.properties`. Pass `-Paudio
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    subgraph shared["shared (Kotlin Multiplatform)"]
-        UI["Compose UI<br>Material 3 Expressive"] --> VM["AudiopsViewModel<br>job queue, history, settings"]
-        VM --> Engine["AudioEngine<br>interface"]
-        Core["jvmShared<br>DSP pipeline, WAV, downloads"]
-    end
-    Engine --> Android["app<br>MediaCodec, LiteRT, sherpa-onnx"]
-    Engine --> Desktop["desktopApp<br>Java Sound"]
-    Android --> Core
-    Desktop --> Core
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/architecture-dark.svg">
+  <img alt="Audiops architecture: the shared Kotlin Multiplatform module holds the Compose UI, AudiopsViewModel and the AudioEngine interface; JvmAudioEngine implements it with the streaming DSP core; the Android and desktop engines extend JvmAudioEngine." src="docs/images/architecture-light.svg" width="100%">
+</picture>
 
 - **`shared`**: the whole UI, state and the platform-neutral audio core. Screens are stateless (state in, events out); one ViewModel owns the job queue.
 - **`app`**: the Android host and engine. AI enhancement runs in a separate process, so a memory kill can never close the app.
@@ -178,4 +170,6 @@ Bug reports, ideas and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBU
 
 ## License
 
-A license for Audiops' own source code has not been chosen yet. Until one is added, the code is visible but not licensed for reuse. Third-party models and libraries keep their own licenses, listed above and in [`licenses/`](licenses).
+Audiops is licensed under the [Apache License 2.0](LICENSE). Copyright 2026 Sayed Shaun; see [`NOTICE`](NOTICE).
+
+Third-party models and libraries keep their own licenses, listed above and in [`licenses/`](licenses).

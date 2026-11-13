@@ -98,4 +98,4 @@ Compose Multiplatform 1.12.2 with CMP Material 3 `1.12.0-alpha03` (Jetpack `1.5.
 
 ## Licences
 
-Third-party licences are in `licenses/` and listed in Settings → Open-source licenses. Licensing for Audiops' own code has not been chosen yet; do not add a `LICENSE` file without the user's decision.
+Third-party licences are in `licenses/` and listed in Settings → Open-source licenses. Audiops' own code is licensed under Apache 2.0 (`LICENSE`, copyright notice in `NOTICE`). Do not change the licence without the user's decision. A new third-party dependency or model needs its licence in `licenses/`, in Settings → Open-source licenses, and in `NOTICE`; check that it is compatible with Apache 2.0.
