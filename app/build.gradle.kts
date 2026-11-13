@@ -3,9 +3,14 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+// Release version: set by the release workflow from the Git tag (v1.2.3 -> 1.2.3), with a
+// monotonically increasing version code. Local builds use the defaults below.
+val audiopsVersion: String = providers.gradleProperty("audiopsVersion").getOrElse("0.1.0")
+val audiopsVersionCode: Int = providers.gradleProperty("audiopsVersionCode").map(String::toInt).getOrElse(1)
+
 // Optional release signing. Set all four variables to sign release builds; otherwise
 // the release variant is produced unsigned.
-val releaseKeystore: String? = System.getenv("AUDIOOPS_KEYSTORE")
+val releaseKeystore: String? = System.getenv("AUDIOPS_KEYSTORE")?.takeIf { it.isNotBlank() }  // CI passes "" when unset
 
 android {
     namespace = "com.audiops.app"
@@ -15,8 +20,8 @@ android {
         applicationId = "com.audiops.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = audiopsVersionCode
+        versionName = audiopsVersion
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         providers.gradleProperty("audiopsAbi").orNull?.let { abi ->
             ndk { abiFilters += abi }
@@ -26,9 +31,9 @@ android {
     if (releaseKeystore != null) {
         signingConfigs.create("release") {
             storeFile = file(releaseKeystore)
-            storePassword = System.getenv("AUDIOOPS_KEYSTORE_PASSWORD")
-            keyAlias = System.getenv("AUDIOOPS_KEY_ALIAS")
-            keyPassword = System.getenv("AUDIOOPS_KEY_PASSWORD")
+            storePassword = System.getenv("AUDIOPS_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("AUDIOPS_KEY_ALIAS")
+            keyPassword = System.getenv("AUDIOPS_KEY_PASSWORD")
         }
     }
 

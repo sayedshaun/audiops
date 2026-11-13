@@ -1,12 +1,13 @@
 # Progress
 
-Snapshot as of 2026-11-13, branch `feature/audio-toolkit`. Updated in place; the history is in `CHANGES.md`.
+Snapshot as of 2026-11-13, branch `docs/readme-release-pipeline`. Updated in place; the history is in `CHANGES.md`.
 
 ## Status
 
 Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine on Linux/Windows desktop, a job queue with persistent history, and a Material 3 Expressive UI. Built, unit-tested, lint-checked, R8-built, and exercised end to end on an Android emulator.
 
 ### Done
+- **Repository:** public at github.com/sayedshaun/audiops, with README, logo, banner, CONTRIBUTING, SECURITY, issue and PR templates, and a release workflow that builds and attaches Android, Linux and Windows artifacts on every published release.
 - **Platforms:** `:shared` (Compose Multiplatform), `:app` (Android), `:desktopApp` (Linux/Windows; DEB/RPM/MSI/EXE packaging).
 - **Tools:** Enhance, Transcribe (Android); Noise reduction, Remove silence, Trim, Fade, Volume, Speed and pitch, Equalizer, Convert, Analyze (both platforms).
 - **UX:** bottom navigation / rail, Activity tab with queue and history, waveform preview, playback, save via system dialogs, cancel, haptics, auto-scroll to results, settings (theme, dynamic colour, pure black, default language, keep screen on, storage).
@@ -28,7 +29,7 @@ Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine o
 3. **APK size** (~148 MB, all ABIs): publish an App Bundle or add ABI splits.
 4. **LiteRT 2.3.2** is available (using 2.3.0).
 5. **Resemble model digests** for SHA-256 verification, and a lighter vocoder export (fp16/int8 activations) so enhancement fits 4 GB phones.
-6. **GitHub repository name:** the remote is still `SayedShaun/audioops`; rename it to `audiops` on GitHub, then update the remote URL.
+6. **Release signing secrets:** add `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD` to publish a signed APK and AAB (see CONTRIBUTING.md).
 
 ## Next steps
 

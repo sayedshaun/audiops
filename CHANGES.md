@@ -115,3 +115,20 @@ Entries are appended in order. Newest entries are at the bottom.
 - 28 shared tests, 7 desktop tests, lint 0 errors, androidTest compiles.
 - Emulator: transcription of real English speech is accurate (11 s clip in ~26 s); cancel during enhancement kills the worker within 3 s and the app stays alive; an out-of-memory enhancement fails gracefully with the app open; landscape shows the navigation rail; dark mode checked; R8 release build runs.
 - Not verified: a completed AI enhancement (needs a device with more free RAM than this 4 GB emulator).
+
+## 2026-11-13: Public repository, README and release pipeline (`docs/readme-release-pipeline`)
+
+### Added
+- Repository renamed to `audiops` and made public, with description and topics.
+- New README: banner, logo, badges, screenshots, feature and download tables, platform support, build instructions, architecture diagram, roadmap and acknowledgements. Assets in `docs/images/` (SVG logo and banner, screenshots).
+- `CONTRIBUTING.md` (setup, conventions, release process, signing secrets), `SECURITY.md`, issue forms and a pull request template.
+- `.github/workflows/release.yml`: on a published release (or manually for a tag) it validates the `vX.Y.Z` tag, runs tests, builds the Android APK and AAB (signed when secrets exist, otherwise an unsigned APK), Linux `.deb`/`.rpm` and Windows `.msi`/`.exe`, and attaches them with `SHA256SUMS.txt`.
+- Release version flows from the tag: `-PaudiopsVersion`/`-PaudiopsVersionCode` set the Android version and the desktop package version; the desktop app reads it at runtime.
+- Desktop installers and window use the Audiops icon.
+
+### Fixed
+- Android signing read `AUDIOOPS_*` environment variables (missed by the rename) instead of the documented `AUDIOPS_*`, and treated empty CI secrets as set.
+
+### Verified
+- Locally: a `.deb` builds with the icon and metadata; the CI signing path (base64 keystore → env) produces an APK signed with the given key, versionName 1.2.3 / versionCode 1002003, plus an AAB; desktop tests pass; README rendered through GitHub's Markdown API.
+- Not yet run on GitHub Actions: pushing workflow files needs a token with the `workflow` scope.
