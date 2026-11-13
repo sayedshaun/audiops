@@ -298,3 +298,21 @@ Entries are appended in order. Newest entries are at the bottom.
 
 ### Verified
 - Android 17 emulator, light and dark; desktop off-screen renders at 1375 px and 520 px.
+
+## 2026-11-13: Settings sections, per-model storage, more languages (`feature/settings-sections`)
+
+### Added
+- `SpeechLanguage` gains Arabic, Chinese, French, German, Indonesian, Italian, Japanese, Korean, Persian, Portuguese, Russian, Spanish, Turkish, Urdu and Vietnamese (Whisper codes). The pinned `whisper-tiny` is the multilingual openai/whisper-tiny (checked: the repo README and the 50,257-line `tokens.txt` matching our pinned digest). Bangla still routes to Bangla Zipformer.
+- `LanguagePicker.kt`: `LanguageField` (Transcribe) and a shared, scrollable `LanguageDialog` (Transcribe and Settings → Default spoken language), with the main languages first and a divider before the rest.
+- `AiModel` (ENHANCE, WHISPER, BANGLA). `AudioEngine.modelStorage(): Map<AiModel, Long>` and `deleteModel(model)` replace `modelStorageBytes()`/`deleteModels()`. `ModelFiles.storage`/`delete` map Enhance to `resemble-enhance` plus `xnnpack-cache`.
+
+### Changed
+- Settings → Storage shows one row per downloaded model (name, purpose, size, Delete with its own confirmation), then Processed files. The Enhance row includes its XNNPACK weight cache, so it shows about 1.4 GB once the cache is built.
+- Settings → About is two rows that open sub-pages: **About Audiops** (version, privacy, source code, the Apache 2.0 license) and **Open-source licenses** (third-party notices and one row per component). Back (system or the top-bar arrow) returns to the main page at the same scroll position.
+- Copy: the Transcribe description and language hint, README tables.
+
+### Tests
+- `ModelTest`: every language round-trips and has a unique two-letter Whisper code. `ModelFilesTest`: storage counted and deleted per model. `AudiopsViewModelTest`: models listed and deleted one by one.
+
+### Verified
+- Android 17 emulator: the Storage rows, the language dialog (main languages, divider, scrolling), the About and Licenses pages, Back keeping the scroll position, and the Transcribe field in dark mode. `make ci` passes.

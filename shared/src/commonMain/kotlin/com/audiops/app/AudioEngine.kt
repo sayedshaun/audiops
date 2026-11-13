@@ -42,11 +42,11 @@ interface AudioEngine {
     /** Deletes an app file (an output or temporary file). */
     fun deleteFile(path: String)
 
-    /** Bytes used by downloaded models. */
-    fun modelStorageBytes(): Long
+    /** Bytes used by each downloaded model; models that are not downloaded are absent. */
+    fun modelStorage(): Map<AiModel, Long>
 
-    /** Deletes every downloaded model; they download again on next use. */
-    fun deleteModels()
+    /** Deletes one downloaded model; it downloads again on next use. */
+    fun deleteModel(model: AiModel)
 
     /** Bytes used by processed files kept for the Activity tab. */
     fun outputStorageBytes(): Long

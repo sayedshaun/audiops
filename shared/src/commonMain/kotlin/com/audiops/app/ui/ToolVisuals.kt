@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialShapes
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.graphics.shapes.RoundedPolygon
+import com.audiops.app.AiModel
 import com.audiops.app.Tool
 import com.audiops.app.ToolCategory
 
@@ -61,3 +62,10 @@ fun ToolCategory.colors(scheme: ColorScheme): Pair<Color, Color> = when (this) {
     ToolCategory.EFFECTS -> scheme.primaryFixedDim to scheme.onPrimaryFixed
     ToolCategory.UTILITIES -> scheme.surfaceContainerHighest to scheme.onSurface
 }
+
+/** Icon for a downloadable model: the icon of the tool that uses it. */
+val AiModel.icon: ImageVector
+    get() = when (this) {
+        AiModel.ENHANCE -> Tool.ENHANCE.icon
+        AiModel.WHISPER, AiModel.BANGLA -> Tool.TRANSCRIBE.icon
+    }

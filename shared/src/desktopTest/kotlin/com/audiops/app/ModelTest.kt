@@ -45,6 +45,18 @@ class ModelTest {
         }
     }
 
+    @Test fun everyLanguageSurvivesAJsonRoundTripWithAUniqueWhisperCode() {
+        SpeechLanguage.entries.forEach { language ->
+            val spec: JobSpec = JobSpec.Transcribe(language)
+            assertEquals(spec, json.decodeFromString<JobSpec>(json.encodeToString(spec)))
+        }
+        val codes = SpeechLanguage.entries.map { it.code }
+        assertEquals(codes.size, codes.toSet().size)
+        assertTrue(codes.filter { it.isNotEmpty() }.all { it.length == 2 && it.all(Char::isLowerCase) })
+        assertEquals("", SpeechLanguage.AUTO.code)
+        assertEquals("bn", SpeechLanguage.BANGLA.code)
+    }
+
     @Test fun storedTypeNamesStayStable() {
         // History written by older versions must keep loading: these names are a file format.
         val encoded = json.encodeToString<JobSpec>(JobSpec.Process(listOf(AudioOperation.NormalizePeak(-1f))))

@@ -1,6 +1,7 @@
 package com.audiops.app.ui
 
 import androidx.compose.runtime.Composable
+import com.audiops.app.AiModel
 import com.audiops.app.AudioOperation
 import com.audiops.app.EqPreset
 import com.audiops.app.FailureKind
@@ -40,10 +41,25 @@ import com.audiops.shared.resources.error_unknown
 import com.audiops.shared.resources.error_unreadable
 import com.audiops.shared.resources.error_unsupported_format
 import com.audiops.shared.resources.error_unsupported_platform
+import com.audiops.shared.resources.language_arabic
 import com.audiops.shared.resources.language_auto
 import com.audiops.shared.resources.language_bangla
+import com.audiops.shared.resources.language_chinese
 import com.audiops.shared.resources.language_english
+import com.audiops.shared.resources.language_french
+import com.audiops.shared.resources.language_german
 import com.audiops.shared.resources.language_hindi
+import com.audiops.shared.resources.language_indonesian
+import com.audiops.shared.resources.language_italian
+import com.audiops.shared.resources.language_japanese
+import com.audiops.shared.resources.language_korean
+import com.audiops.shared.resources.language_persian
+import com.audiops.shared.resources.language_portuguese
+import com.audiops.shared.resources.language_russian
+import com.audiops.shared.resources.language_spanish
+import com.audiops.shared.resources.language_turkish
+import com.audiops.shared.resources.language_urdu
+import com.audiops.shared.resources.language_vietnamese
 import com.audiops.shared.resources.loudness_broadcast
 import com.audiops.shared.resources.loudness_podcast
 import com.audiops.shared.resources.loudness_streaming
@@ -54,6 +70,12 @@ import com.audiops.shared.resources.message_job_failed
 import com.audiops.shared.resources.message_job_finished
 import com.audiops.shared.resources.message_models_deleted
 import com.audiops.shared.resources.message_saved
+import com.audiops.shared.resources.model_bangla
+import com.audiops.shared.resources.model_bangla_purpose
+import com.audiops.shared.resources.model_enhance
+import com.audiops.shared.resources.model_enhance_purpose
+import com.audiops.shared.resources.model_whisper
+import com.audiops.shared.resources.model_whisper_purpose
 import com.audiops.shared.resources.stage_model_download_percent
 import com.audiops.shared.resources.stage_percent
 import com.audiops.shared.resources.stage_preparing
@@ -110,6 +132,36 @@ val SpeechLanguage.label: StringResource
         SpeechLanguage.BANGLA -> Res.string.language_bangla
         SpeechLanguage.ENGLISH -> Res.string.language_english
         SpeechLanguage.HINDI -> Res.string.language_hindi
+        SpeechLanguage.ARABIC -> Res.string.language_arabic
+        SpeechLanguage.CHINESE -> Res.string.language_chinese
+        SpeechLanguage.FRENCH -> Res.string.language_french
+        SpeechLanguage.GERMAN -> Res.string.language_german
+        SpeechLanguage.INDONESIAN -> Res.string.language_indonesian
+        SpeechLanguage.ITALIAN -> Res.string.language_italian
+        SpeechLanguage.JAPANESE -> Res.string.language_japanese
+        SpeechLanguage.KOREAN -> Res.string.language_korean
+        SpeechLanguage.PERSIAN -> Res.string.language_persian
+        SpeechLanguage.PORTUGUESE -> Res.string.language_portuguese
+        SpeechLanguage.RUSSIAN -> Res.string.language_russian
+        SpeechLanguage.SPANISH -> Res.string.language_spanish
+        SpeechLanguage.TURKISH -> Res.string.language_turkish
+        SpeechLanguage.URDU -> Res.string.language_urdu
+        SpeechLanguage.VIETNAMESE -> Res.string.language_vietnamese
+    }
+
+val AiModel.title: StringResource
+    get() = when (this) {
+        AiModel.ENHANCE -> Res.string.model_enhance
+        AiModel.WHISPER -> Res.string.model_whisper
+        AiModel.BANGLA -> Res.string.model_bangla
+    }
+
+/** What the model is used for. */
+val AiModel.purpose: StringResource
+    get() = when (this) {
+        AiModel.ENHANCE -> Res.string.model_enhance_purpose
+        AiModel.WHISPER -> Res.string.model_whisper_purpose
+        AiModel.BANGLA -> Res.string.model_bangla_purpose
     }
 
 val Tool.title: StringResource

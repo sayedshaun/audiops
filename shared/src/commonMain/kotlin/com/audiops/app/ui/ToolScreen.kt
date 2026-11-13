@@ -437,12 +437,7 @@ private fun ToolOptionsEditor(
 ) {
     when (tool) {
         Tool.TRANSCRIBE -> {
-            ConnectedChoice(
-                options = SpeechLanguage.entries,
-                selected = language,
-                label = { stringResource(it.label) },
-                onSelect = onLanguage,
-            )
+            LanguageField(selected = language, onSelect = onLanguage)
             Hint(stringResource(Res.string.transcribe_language_hint))
         }
 

@@ -68,13 +68,17 @@ class ModelFilesTest {
         assertFalse("old revision removed", File(root, "resemble-enhance/old").exists())
     }
 
-    @Test fun storageCountsAndDeleteRemovesEveryModel() {
+    @Test fun storageIsCountedAndDeletedPerModel() {
         write("resemble-enhance/rev/a.tflite", "12345")
+        write("xnnpack-cache/rev-a.xnnpack", "12")
         write("whisper-tiny/rev/b.onnx", "123")
         write("unrelated/c.txt", "1234567")
-        assertEquals(8L, ModelFiles.storageBytes(root))
-        ModelFiles.deleteAll(root)
-        assertEquals(0L, ModelFiles.storageBytes(root))
+        assertEquals(mapOf(AiModel.ENHANCE to 7L, AiModel.WHISPER to 3L), ModelFiles.storage(root))
+        ModelFiles.delete(root, AiModel.ENHANCE)
+        assertEquals(mapOf(AiModel.WHISPER to 3L), ModelFiles.storage(root))
+        assertFalse("weight cache deleted with Enhance", File(root, "xnnpack-cache").exists())
+        ModelFiles.delete(root, AiModel.WHISPER)
+        assertEquals(emptyMap<AiModel, Long>(), ModelFiles.storage(root))
         assertTrue(File(root, "unrelated/c.txt").exists())
     }
 

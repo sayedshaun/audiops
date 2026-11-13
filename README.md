@@ -27,7 +27,7 @@ Nothing you open is uploaded. AI models download once, then run offline.
 | | Tool | What it does |
 | :-: | --- | --- |
 | ✨ | **Enhance speech** | AI restoration of voice recordings ([Resemble Enhance](https://huggingface.co/SayedShaun/resemble-enhance-litert), LiteRT, mobile export). |
-| 🗣️ | **Transcribe** | Speech to text in Bangla, English and Hindi (Whisper Tiny and [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx) on sherpa-onnx). |
+| 🗣️ | **Transcribe** | Speech to text in Bangla, English, Hindi and 15 more major languages (Whisper Tiny and [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx) on sherpa-onnx). |
 | 🌊 | **Noise reduction** | Learns the noise from quiet passages and removes hiss, hum and steady background sound. |
 | ⏸️ | **Remove silence** | Shortens long pauses and keeps natural padding. |
 | ✂️ | **Trim** | Keep the part you need, chosen on the waveform. |
@@ -49,7 +49,7 @@ Only the two AI tools use machine-learning models. Every other tool is classic s
 | Tool (option) | Model | Runtime | Files | Download | License |
 | --- | --- | --- | --- | --: | --- |
 | **Enhance speech** | [Resemble Enhance](https://huggingface.co/SayedShaun/resemble-enhance-litert) `mobile` set: INT8 dynamic networks + a vocoder re-exported for XNNPACK (FP16) | [LiteRT](https://ai.google.dev/edge/litert), CPU | 5 networks + mel filter bank | ~570 MB | MIT |
-| **Transcribe** (Auto, English, Hindi) | [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny), INT8 ONNX | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), CPU | encoder, decoder, tokens | ~104 MB | MIT (OpenAI Whisper weights) · Apache 2.0 (ONNX export) |
+| **Transcribe** (Auto, English, Hindi, Arabic, Chinese, French, German, Indonesian, Italian, Japanese, Korean, Persian, Portuguese, Russian, Spanish, Turkish, Urdu, Vietnamese) | [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny), INT8 ONNX | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), CPU | encoder, decoder, tokens | ~104 MB | MIT (OpenAI Whisper weights) · Apache 2.0 (ONNX export) |
 | **Transcribe** (Bangla) | [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx/tree/5442ca3d447572aaa5ef6913684d8f24d6d916cc), INT8 transducer | sherpa-onnx, CPU | encoder, decoder, joiner, tokens | ~74 MB | CC BY-SA 4.0 |
 | All other tools | None | Kotlin DSP | – | – | – |
 
