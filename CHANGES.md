@@ -263,3 +263,9 @@ Entries are appended in order. Newest entries are at the bottom.
 
 ### Fixed
 - `HubModels.download` retries up to five times (growing, interruptible pauses) on I/O errors, HTTP 429 and 5xx, and resumes from a stable `<name>.part` file with HTTP range requests (a 200 reply restarts cleanly, 416 discards the part). Partial downloads survive app restarts; SHA-256 verification still decides. New `DownloadResumeTest` drops a connection halfway through and checks the resumed file is byte-identical.
+
+## 2026-11-13: Release v0.1.1 (`docs/release-0.1.1`)
+
+### Released
+- Published https://github.com/sayedshaun/audiops/releases/tag/v0.1.1 from `f1df2e3`. CI built and attached the Linux DEB/RPM and Windows MSI/EXE and wrote the notes from `CHANGELOG.md`. The Android APKs and AAB were built locally from the same commit with the release key (signing secrets are still not on GitHub), replaced the unsigned CI APKs, and `SHA256SUMS.txt` was regenerated (10 files).
+- Verified the downloaded arm64 APK: checksum OK, release certificate `c147c216…`, versionName 0.1.1, versionCode 1001. The same build passed Enhance speech on the Moto g96 from a fresh install.
