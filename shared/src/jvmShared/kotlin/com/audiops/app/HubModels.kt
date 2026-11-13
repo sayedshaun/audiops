@@ -9,9 +9,16 @@ import java.net.URL
 object HubModels {
     fun fileName(name: String, dtype: String): String = when (dtype) {
         "fp32" -> "$name-float32.tflite"
+
         "fp16" -> "$name-fp16weights.tflite"
+
         "int8" -> if (name == "vocoder") "$name-int8-weights.tflite" else "$name-int8-dynamic.tflite"
-        else -> throw IllegalArgumentException("dtype must be 'fp32', 'fp16', or 'int8'")
+
+        // Phones: INT8 dynamic for the small networks; the vocoder re-exported for XNNPACK with
+        // float16 weights (the INT8 vocoder needs ~4.5 GB at run time and loses quality).
+        "mobile" -> if (name == "vocoder") "$name-mobile-fp16.tflite" else "$name-int8-dynamic.tflite"
+
+        else -> throw IllegalArgumentException("dtype must be 'fp32', 'fp16', 'int8' or 'mobile'")
     }
 
     /**

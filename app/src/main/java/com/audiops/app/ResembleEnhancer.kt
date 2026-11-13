@@ -21,6 +21,7 @@ internal class LiteModel(
     private val outputName: String,
     private val inputSizes: IntArray,
     private val outputSize: Int,
+    weightCache: File? = null,
 ) : Closeable {
     private val model: CompiledModel
     private val inputs: List<TensorBuffer>
@@ -29,7 +30,10 @@ internal class LiteModel(
     init {
         require(file.isFile && file.canRead()) { "Missing model: ${file.absolutePath}" }
         val options = CompiledModel.Options(Accelerator.CPU)
-        options.cpuOptions = CompiledModel.CpuOptions(numThreads = 4)
+        // With a weight cache, XNNPACK writes its repacked weights to a memory-mapped file
+        // instead of anonymous memory: those pages are file-backed, so the system can page
+        // them out instead of killing the process (the vocoder otherwise needs several GB).
+        options.cpuOptions = CompiledModel.CpuOptions(numThreads = 4, xnnPackWeightCachePath = weightCache?.absolutePath)
         model = CompiledModel.create(file.absolutePath, options)
         val createdInputs = mutableListOf<TensorBuffer>()
         val createdOutputs = mutableListOf<TensorBuffer>()
@@ -78,7 +82,12 @@ internal class LiteModel(
  * (weight-only INT8 layers are dequantized to float32 at load) and got the app killed by
  * Android's low-memory killer; staged, peak memory is about one model.
  */
-class ResembleEnhancer(private val modelDirectory: File, private val dtype: String = "fp16") : Closeable {
+class ResembleEnhancer(
+    private val modelDirectory: File,
+    private val dtype: String = "fp16",
+    /** Directory for XNNPACK weight caches (one file per model); null disables them. */
+    private val cacheDirectory: File? = null,
+) : Closeable {
     private class ModelSpec(val name: String, val inputs: List<String>, val output: String, val inputSizes: IntArray, val outputSize: Int)
 
     private class Chunk(val start: Int, val count: Int, val peak: Float, val seed: Long) {
@@ -122,7 +131,7 @@ class ResembleEnhancer(private val modelDirectory: File, private val dtype: Stri
     private val features: AudioFeatures
 
     init {
-        require(dtype in setOf("fp32", "fp16", "int8")) { "dtype must be 'fp32', 'fp16', or 'int8'" }
+        require(dtype in setOf("fp32", "fp16", "int8", "mobile")) { "dtype must be 'fp32', 'fp16', 'int8' or 'mobile'" }
         features = AudioFeatures(File(modelDirectory, "mel-filters.f32").readBytes())
         // Fail early, before any audio work, if a model file is missing.
         listOf(DENOISER, ENCODER, FLOW, DECODER, VOCODER).forEach { spec ->
@@ -131,9 +140,18 @@ class ResembleEnhancer(private val modelDirectory: File, private val dtype: Stri
         }
     }
 
-    private inline fun <T> withModel(spec: ModelSpec, block: (LiteModel) -> T): T =
-        LiteModel(File(modelDirectory, HubModels.fileName(spec.name, dtype)), spec.inputs, spec.output, spec.inputSizes, spec.outputSize)
-            .use(block)
+    private inline fun <T> withModel(spec: ModelSpec, block: (LiteModel) -> T): T = LiteModel(
+        File(modelDirectory, HubModels.fileName(spec.name, dtype)),
+        spec.inputs,
+        spec.output,
+        spec.inputSizes,
+        spec.outputSize,
+        weightCache = cacheDirectory?.let { dir ->
+            dir.mkdirs()
+            // Keyed by model revision (the model directory name) so an update never reuses a stale cache.
+            File(dir, "${modelDirectory.name}-${HubModels.fileName(spec.name, dtype)}.xnnpack")
+        },
+    ).use(block)
 
     /**
      * Processes arbitrary length 44.1 kHz mono PCM with 50% overlap. [progress] receives

@@ -237,3 +237,19 @@ Entries are appended in order. Newest entries are at the bottom.
 
 ### Changed
 - `CHANGELOG.md`: `0.1.1` section cut (bundled third-party licence notices). Default local version is 0.1.1.
+
+## 2026-11-13: Enhance speech memory fix and vocoder re-export (`fix/enhance-memory`)
+
+### Diagnosed
+- Reported as "crashing" on a Moto g96 (8 GB, Android 16, 0.1.0 from the release). Logcat while reproducing: the `:enhance` process went from ~0.3 GB to 3 GB, then 4.7 GB RSS as the vocoder loaded; `lowmemorykiller` killed about 20 other apps (ChatGPT, Chrome, Play Store, the keyboard) and then `com.audiops.app:enhance`. The app reported "ran out of memory" as designed; there was no code crash.
+- Desktop LiteRT reproduced it: the INT8 vocoder peaks at 4.5 GB (2.9 GB without XNNPACK). Causes in the conversion: grouped transposed convolutions (anti-aliased upsampling) became one `TRANSPOSE_CONV` per channel (1,156 ops), replicate padding/`unfold` became `GATHER`/`TILE`, and weight-only INT8 dequantizes to float32 at load. That vocoder also differs from PyTorch by 20.6 dB SNR.
+
+### Fixed
+- XNNPACK weight cache for every Resemble model (`noBackupFilesDir/xnnpack-cache`, keyed by revision; caches of older revisions are deleted; counted and deleted with the models).
+- New vocoder `vocoder-mobile-fp16.tflite`, re-exported from the original PyTorch weights with identical, XNNPACK-friendly ops (zero-stuffing + depthwise conv, edge concatenation, one batched matmul for the location-variable convolution); each replacement checked against PyTorch (< 1e-6). 1.32 GB peak instead of 4.55 GB, 2.5 s instead of 7.1 s per second of audio, 62.2 dB SNR vs PyTorch; full pipeline 63.9 dB vs a float32 vocoder (old INT8: 26.3 dB). Published to the Hugging Face repo as commit `b92eaae` with a `mobile` dtype, an XNNPACK weight cache in `inference.kt`, README corrections and the conversion scripts.
+- The app uses the `mobile` set pinned to `b92eaae` (all six digests verified against the Hub). `ModelFiles.ensure` moves unchanged files from the previous revision instead of downloading them, so updating fetches only the vocoder. UI hint, README and AGENTS.md sizes updated (~570 MB).
+
+### Verified
+- 4 GB emulator: enhancement completes end to end (it was always killed before); peak anonymous memory 1.5 GB while the vocoder's weight cache is written, then ~0.65 GB. Update path: models 1–5 reused, only the vocoder downloaded and verified.
+- Installing the fix on the Moto g96 was blocked (CLAUDE.md: no installs on the phone unless asked), so the phone has not run the new build yet.
+- `make ci` passes; new tests for the `mobile` file names and for reusing files across revisions.
