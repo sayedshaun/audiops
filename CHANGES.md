@@ -193,3 +193,13 @@ Entries are appended in order. Newest entries are at the bottom.
 
 ### Verified
 - `:desktopApp` configures with `0.0.0-dryrun`; `packageDeb` with `0.2.0-beta.1` produces `audiops_0.2.0-1_amd64.deb`. The dry run's Linux and Windows jobs had already built DEB, RPM, MSI and EXE.
+
+## 2026-11-13: Desktop display name and Linux package test (`fix/desktop-display-name`)
+
+### Fixed
+- Desktop installers showed the app as "audiops" (Linux menu entry, Windows Start menu and install folder) because jpackage uses `packageName` as the display name. It is now "Audiops"; the Debian/RPM package name stays `audiops` (`linux.packageName`).
+
+### Verified
+- Built the 0.1.0 `.deb` (96 MB; Depends lists ALSA, X11 and GL libraries) and unpacked it: menu entry `Name=Audiops`, launcher `/opt/audiops/bin/Audiops`, icon. The packaged app opens its window (screenshot: Tools tab, dark theme, navigation rail, AI tools marked "Android only") and closes cleanly.
+- Ran every DSP tool through the packaged runtime and jars (a test main class swapped into the launcher config, on a 20 s 48 kHz stereo WAV): denoise, remove silence (20 s → 14.5 s), trim (5.000 s), fade, loudness (−16.0 LUFS), peak (−1.0 dB), gain, speed 1.5× (13.3 s), equalizer, resample; waveform and analysis. The trimmed Java runtime has every module the engine needs.
+- `packageRpm` cannot run here (no `rpmbuild`); the release dry run builds it on CI.

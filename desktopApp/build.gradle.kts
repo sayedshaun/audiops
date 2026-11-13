@@ -28,12 +28,14 @@ compose.desktop {
         jvmArgs += "-Daudiops.version=$audiopsVersion"
         nativeDistributions {
             targetFormats(TargetFormat.Deb, TargetFormat.Rpm, TargetFormat.Msi, TargetFormat.Exe)
-            packageName = "audiops"
+            // Display name: launcher, Linux menu entry, Windows Start menu and install folder.
+            packageName = "Audiops"
             packageVersion = packageVersionNumber
             description = "On-device audio toolkit"
             vendor = "Audiops"
             licenseFile.set(project.rootProject.file("LICENSE").takeIf { it.exists() })
             linux {
+                packageName = "audiops" // Debian/RPM package names must be lower case
                 shortcut = true
                 menuGroup = "AudioVideo"
                 iconFile.set(project.file("icons/audiops.png"))
