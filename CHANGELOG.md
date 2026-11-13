@@ -15,6 +15,11 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ### Added
 - **Jobs keep running in the background on Android.** Enhance speech and other jobs continue when you switch apps, turn the screen off or swipe Audiops away from Recents. A notification shows the running job and its progress, with a Cancel button, and another tells you when a job finishes or fails while Audiops is closed. Tap it to open the Activity tab. Android 13+ asks for notification permission when you start your first job.
+- **15 more transcription languages:** Arabic, Chinese, French, German, Indonesian, Italian, Japanese, Korean, Persian, Portuguese, Russian, Spanish, Turkish, Urdu and Vietnamese, through Whisper Tiny. Accuracy is best for English and lower for the others. Transcribe now has a language field that opens the full list, with the main languages (Auto, Bangla, English, Hindi) first.
+
+### Changed
+- **Settings is shorter.** About now has two rows: **About Audiops** (version, privacy, source code, the app's license) and **Open-source licenses** (every third-party license). Each opens its own page.
+- **Storage lists each downloaded model** (Resemble Enhance, Whisper Tiny, Bangla Zipformer) with its size, and each can be deleted on its own.
 
 ### Changed
 - **Tidier Tools tab.** Removed the "On device" badge from the top bar; it did nothing when tapped. The banner is shorter and now reads "Transform audio, without the cloud." In wide windows (desktop, tablets) the tool cards stretch to fill each row instead of leaving empty space.

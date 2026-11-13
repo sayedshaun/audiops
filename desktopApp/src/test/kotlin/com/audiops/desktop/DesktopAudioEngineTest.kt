@@ -18,7 +18,6 @@ import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioInputStream
 import javax.sound.sampled.AudioSystem
 import kotlin.math.PI
-import kotlin.math.abs
 import kotlin.math.log10
 import kotlin.math.sin
 
@@ -74,7 +73,7 @@ class DesktopAudioEngineTest {
         val fake = File(dir, "song.mp3").apply { writeText("not audio") }
         val error = assertThrows(UnsupportedOnPlatformException::class.java) { engine.waveform(fake.absolutePath, 10) }
         assertTrue(error.message!!.contains("WAV"))
-        assertTrue(abs(engine.modelStorageBytes()) == 0L)
+        assertTrue(engine.modelStorage().isEmpty())
     }
 
     @Test fun aiToolsReportUnsupported() {

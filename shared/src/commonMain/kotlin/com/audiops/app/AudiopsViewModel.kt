@@ -89,8 +89,9 @@ class AudiopsViewModel(
         if (!engine.supportsTranscribe) add(Tool.TRANSCRIBE)
     }
 
-    private val _modelStorage = MutableStateFlow<Long?>(null)
-    val modelStorage: StateFlow<Long?> = _modelStorage.asStateFlow()
+    /** Bytes per downloaded model; null while measuring. */
+    private val _modelStorage = MutableStateFlow<Map<AiModel, Long>?>(null)
+    val modelStorage: StateFlow<Map<AiModel, Long>?> = _modelStorage.asStateFlow()
 
     private val _outputStorage = MutableStateFlow<Long?>(null)
     val outputStorage: StateFlow<Long?> = _outputStorage.asStateFlow()
@@ -392,16 +393,16 @@ class AudiopsViewModel(
 
     fun refreshStorage() {
         viewModelScope.launch {
-            _modelStorage.value = runCatching { runOnWorker(engine::modelStorageBytes) }.getOrDefault(0L)
+            _modelStorage.value = runCatching { runOnWorker(engine::modelStorage) }.getOrDefault(emptyMap())
             _outputStorage.value = runCatching { runOnWorker(engine::outputStorageBytes) }.getOrDefault(0L)
         }
     }
 
-    /** Deletes downloaded models. Not allowed while a job may be reading them. */
-    fun deleteModels() {
+    /** Deletes one downloaded model. Not allowed while a job may be reading it. */
+    fun deleteModel(model: AiModel) {
         if (_state.value.activeJobs.isNotEmpty()) return
         viewModelScope.launch {
-            runCatching { runOnWorker(engine::deleteModels) }
+            runCatching { runOnWorker { engine.deleteModel(model) } }
             refreshStorage()
             _messages.trySend(UiMessage.ModelsDeleted)
         }

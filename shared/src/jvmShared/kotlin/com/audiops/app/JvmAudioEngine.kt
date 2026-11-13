@@ -95,9 +95,9 @@ abstract class JvmAudioEngine(protected val workDir: File, protected val outputD
         File(path).delete()
     }
 
-    override fun modelStorageBytes(): Long = ModelFiles.storageBytes(modelRoot)
+    override fun modelStorage(): Map<AiModel, Long> = ModelFiles.storage(modelRoot)
 
-    override fun deleteModels() = ModelFiles.deleteAll(modelRoot)
+    override fun deleteModel(model: AiModel) = ModelFiles.delete(modelRoot, model)
 
     override fun outputStorageBytes(): Long = outputDir.listFiles()?.sumOf { it.length() } ?: 0L
 

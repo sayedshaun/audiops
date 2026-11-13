@@ -18,7 +18,7 @@ Audiops is an open-source, on-device audio toolkit. Audio never leaves the devic
 
 | Category | Tools | Engine |
 | --- | --- | --- |
-| AI | Enhance speech, Transcribe | Resemble Enhance (LiteRT "mobile" set: INT8 dynamic + re-exported FP16 vocoder, ~570 MB); Whisper Tiny and Bangla Zipformer (sherpa-onnx) |
+| AI | Enhance speech, Transcribe | Resemble Enhance (LiteRT "mobile" set: INT8 dynamic + re-exported FP16 vocoder, ~570 MB); Whisper Tiny (Auto plus 17 languages, `SpeechLanguage`) and Bangla Zipformer (sherpa-onnx) |
 | Clean up | Noise reduction, Remove silence | Spectral subtraction; frame-based silence gate |
 | Edit | Trim, Fade, Volume (peak, loudness BS.1770, gain) | Streaming DSP |
 | Effects | Speed and pitch, Equalizer | WSOLA time-stretch + cubic resampler; RBJ biquads |

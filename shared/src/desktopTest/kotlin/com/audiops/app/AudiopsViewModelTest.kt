@@ -69,9 +69,13 @@ private class FakeEngine(override val supportsEnhance: Boolean = true, override 
         deleted += path
     }
 
-    override fun modelStorageBytes() = 0L
+    val models: MutableMap<AiModel, Long> = Collections.synchronizedMap(mutableMapOf(AiModel.WHISPER to 75L, AiModel.BANGLA to 30L))
 
-    override fun deleteModels() = Unit
+    override fun modelStorage(): Map<AiModel, Long> = models.toMap()
+
+    override fun deleteModel(model: AiModel) {
+        models.remove(model)
+    }
 
     override fun outputStorageBytes() = 0L
 }
@@ -225,6 +229,17 @@ class AudiopsViewModelTest {
         assertEquals(UiMessage.Cancelled, message)
         assertNull(runBlocking { withTimeoutOrNull(300) { vm.messages.first() } })
         assertTrue(engine.processed.isEmpty())
+    }
+
+    @Test fun modelsAreListedAndDeletedOneByOne() {
+        val engine = FakeEngine()
+        val vm = viewModel(engine)
+        val listed = runBlocking { withTimeout(10_000) { vm.modelStorage.first { it != null } } }
+        assertEquals(mapOf(AiModel.WHISPER to 75L, AiModel.BANGLA to 30L), listed)
+        vm.deleteModel(AiModel.WHISPER)
+        val after = runBlocking { withTimeout(10_000) { vm.modelStorage.first { it == mapOf(AiModel.BANGLA to 30L) } } }
+        assertEquals(mapOf(AiModel.BANGLA to 30L), after)
+        assertEquals(UiMessage.ModelsDeleted, runBlocking { withTimeout(10_000) { vm.messages.first() } })
     }
 
     @Test fun deleteAndClearHistoryRemoveOutputs() {

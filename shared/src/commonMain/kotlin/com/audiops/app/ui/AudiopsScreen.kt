@@ -181,7 +181,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                             onPureBlack = viewModel::setPureBlack,
                             onKeepScreenOn = viewModel::setKeepScreenOn,
                             onDefaultLanguage = viewModel::setDefaultLanguage,
-                            onDeleteModels = viewModel::deleteModels,
+                            onDeleteModel = viewModel::deleteModel,
                             onClearHistory = viewModel::clearHistory,
                         ),
                     )

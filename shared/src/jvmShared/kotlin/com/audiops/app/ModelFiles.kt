@@ -5,17 +5,21 @@ import java.security.MessageDigest
 
 /** Downloads a fixed set of model files once, verifies each SHA-256 digest, and reuses them. */
 object ModelFiles {
-    /** Top-level folders under the model root that hold downloaded models. */
-    private val FOLDERS = listOf("resemble-enhance", "whisper-tiny", "bangla-zipformer", "xnnpack-cache")
+    /** Top-level folders under the model root for each model (Enhance includes its XNNPACK weight cache). */
+    private val FOLDERS = mapOf(
+        AiModel.ENHANCE to listOf("resemble-enhance", "xnnpack-cache"),
+        AiModel.WHISPER to listOf("whisper-tiny"),
+        AiModel.BANGLA to listOf("bangla-zipformer"),
+    )
 
-    /** Total bytes used by downloaded models. */
-    fun storageBytes(root: File): Long = FOLDERS.sumOf { folder ->
-        File(root, folder).walkBottomUp().filter { it.isFile }.sumOf { it.length() }
-    }
+    /** Bytes used by each downloaded model, in [AiModel] order; models without files are absent. */
+    fun storage(root: File): Map<AiModel, Long> = FOLDERS
+        .mapValues { (_, folders) -> folders.sumOf { File(root, it).walkBottomUp().filter(File::isFile).sumOf(File::length) } }
+        .filterValues { it > 0L }
 
-    /** Deletes every downloaded model. They are downloaded again on next use. */
-    fun deleteAll(root: File) {
-        FOLDERS.forEach { File(root, it).deleteRecursively() }
+    /** Deletes one model's files. It is downloaded again on next use. */
+    fun delete(root: File, model: AiModel) {
+        FOLDERS.getValue(model).forEach { File(root, it).deleteRecursively() }
     }
 
     /**
