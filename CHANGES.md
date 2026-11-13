@@ -214,3 +214,21 @@ Entries are appended in order. Newest entries are at the bottom.
 - Downloaded every asset from the release: all ten checksums match; the APK certificate is the release key (`c147c216…`), versionName 0.1.0, versionCode 1000.
 - Installed the released x86_64 APK on the emulator as an update over the locally tested build: launches, history kept, no crashes. Before the release, the same signed build passed English transcription (accurate), noise reduction and the pinned, digest-verified download of all six Resemble files (enhancement itself runs out of memory on the 4 GB emulator and fails gracefully).
 - The released `.deb` unpacks with `Name=Audiops` and the app opens.
+
+## 2026-11-13: Secrets and licence audit (`fix/third-party-licenses`)
+
+### Audited
+- Secrets: no keystores, `.env`, `local.properties`, tokens or private keys in the working tree or any commit; the keystore password appears nowhere in history, the tree or the 11 published v0.1.0 assets; workflows read secrets only from the GitHub store; `~/.audiops-release` is `700`/`600`. GitHub currently holds no repository secrets.
+- Licences: listed every runtime dependency of the Android release and the desktop app and the licence of each Hugging Face model repository.
+
+### Fixed
+- Bundled components whose licences require their notice in binary distributions were not credited: ONNX Runtime (MIT, inside the sherpa-onnx AAR), JTransforms and JLargeArrays (BSD 2-Clause), Apache Commons Math (Apache 2.0 NOTICE), LiteRT. Their texts are now in `licenses/`.
+- The app now bundles `composeResources/files/third_party_notices.txt` (all licence texts) and shows it under Settings → Open-source licenses → Third-party notices. The list gains Whisper, LiteRT and the DSP libraries; Android-only AI components are hidden on desktop. Whisper was labelled Apache 2.0; the weights are MIT (OpenAI) and only the ONNX export is Apache 2.0 (README Models table fixed too).
+- `NOTICE` and the README acknowledgements list every component, including the Play libraries LiteRT pulls in (Android SDK License, not open source) and the desktop OpenJDK runtime (GPL v2 + Classpath Exception, notices shipped in `lib/runtime/legal`).
+- New `ThirdPartyNoticesTest` fails if a file in `licenses/` is not bundled verbatim; AGENTS.md documents the steps for a new dependency.
+
+### Verified
+- `make ci` passes (64 tests). On the emulator (release-signed build installed over 0.1.0, data kept): the licence list and the notices dialog render and scroll in light and dark.
+
+### Note
+- The v0.1.0 binaries predate this fix; a 0.1.1 release would ship the notices.

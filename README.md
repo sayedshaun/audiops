@@ -49,7 +49,7 @@ Only the two AI tools use machine-learning models. Every other tool is classic s
 | Tool (option) | Model | Runtime | Files | Download | License |
 | --- | --- | --- | --- | --: | --- |
 | **Enhance speech** | [Resemble Enhance](https://huggingface.co/SayedShaun/resemble-enhance-litert), INT8 LiteRT export | [LiteRT](https://ai.google.dev/edge/litert), CPU | 5 networks + mel filter bank | ~361 MB | MIT |
-| **Transcribe** (Auto, English, Hindi) | [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny), INT8 ONNX | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), CPU | encoder, decoder, tokens | ~104 MB | Apache 2.0 (export of OpenAI Whisper) |
+| **Transcribe** (Auto, English, Hindi) | [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny), INT8 ONNX | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), CPU | encoder, decoder, tokens | ~104 MB | MIT (OpenAI Whisper weights) · Apache 2.0 (ONNX export) |
 | **Transcribe** (Bangla) | [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx/tree/5442ca3d447572aaa5ef6913684d8f24d6d916cc), INT8 transducer | sherpa-onnx, CPU | encoder, decoder, joiner, tokens | ~74 MB | CC BY-SA 4.0 |
 | All other tools | None | Kotlin DSP | – | – | – |
 
@@ -169,10 +169,14 @@ Bug reports, ideas and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBU
 ## Acknowledgements
 
 - [Resemble Enhance](https://github.com/resemble-ai/resemble-enhance) by Resemble AI (MIT) · [license](licenses/RESEMBLE-ENHANCE-MIT.txt)
-- [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) by k2-fsa (Apache 2.0) · [license](licenses/SHERPA-ONNX-APACHE-2.0.txt)
-- Whisper Tiny INT8 export from [ippocode/indic-asr-onnx](https://huggingface.co/ippocode/indic-asr-onnx)
+- [Whisper](https://github.com/openai/whisper) by OpenAI (MIT) · [license](licenses/WHISPER-MIT.txt); Tiny INT8 ONNX export from [ippocode/indic-asr-onnx](https://huggingface.co/ippocode/indic-asr-onnx) (Apache 2.0)
+- [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) by k2-fsa (Apache 2.0) · [license](licenses/SHERPA-ONNX-APACHE-2.0.txt), with [ONNX Runtime](https://github.com/microsoft/onnxruntime) by Microsoft (MIT) · [license](licenses/ONNXRUNTIME-MIT.txt)
 - [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx) (CC BY-SA 4.0) · [license](licenses/BANGLA-ZIPFORMER-CC-BY-SA-4.0.txt)
-- [JTransforms](https://github.com/wendykierp/JTransforms), [Jetpack Compose](https://developer.android.com/compose) and [Compose Multiplatform](https://www.jetbrains.com/compose-multiplatform/)
+- [LiteRT](https://ai.google.dev/edge/litert) by Google (Apache 2.0)
+- [JTransforms](https://github.com/wendykierp/JTransforms) and [JLargeArrays](https://gitlab.com/ICM-VisLab/JLargeArrays) (BSD 2-Clause) · [license](licenses/JTRANSFORMS-BSD-2-CLAUSE.txt), [license](licenses/JLARGEARRAYS-BSD-2-CLAUSE.txt); [Apache Commons Math](https://commons.apache.org/proper/commons-math/) (Apache 2.0) · [NOTICE](licenses/COMMONS-MATH3-NOTICE.txt)
+- [Jetpack Compose](https://developer.android.com/compose), [Compose Multiplatform](https://www.jetbrains.com/compose-multiplatform/), AndroidX and Kotlin (Apache 2.0)
+
+The app shows every license in full under **Settings → Open-source licenses → Third-party notices**.
 
 ## License
 

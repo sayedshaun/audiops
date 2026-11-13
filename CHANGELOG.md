@@ -13,6 +13,9 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+### Fixed
+- Settings → Open-source licenses now includes the full license text of every bundled and downloaded component ("Third-party notices"), and credits ONNX Runtime, LiteRT, JTransforms, JLargeArrays and Apache Commons Math. Whisper is correctly listed as MIT (OpenAI).
+
 ## [0.1.0] - 2026-11-13
 
 First public release.
