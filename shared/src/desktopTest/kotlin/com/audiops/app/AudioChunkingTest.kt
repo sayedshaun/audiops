@@ -1,12 +1,12 @@
 package com.audiops.app
 
-import java.io.File
-import java.util.concurrent.CancellationException
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
+import java.io.File
+import java.util.concurrent.CancellationException
 
 /** Covers the section arithmetic that the enhancement join and transcription depend on. */
 class AudioChunkingTest {

@@ -94,8 +94,7 @@ fun analyze(file: File, listener: ProcessingListener): AudioReport {
     return analyzer.report()
 }
 
-private fun progressStep(done: Long, total: Long): Int =
-    if (total <= 0) 100 else (1 + done * 99 / total).toInt().coerceIn(1, 100)
+private fun progressStep(done: Long, total: Long): Int = if (total <= 0) 100 else (1 + done * 99 / total).toInt().coerceIn(1, 100)
 
 /**
  * Runs [operations] over a decoded recording and writes a WAV to [output]. Memory use is
@@ -104,13 +103,7 @@ private fun progressStep(done: Long, total: Long): Int =
  * intermediate files, which are deleted before returning.
  */
 object DspPipeline {
-    fun run(
-        input: File,
-        operations: List<AudioOperation>,
-        output: File,
-        workDir: File,
-        listener: ProcessingListener,
-    ) {
+    fun run(input: File, operations: List<AudioOperation>, output: File, workDir: File, listener: ProcessingListener) {
         val stages = splitStages(operations)
         val outputRate = operations.filterIsInstance<AudioOperation.Resample>().lastOrNull()?.sampleRate ?: PIPELINE_RATE
         var current = input
@@ -165,41 +158,47 @@ object DspPipeline {
         sink(chain.flush())
     }
 
-    private fun processorFor(
-        op: AudioOperation,
-        input: File,
-        from: Long,
-        to: Long,
-        progress: StageProgress,
-    ): AudioProcessor? = when (op) {
+    private fun processorFor(op: AudioOperation, input: File, from: Long, to: Long, progress: StageProgress): AudioProcessor? = when (op) {
         is AudioOperation.Trim -> null
+
         // Boosts go through the limiter so the result cannot hard-clip.
         is AudioOperation.Gain -> if (op.db > 0f) {
             ProcessorChain(listOf(GainProcessor(op.db), Limiter(-0.3f, PIPELINE_RATE)))
         } else {
             GainProcessor(op.db)
         }
+
         is AudioOperation.Fade -> FadeProcessor(
             (op.inMs * PIPELINE_RATE / 1000).toInt(),
             (op.outMs * PIPELINE_RATE / 1000).toInt(),
         )
+
         is AudioOperation.Equalizer -> ProcessorChain(
             listOf(FilterChain.equalizer(op.preset, PIPELINE_RATE), Limiter(-0.5f, PIPELINE_RATE)),
         )
+
         is AudioOperation.SpeedPitch -> speedPitchProcessor(op.speed, op.semitones, PIPELINE_RATE)
+
         is AudioOperation.RemoveSilence -> SilenceRemover(op.thresholdDb, op.minSilenceMs, op.paddingMs, PIPELINE_RATE)
-        is AudioOperation.Resample -> if (op.sampleRate == PIPELINE_RATE) null else ProcessorChain(
-            listOfNotNull(
-                if (op.sampleRate < PIPELINE_RATE) FilterChain.antiAlias(PIPELINE_RATE, op.sampleRate) else null,
-                Resampler(PIPELINE_RATE.toDouble() / op.sampleRate),
-            ),
-        )
+
+        is AudioOperation.Resample -> if (op.sampleRate == PIPELINE_RATE) {
+            null
+        } else {
+            ProcessorChain(
+                listOfNotNull(
+                    if (op.sampleRate < PIPELINE_RATE) FilterChain.antiAlias(PIPELINE_RATE, op.sampleRate) else null,
+                    Resampler(PIPELINE_RATE.toDouble() / op.sampleRate),
+                ),
+            )
+        }
+
         is AudioOperation.NormalizePeak -> {
             progress.measuring()
             val analyzer = AudioAnalyzer(PIPELINE_RATE)
             PcmFile.forEachBlock(input, from, to) { analyzer.add(it) }
             GainProcessor(gainToward(toDb(analyzer.peakLevel), op.peakDb))
         }
+
         is AudioOperation.NormalizeLoudness -> {
             progress.measuring()
             val analyzer = AudioAnalyzer(PIPELINE_RATE)
@@ -211,6 +210,7 @@ object DspPipeline {
                 ProcessorChain(listOf(GainProcessor(gainToward(loudness, op.target.lufs)), Limiter(-1f, PIPELINE_RATE)))
             }
         }
+
         is AudioOperation.Denoise -> {
             progress.measuring()
             val profile = NoiseProfile.estimate { consume -> PcmFile.forEachBlock(input, from, to, consume) }

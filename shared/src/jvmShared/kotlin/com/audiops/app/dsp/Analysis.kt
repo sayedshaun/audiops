@@ -18,8 +18,8 @@ class SilenceRemover(thresholdDb: Float, minSilenceMs: Long, paddingMs: Long, ra
     private val padFrames = (paddingMs / 10).toInt().coerceIn(0, minFrames / 2)
     private val frame = FloatArray(frameSize)
     private var filled = 0
-    private val pending = ArrayList<FloatArray>()   // silent frames while the run is still short
-    private val tail = ArrayDeque<FloatArray>()     // last frames of a long run (trailing padding)
+    private val pending = ArrayList<FloatArray>() // silent frames while the run is still short
+    private val tail = ArrayDeque<FloatArray>() // last frames of a long run (trailing padding)
     private var longRun = false
 
     override fun process(input: FloatArray): FloatArray {
@@ -83,7 +83,7 @@ class LoudnessMeter(rate: Int) {
     // K-weighting: high-shelf (+4 dB above ~1.7 kHz) then a ~38 Hz high-pass.
     private val shelf = Biquad.highShelf(rate, 1681.974450955533, 3.999843853973347, 0.7071752369554196)
     private val highPass = Biquad.highPass(rate, 38.13547087602444, 0.5003270373238773)
-    private val segmentLength = rate / 10   // 100 ms
+    private val segmentLength = rate / 10 // 100 ms
     private var segmentSum = 0.0
     private var segmentCount = 0
     private val segments = ArrayList<Double>()

@@ -15,12 +15,94 @@ import com.audiops.app.Tool
 import com.audiops.app.ToolCategory
 import com.audiops.app.UiMessage
 import com.audiops.app.currentTimeMillis
-import com.audiops.shared.resources.*
-import kotlin.math.abs
-import kotlin.math.roundToInt
+import com.audiops.shared.resources.Res
+import com.audiops.shared.resources.action_analyze
+import com.audiops.shared.resources.action_enhance
+import com.audiops.shared.resources.action_process
+import com.audiops.shared.resources.action_transcribe
+import com.audiops.shared.resources.category_ai
+import com.audiops.shared.resources.category_clean_up
+import com.audiops.shared.resources.category_edit
+import com.audiops.shared.resources.category_effects
+import com.audiops.shared.resources.category_utilities
+import com.audiops.shared.resources.eq_bass_boost
+import com.audiops.shared.resources.eq_remove_rumble
+import com.audiops.shared.resources.eq_telephone
+import com.audiops.shared.resources.eq_treble_boost
+import com.audiops.shared.resources.eq_voice_clarity
+import com.audiops.shared.resources.eq_warm
+import com.audiops.shared.resources.error_interrupted
+import com.audiops.shared.resources.error_no_speech
+import com.audiops.shared.resources.error_out_of_memory
+import com.audiops.shared.resources.error_processing_failed
+import com.audiops.shared.resources.error_save
+import com.audiops.shared.resources.error_unknown
+import com.audiops.shared.resources.error_unreadable
+import com.audiops.shared.resources.error_unsupported_format
+import com.audiops.shared.resources.error_unsupported_platform
+import com.audiops.shared.resources.language_auto
+import com.audiops.shared.resources.language_bangla
+import com.audiops.shared.resources.language_english
+import com.audiops.shared.resources.language_hindi
+import com.audiops.shared.resources.loudness_broadcast
+import com.audiops.shared.resources.loudness_podcast
+import com.audiops.shared.resources.loudness_streaming
+import com.audiops.shared.resources.message_cancelled
+import com.audiops.shared.resources.message_copied
+import com.audiops.shared.resources.message_history_cleared
+import com.audiops.shared.resources.message_job_failed
+import com.audiops.shared.resources.message_job_finished
+import com.audiops.shared.resources.message_models_deleted
+import com.audiops.shared.resources.message_saved
+import com.audiops.shared.resources.stage_model_download_percent
+import com.audiops.shared.resources.stage_percent
+import com.audiops.shared.resources.stage_preparing
+import com.audiops.shared.resources.stage_queued
+import com.audiops.shared.resources.stage_section
+import com.audiops.shared.resources.status_cancelled
+import com.audiops.shared.resources.status_done
+import com.audiops.shared.resources.status_failed
+import com.audiops.shared.resources.status_queued
+import com.audiops.shared.resources.status_running
+import com.audiops.shared.resources.summary_fade
+import com.audiops.shared.resources.summary_gain
+import com.audiops.shared.resources.summary_loudness
+import com.audiops.shared.resources.summary_peak
+import com.audiops.shared.resources.summary_rate
+import com.audiops.shared.resources.summary_silence
+import com.audiops.shared.resources.summary_speed
+import com.audiops.shared.resources.summary_strength
+import com.audiops.shared.resources.time_days
+import com.audiops.shared.resources.time_hours
+import com.audiops.shared.resources.time_just_now
+import com.audiops.shared.resources.time_minutes
+import com.audiops.shared.resources.tool_analyze_description
+import com.audiops.shared.resources.tool_analyze_title
+import com.audiops.shared.resources.tool_convert_description
+import com.audiops.shared.resources.tool_convert_title
+import com.audiops.shared.resources.tool_denoise_description
+import com.audiops.shared.resources.tool_denoise_title
+import com.audiops.shared.resources.tool_enhance_description
+import com.audiops.shared.resources.tool_enhance_title
+import com.audiops.shared.resources.tool_equalizer_description
+import com.audiops.shared.resources.tool_equalizer_title
+import com.audiops.shared.resources.tool_fade_description
+import com.audiops.shared.resources.tool_fade_title
+import com.audiops.shared.resources.tool_silence_description
+import com.audiops.shared.resources.tool_silence_title
+import com.audiops.shared.resources.tool_speed_description
+import com.audiops.shared.resources.tool_speed_title
+import com.audiops.shared.resources.tool_transcribe_description
+import com.audiops.shared.resources.tool_transcribe_title
+import com.audiops.shared.resources.tool_trim_description
+import com.audiops.shared.resources.tool_trim_title
+import com.audiops.shared.resources.tool_volume_description
+import com.audiops.shared.resources.tool_volume_title
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 val SpeechLanguage.label: StringResource
     get() = when (this) {
@@ -110,10 +192,16 @@ fun Job.progressText(): String {
     val p = progress ?: return stringResource(status.title)
     return when (p.stage) {
         Stage.QUEUED -> stringResource(Res.string.stage_queued)
+
         Stage.PREPARING -> stringResource(Res.string.stage_preparing)
+
         Stage.DOWNLOADING_MODEL -> stringResource(
-            Res.string.stage_model_download_percent, p.index, p.total, (p.subFraction * 100).toInt(),
+            Res.string.stage_model_download_percent,
+            p.index,
+            p.total,
+            (p.subFraction * 100).toInt(),
         )
+
         Stage.PROCESSING -> if (p.total == 100) {
             stringResource(Res.string.stage_percent, p.index)
         } else {
@@ -125,10 +213,17 @@ fun Job.progressText(): String {
 @Composable
 fun Job.failureText(): String = when (failure) {
     FailureKind.OUT_OF_MEMORY -> stringResource(Res.string.error_out_of_memory)
+
     FailureKind.NO_SPEECH -> stringResource(Res.string.error_no_speech)
+
     FailureKind.UNSUPPORTED -> failureDetail ?: stringResource(Res.string.error_unsupported_platform)
+
     FailureKind.INTERRUPTED -> stringResource(Res.string.error_interrupted)
-    FailureKind.PROCESSING, null -> stringResource(Res.string.error_processing_failed, failureDetail ?: stringResource(Res.string.error_unknown))
+
+    FailureKind.PROCESSING, null -> stringResource(
+        Res.string.error_processing_failed,
+        failureDetail ?: stringResource(Res.string.error_unknown),
+    )
 }
 
 @Composable

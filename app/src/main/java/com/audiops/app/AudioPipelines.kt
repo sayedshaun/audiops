@@ -52,12 +52,11 @@ internal object AudioPipelines {
     }
 
     /** Transcribes decoded [audio]. [language] is `bn` for Bangla (dedicated model), a Whisper code, or empty for auto. */
-    fun transcribe(context: Context, audio: File, language: String, listener: ProcessingListener): String =
-        if (language == "bn") {
-            BanglaTranscriber.transcribe(context, audio, listener)
-        } else {
-            WhisperTranscriber.transcribe(context, audio, language, listener)
-        }
+    fun transcribe(context: Context, audio: File, language: String, listener: ProcessingListener): String = if (language == "bn") {
+        BanglaTranscriber.transcribe(context, audio, listener)
+    } else {
+        WhisperTranscriber.transcribe(context, audio, language, listener)
+    }
 
     private fun crossfade(previous: FloatArray, enhanced: FloatArray): FloatArray {
         val overlap = minOf(previous.size, enhanced.size)

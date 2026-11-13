@@ -18,6 +18,9 @@ import com.audiops.app.dsp.analyze
 import com.audiops.app.dsp.noiseReducer
 import com.audiops.app.dsp.speedPitchProcessor
 import com.audiops.app.dsp.waveformPeaks
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -27,9 +30,6 @@ import kotlin.math.log10
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Test
 
 private const val RATE = 44_100
 
@@ -176,7 +176,10 @@ class DspTest {
     }
 
     @Test fun pipelineTrimsNormalizesAndResamples() {
-        val dir = File.createTempFile("dsp", "").apply { delete(); mkdirs() }
+        val dir = File.createTempFile("dsp", "").apply {
+            delete()
+            mkdirs()
+        }
         try {
             val pcm = File(dir, "in.pcm")
             PcmFile.Writer(pcm).use { it.write(sine(440.0, 3.0, 0.2f)) }
@@ -187,7 +190,9 @@ class DspTest {
             DspPipeline.run(
                 pcm,
                 listOf(AudioOperation.Trim(500, 1500), AudioOperation.NormalizePeak(-1f)),
-                trimmed, dir, ProcessingListener.None,
+                trimmed,
+                dir,
+                ProcessingListener.None,
             )
             val samples = readWav(trimmed)
             assertEquals(RATE.toFloat(), samples.size.toFloat(), 2f)

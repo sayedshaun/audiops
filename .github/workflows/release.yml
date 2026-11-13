@@ -97,7 +97,7 @@ jobs:
           ./gradlew --no-daemon
           -PaudiopsVersion=${{ needs.version.outputs.version }}
           -PaudiopsVersionCode=${{ needs.version.outputs.code }}
-          :shared:desktopTest :app:lintRelease :app:assembleRelease :app:bundleRelease
+          spotlessCheck :shared:desktopTest :app:lintRelease :app:assembleRelease :app:bundleRelease
 
       - name: Collect artifacts
         run: |

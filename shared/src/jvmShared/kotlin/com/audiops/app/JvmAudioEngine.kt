@@ -2,9 +2,9 @@ package com.audiops.app
 
 import com.audiops.app.dsp.DspPipeline
 import com.audiops.app.dsp.PcmFile
-import com.audiops.app.dsp.analyze as analyzePcm
 import com.audiops.app.dsp.waveformPeaks
 import java.io.File
+import com.audiops.app.dsp.analyze as analyzePcm
 
 /**
  * Engine logic shared by Android and desktop: decoded-audio cache, DSP tools, analysis,
@@ -14,11 +14,7 @@ import java.io.File
  * @param outputDir processed files kept for the Activity tab.
  * @param modelRoot downloaded models.
  */
-abstract class JvmAudioEngine(
-    protected val workDir: File,
-    protected val outputDir: File,
-    protected val modelRoot: File,
-) : AudioEngine {
+abstract class JvmAudioEngine(protected val workDir: File, protected val outputDir: File, protected val modelRoot: File) : AudioEngine {
 
     /** Decodes [source] to a new mono 44.1 kHz PCM16 file inside [workDir]. */
     protected abstract fun decode(source: String): File
@@ -47,8 +43,13 @@ abstract class JvmAudioEngine(
             cache.firstOrNull { it.source == source && it.file.exists() }?.also { it.users++ }
         }
         val entry = existing ?: run {
-            val file = decode(source)   // slow: outside the lock
-            synchronized(lock) { Entry(source, file).also { it.users++; cache += it } }
+            val file = decode(source) // slow: outside the lock
+            synchronized(lock) {
+                Entry(source, file).also {
+                    it.users++
+                    cache += it
+                }
+            }
         }
         try {
             return block(entry.file)

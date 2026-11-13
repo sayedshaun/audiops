@@ -107,23 +107,30 @@ class FilterChain(private val filters: List<Biquad>, private val outputGain: Dou
             EqPreset.VOICE_CLARITY -> FilterChain(
                 listOf(
                     Biquad.highPass(rate, 80.0),
-                    Biquad.peaking(rate, 250.0, 1.0, -3.0),   // reduce mud
-                    Biquad.peaking(rate, 3000.0, 1.0, 4.0),   // presence
-                    Biquad.highShelf(rate, 8000.0, 2.0),      // air
+                    Biquad.peaking(rate, 250.0, 1.0, -3.0), // reduce mud
+                    Biquad.peaking(rate, 3000.0, 1.0, 4.0), // presence
+                    Biquad.highShelf(rate, 8000.0, 2.0), // air
                 ),
                 outputGain = 0.85,
             )
+
             EqPreset.BASS_BOOST -> FilterChain(listOf(Biquad.lowShelf(rate, 120.0, 6.0)), outputGain = 0.6)
+
             EqPreset.TREBLE_BOOST -> FilterChain(listOf(Biquad.highShelf(rate, 4000.0, 6.0)), outputGain = 0.6)
+
             EqPreset.WARM -> FilterChain(
                 listOf(Biquad.lowShelf(rate, 200.0, 3.0), Biquad.highShelf(rate, 6000.0, -3.0)),
                 outputGain = 0.8,
             )
+
             EqPreset.REMOVE_RUMBLE -> FilterChain(listOf(Biquad.highPass(rate, 90.0), Biquad.highPass(rate, 90.0)))
+
             EqPreset.TELEPHONE -> FilterChain(
                 listOf(
-                    Biquad.highPass(rate, 300.0), Biquad.highPass(rate, 300.0),
-                    Biquad.lowPass(rate, 3400.0), Biquad.lowPass(rate, 3400.0),
+                    Biquad.highPass(rate, 300.0),
+                    Biquad.highPass(rate, 300.0),
+                    Biquad.lowPass(rate, 3400.0),
+                    Biquad.lowPass(rate, 3400.0),
                 ),
             )
         }

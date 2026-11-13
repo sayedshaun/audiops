@@ -64,7 +64,24 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.audiops.app.Job
 import com.audiops.app.JobStatus
-import com.audiops.shared.resources.*
+import com.audiops.shared.resources.Res
+import com.audiops.shared.resources.action_cancel
+import com.audiops.shared.resources.action_clear
+import com.audiops.shared.resources.action_clear_history
+import com.audiops.shared.resources.action_delete
+import com.audiops.shared.resources.action_open_tool
+import com.audiops.shared.resources.activity_empty_body
+import com.audiops.shared.resources.activity_empty_title
+import com.audiops.shared.resources.activity_in_progress
+import com.audiops.shared.resources.activity_recent
+import com.audiops.shared.resources.activity_subtitle
+import com.audiops.shared.resources.clear_history_body
+import com.audiops.shared.resources.clear_history_title
+import com.audiops.shared.resources.status_cancelled
+import com.audiops.shared.resources.status_done
+import com.audiops.shared.resources.status_failed
+import com.audiops.shared.resources.status_queued
+import com.audiops.shared.resources.tab_activity
 import org.jetbrains.compose.resources.stringResource
 
 /** Events from [ActivityTab]. */
@@ -172,7 +189,9 @@ private fun JobRow(job: Job, shape: androidx.compose.ui.graphics.Shape, onClick:
     val (container, content) = job.tool.category.colors(colors)
     val supporting = when (job.status) {
         JobStatus.QUEUED, JobStatus.RUNNING -> "${stringResource(job.tool.title)} · ${job.progressText()}"
+
         JobStatus.FAILED -> "${stringResource(job.tool.title)} · ${stringResource(job.status.title)}"
+
         else -> listOfNotNull(
             stringResource(job.tool.title),
             job.spec.summary(),
@@ -202,9 +221,13 @@ private fun StatusIndicator(job: Job) {
                     CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
                 }
             }
+
             JobStatus.QUEUED -> Icon(Icons.Rounded.Schedule, stringResource(Res.string.status_queued), tint = colors.onSurfaceVariant)
+
             JobStatus.DONE -> Icon(Icons.Rounded.CheckCircle, stringResource(Res.string.status_done), tint = colors.primary)
+
             JobStatus.FAILED -> Icon(Icons.Rounded.ErrorOutline, stringResource(Res.string.status_failed), tint = colors.error)
+
             JobStatus.CANCELLED -> Icon(Icons.Rounded.Block, stringResource(Res.string.status_cancelled), tint = colors.onSurfaceVariant)
         }
     }
@@ -225,7 +248,12 @@ private fun JobSheet(job: Job, actions: ActivityActions, onDismiss: () -> Unit) 
                 ShapedIcon(job.tool.icon, job.tool.shape.toShape(), container, content, size = 52.dp)
                 Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(job.inputName, style = MaterialTheme.typography.titleLargeEmphasized, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        job.inputName,
+                        style = MaterialTheme.typography.titleLargeEmphasized,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                     Text(
                         listOfNotNull(stringResource(job.tool.title), job.spec.summary(), relativeTime(job.finishedAt ?: job.createdAt))
                             .joinToString(" · "),
@@ -276,9 +304,19 @@ private fun EmptyActivity(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        ShapedIcon(Icons.Rounded.History, MaterialShapes.Cookie12Sided.toShape(), colors.secondaryContainer, colors.onSecondaryContainer, size = 112.dp)
+        ShapedIcon(
+            Icons.Rounded.History,
+            MaterialShapes.Cookie12Sided.toShape(),
+            colors.secondaryContainer,
+            colors.onSecondaryContainer,
+            size = 112.dp,
+        )
         Spacer(Modifier.height(24.dp))
-        Text(stringResource(Res.string.activity_empty_title), style = MaterialTheme.typography.titleLargeEmphasized, textAlign = TextAlign.Center)
+        Text(
+            stringResource(Res.string.activity_empty_title),
+            style = MaterialTheme.typography.titleLargeEmphasized,
+            textAlign = TextAlign.Center,
+        )
         Spacer(Modifier.height(8.dp))
         Text(
             stringResource(Res.string.activity_empty_body),

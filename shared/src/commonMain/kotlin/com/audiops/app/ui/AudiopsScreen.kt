@@ -72,7 +72,18 @@ import com.audiops.app.Tab
 import com.audiops.app.Tool
 import com.audiops.app.ToolCategory
 import com.audiops.app.UserSettings
-import com.audiops.shared.resources.*
+import com.audiops.shared.resources.Res
+import com.audiops.shared.resources.app_name
+import com.audiops.shared.resources.badge_android_only
+import com.audiops.shared.resources.badge_on_device
+import com.audiops.shared.resources.banner_processing
+import com.audiops.shared.resources.home_footer
+import com.audiops.shared.resources.home_hero_body
+import com.audiops.shared.resources.home_hero_title
+import com.audiops.shared.resources.home_subtitle
+import com.audiops.shared.resources.tab_activity
+import com.audiops.shared.resources.tab_settings
+import com.audiops.shared.resources.tab_tools
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -147,6 +158,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                         onOpen = viewModel::open,
                         onShowActivity = { viewModel.selectTab(Tab.ACTIVITY) },
                     )
+
                     Tab.ACTIVITY -> ActivityTab(
                         jobs = state.jobs,
                         actions = ActivityActions(
@@ -159,6 +171,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                             readText = viewModel::readText,
                         ),
                     )
+
                     Tab.SETTINGS -> SettingsScreen(
                         settings = settings ?: UserSettings(),
                         appVersion = appVersion,
@@ -196,13 +209,7 @@ private val tabs = listOf(
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun Shell(
-    tab: Tab,
-    activeJobs: Int,
-    snackbar: SnackbarHostState,
-    onTab: (Tab) -> Unit,
-    content: @Composable (Tab) -> Unit,
-) {
+private fun Shell(tab: Tab, activeJobs: Int, snackbar: SnackbarHostState, onTab: (Tab) -> Unit, content: @Composable (Tab) -> Unit) {
     val effects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
     BoxWithConstraints {
         val wide = maxWidth >= 600.dp
@@ -353,7 +360,12 @@ private fun ToolTile(tool: Tool, available: Boolean, onClick: () -> Unit) {
                     }
                 }
             }
-            Text(stringResource(tool.title), style = MaterialTheme.typography.titleMediumEmphasized, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                stringResource(tool.title),
+                style = MaterialTheme.typography.titleMediumEmphasized,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             Text(
                 stringResource(tool.description),
                 style = MaterialTheme.typography.bodySmall,
@@ -386,7 +398,12 @@ private fun ProcessingBanner(job: Job, count: Int, onClick: () -> Unit) {
                 Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = stringResource(Res.string.tab_activity))
             }
             Spacer(Modifier.height(4.dp))
-            Text("${stringResource(job.tool.title)} · ${job.inputName}", style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                "${stringResource(job.tool.title)} · ${job.inputName}",
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             Spacer(Modifier.height(12.dp))
             WorkStatus(job.progressText(), job.progress?.fraction)
         }
@@ -400,7 +417,11 @@ private fun OnDeviceBadge(modifier: Modifier = Modifier) {
         Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.Lock, contentDescription = null, modifier = Modifier.size(16.dp), tint = colors.onSecondaryContainer)
             Spacer(Modifier.width(6.dp))
-            Text(stringResource(Res.string.badge_on_device), style = MaterialTheme.typography.labelLarge, color = colors.onSecondaryContainer)
+            Text(
+                stringResource(Res.string.badge_on_device),
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.onSecondaryContainer,
+            )
         }
     }
 }
