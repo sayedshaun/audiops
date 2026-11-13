@@ -185,3 +185,11 @@ Entries are appended in order. Newest entries are at the bottom.
 - Locally signed release build: every APK and the AAB verify with the new certificate (SHA-256 `c147c216…`); `aapt2` reports versionName 0.1.0 and only arm64-v8a native code in the arm64 APK.
 - Compose's Windows version check accepts MAJOR = 0, so `v0.1.0` packages on Windows.
 - Not verified on the emulator: it has an older build signed with a different key, and replacing it would wipe its data.
+
+## 2026-11-13: Desktop installer version fix (`fix/desktop-package-version`)
+
+### Fixed
+- The release dry run failed in the Android job: `-PaudiopsVersion` applies to every module, and configuring `:desktopApp` rejected `0.0.0-dryrun` because RPM versions cannot contain `-`. A pre-release tag such as `v0.2.0-beta.1` would have failed the same way. Installer versions now drop the suffix (`0.2.0`); the app still shows the full version.
+
+### Verified
+- `:desktopApp` configures with `0.0.0-dryrun`; `packageDeb` with `0.2.0-beta.1` produces `audiops_0.2.0-1_amd64.deb`. The dry run's Linux and Windows jobs had already built DEB, RPM, MSI and EXE.
