@@ -8,6 +8,7 @@ Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine o
 
 ### Done
 - **Licence:** Apache 2.0 (`LICENSE`, `NOTICE`).
+- **Moto g96 (8 GB, Android 16):** Enhance speech completes from a fresh install of 0.1.1 (peak 0.8 GB, ~3 min for 11 s); before, the old vocoder reached 4.7 GB and was killed.
 - **Released v0.1.0** (https://github.com/sayedshaun/audiops/releases/tag/v0.1.0): signed Android APKs and AAB, Linux DEB/RPM, Windows MSI/EXE, SHA256SUMS. Android files were signed locally (the signing secrets are not on GitHub yet) and swapped into the release. Earlier prep: CHANGELOG section cut; release signing key created (kept outside the repo in `~/.audiops-release/`); signed per-ABI APKs (arm64 ≈ 40 MB), universal APK and AAB verified locally; every model pinned and SHA-256 verified; the release workflow has a dry-run mode and writes release notes from CHANGELOG.md.
 - **Repository:** public at github.com/sayedshaun/audiops, with README, logo, banner, CONTRIBUTING, SECURITY, issue and PR templates, and a release workflow that builds and attaches Android, Linux and Windows artifacts on every published release.
 - **Platforms:** `:shared` (Compose Multiplatform), `:app` (Android), `:desktopApp` (Linux/Windows; DEB/RPM/MSI/EXE packaging).
@@ -19,7 +20,6 @@ Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine o
 - **Emulator end to end:** every DSP tool on a 3-minute 48 kHz stereo file; queue; history across restarts; playback; save; cancel during download; staged enhancement memory.
 
 ### Not yet done
-- **AI enhancement on a phone with the new vocoder** not yet run: confirmed end to end on the 4 GB emulator; the Moto g96 test of the old build showed the low-memory kill that this fixes.
 - **Desktop window not opened interactively** (Wayland session, no capture); the desktop UI is verified by off-screen render tests and the engine by unit tests.
 - **Physical devices:** not tested; the emulator is x86_64 while phones are arm64.
 - **Desktop AI tools:** need sherpa-onnx's JVM build and a broader decoder (FFmpeg/JavaCV) for MP3/AAC input.
