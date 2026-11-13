@@ -189,23 +189,30 @@ val JobStatus.title: StringResource
 /** Status line for a running or queued job, such as "Processing… 42%". */
 @Composable
 fun Job.progressText(): String {
-    val p = progress ?: return stringResource(status.title)
+    val (resource, args) = progressResource()
+    return stringResource(resource, *args)
+}
+
+/** [progressText] outside composition, for example in a notification. */
+suspend fun Job.progressLabel(): String {
+    val (resource, args) = progressResource()
+    return getString(resource, *args)
+}
+
+private fun Job.progressResource(): Pair<StringResource, Array<Any>> {
+    val p = progress ?: return status.title to emptyArray()
     return when (p.stage) {
-        Stage.QUEUED -> stringResource(Res.string.stage_queued)
+        Stage.QUEUED -> Res.string.stage_queued to emptyArray()
 
-        Stage.PREPARING -> stringResource(Res.string.stage_preparing)
+        Stage.PREPARING -> Res.string.stage_preparing to emptyArray()
 
-        Stage.DOWNLOADING_MODEL -> stringResource(
-            Res.string.stage_model_download_percent,
-            p.index,
-            p.total,
-            (p.subFraction * 100).toInt(),
-        )
+        Stage.DOWNLOADING_MODEL ->
+            Res.string.stage_model_download_percent to arrayOf(p.index, p.total, (p.subFraction * 100).toInt())
 
         Stage.PROCESSING -> if (p.total == 100) {
-            stringResource(Res.string.stage_percent, p.index)
+            Res.string.stage_percent to arrayOf(p.index)
         } else {
-            stringResource(Res.string.stage_section, p.index, p.total)
+            Res.string.stage_section to arrayOf(p.index, p.total)
         }
     }
 }

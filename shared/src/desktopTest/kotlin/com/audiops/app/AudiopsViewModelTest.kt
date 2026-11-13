@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -202,6 +203,27 @@ class AudiopsViewModelTest {
         vm.cancel(running.id)
         val cancelled = vm.awaitJobs(2, JobStatus.CANCELLED)
         assertEquals(setOf(running.id, queued.id), cancelled.map { it.id }.toSet())
+        assertTrue(engine.processed.isEmpty())
+    }
+
+    @Test fun cancelAllStopsEveryActiveJobWithOneMessage() {
+        val started = CountDownLatch(1)
+        val engine = FakeEngine().apply {
+            onProcess = {
+                started.countDown()
+                Thread.sleep(30_000) // interrupted by cancel
+            }
+        }
+        val vm = viewModel(engine)
+        repeat(3) { vm.start(Tool.VOLUME, gain) }
+        assertTrue(started.await(10, TimeUnit.SECONDS))
+        vm.awaitState { s -> s.jobs.any { it.status == JobStatus.RUNNING } }
+        vm.cancelAll()
+        assertEquals(3, vm.awaitJobs(3, JobStatus.CANCELLED).size)
+        assertTrue(vm.state.value.activeJobs.isEmpty())
+        val message = runBlocking { withTimeout(10_000) { vm.messages.first() } }
+        assertEquals(UiMessage.Cancelled, message)
+        assertNull(runBlocking { withTimeoutOrNull(300) { vm.messages.first() } })
         assertTrue(engine.processed.isEmpty())
     }
 
