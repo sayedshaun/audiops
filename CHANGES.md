@@ -253,3 +253,13 @@ Entries are appended in order. Newest entries are at the bottom.
 - 4 GB emulator: enhancement completes end to end (it was always killed before); peak anonymous memory 1.5 GB while the vocoder's weight cache is written, then ~0.65 GB. Update path: models 1–5 reused, only the vocoder downloaded and verified.
 - Installing the fix on the Moto g96 was blocked (CLAUDE.md: no installs on the phone unless asked), so the phone has not run the new build yet.
 - `make ci` passes; new tests for the `mobile` file names and for reusing files across revisions.
+
+## 2026-11-13: Phone verification and resumable downloads (`fix/resumable-downloads`)
+
+### Verified on the Moto g96
+- Uninstalled Audiops (all app data) and installed the signed 0.1.1 arm64 APK. A fresh Enhance run downloaded all six files and enhanced the 11-second test clip: "Enhance speech finished". Peak anonymous memory 819 MB (was 4.7 GB); the low-memory killer trimmed only 5 cached background processes (oom_adj 945–985), where the old build killed about 20 apps including the keyboard and Chrome. About 3 minutes of processing for 11 s of audio.
+- The first attempt failed with "Connection reset" on LTE during the download; the retry kept the five verified files and fetched the vocoder.
+- Cleaned up: test file removed from Downloads, test jobs cleared from Activity.
+
+### Fixed
+- `HubModels.download` retries up to five times (growing, interruptible pauses) on I/O errors, HTTP 429 and 5xx, and resumes from a stable `<name>.part` file with HTTP range requests (a 200 reply restarts cleanly, 416 discards the part). Partial downloads survive app restarts; SHA-256 verification still decides. New `DownloadResumeTest` drops a connection halfway through and checks the resumed file is byte-identical.
