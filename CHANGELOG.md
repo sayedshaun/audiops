@@ -13,6 +13,8 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-13
+
 ### Fixed
 - **Enhance speech no longer gets killed on phones.** The AI vocoder needed about 4.7 GB of memory, so Android stopped it (and closed other apps) even on 8 GB phones. It now uses a re-exported vocoder and a file-backed weight cache: about 1.5 GB at peak, it runs about three times faster, and its output matches the original model far more closely. Updating downloads only the new 384 MB vocoder; the other model files are kept.
 - Settings → Open-source licenses now includes the full license text of every bundled and downloaded component ("Third-party notices"), and credits ONNX Runtime, LiteRT, JTransforms, JLargeArrays and Apache Commons Math. Whisper is correctly listed as MIT (OpenAI).
@@ -36,5 +38,6 @@ First public release.
 - Smaller downloads: an Android APK for each processor type (about 40 MB for most phones) besides the universal APK.
 - Input formats: anything Android can decode (MP3, AAC/M4A, OGG, Opus, FLAC, WAV…); WAV, AIFF and AU on desktop. Output is 16-bit WAV.
 
-[Unreleased]: https://github.com/sayedshaun/audiops/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/sayedshaun/audiops/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/sayedshaun/audiops/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/sayedshaun/audiops/releases/tag/v0.1.0

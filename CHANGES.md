@@ -233,6 +233,11 @@ Entries are appended in order. Newest entries are at the bottom.
 ### Note
 - The v0.1.0 binaries predate this fix; a 0.1.1 release would ship the notices.
 
+## 2026-11-13: Prepare release 0.1.1 (`release/0.1.1`)
+
+### Changed
+- `CHANGELOG.md`: `0.1.1` section cut (bundled third-party licence notices). Default local version is 0.1.1.
+
 ## 2026-11-13: Enhance speech memory fix and vocoder re-export (`fix/enhance-memory`)
 
 ### Diagnosed
