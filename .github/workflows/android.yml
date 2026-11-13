@@ -20,8 +20,7 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - uses: android-actions/setup-android@v3
-
+      # The runner image ships an Android SDK (ANDROID_HOME); Gradle installs missing platforms.
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Shared and desktop tests
