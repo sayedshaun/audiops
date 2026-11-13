@@ -9,7 +9,7 @@
 **Clean up, edit, transcribe and analyze audio, entirely on your device.**<br>
 Nothing you open is uploaded. AI models download once, then run offline.
 
-[**Download**](https://github.com/sayedshaun/audiops/releases/latest) · [Features](#features) · [Screenshots](#screenshots) · [Build from source](#build-from-source) · [Contributing](CONTRIBUTING.md)
+[**Download**](https://github.com/sayedshaun/audiops/releases/latest) · [Features](#features) · [Models](#models) · [Screenshots](#screenshots) · [Build from source](#build-from-source) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
@@ -41,6 +41,35 @@ Nothing you open is uploaded. AI models download once, then run offline.
 Open MP3, AAC/M4A, WAV, FLAC, OGG and anything else your device decodes. Results are saved as WAV files (mono, 16-bit).
 
 **And around the tools:** waveform previews and playback, an Activity tab with the job queue and history, light, dark and pure-black themes, dynamic color on Android 12+, predictive back, haptics, screen-reader labels and large touch targets.
+
+## Models
+
+Only the two AI tools use machine-learning models. Every other tool is classic signal processing written in Kotlin, with nothing to download.
+
+| Tool (option) | Model | Runtime | Files | Download | License |
+| --- | --- | --- | --- | --: | --- |
+| **Enhance speech** | [Resemble Enhance](https://huggingface.co/SayedShaun/resemble-enhance-litert), INT8 LiteRT export | [LiteRT](https://ai.google.dev/edge/litert), CPU | 5 networks + mel filter bank | ~361 MB | MIT |
+| **Transcribe** (Auto, English, Hindi) | [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny), INT8 ONNX | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), CPU | encoder, decoder, tokens | ~104 MB | Apache 2.0 (export of OpenAI Whisper) |
+| **Transcribe** (Bangla) | [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx/tree/5442ca3d447572aaa5ef6913684d8f24d6d916cc), INT8 transducer | sherpa-onnx, CPU | encoder, decoder, joiner, tokens | ~74 MB | CC BY-SA 4.0 |
+| All other tools | None | Kotlin DSP | – | – | – |
+
+### Which model runs when
+
+- **Enhance speech** always uses Resemble Enhance. Audio is converted to 44.1 kHz mono and processed in one-second chunks with 50% overlap through five networks: a **denoiser**, an **encoder**, a **flow-matching step** (16 midpoint steps, 32 evaluations), a **decoder** and a **vocoder** that produces the waveform. Long recordings go through in 20-second windows joined with a crossfade.
+- **Transcribe** picks the model from the language you choose:
+  - **Auto** uses Whisper Tiny with automatic language detection. It can misidentify very short clips.
+  - **English** and **Hindi** use Whisper Tiny with the language fixed, which avoids detection mistakes.
+  - **Bangla** uses the dedicated Bangla Zipformer, a model trained specifically for Bangla speech.
+
+  Whisper reads 30-second sections with greedy decoding; Bangla Zipformer reads 20-second sections with beam search.
+
+### Download, verification and storage
+
+- Each model downloads **once**, on first use of its tool, over HTTPS from Hugging Face. After that the tool works fully offline.
+- Whisper and Bangla files are pinned to a fixed revision and **verified with SHA-256** before use. Resemble Enhance files are checked for completeness; digests are on the [roadmap](#roadmap).
+- Models live in app-private storage that is excluded from backups. See their size, or delete them, in **Settings → Storage → Downloaded models**; they download again when needed.
+- **Memory:** Whisper and Bangla run comfortably on any supported phone. Resemble Enhance loads one network at a time, but its vocoder needs up to about 3 GB of free memory, so it is best on phones with 8 GB of RAM or more. It runs in a separate process: if a phone runs out of memory, Audiops stays open and says so.
+- **Desktop:** the AI tools are Android-only for now (marked "Android only" in the app).
 
 ## Screenshots
 

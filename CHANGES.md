@@ -132,3 +132,8 @@ Entries are appended in order. Newest entries are at the bottom.
 ### Verified
 - Locally: a `.deb` builds with the icon and metadata; the CI signing path (base64 keystore → env) produces an APK signed with the given key, versionName 1.2.3 / versionCode 1002003, plus an AAB; desktop tests pass; README rendered through GitHub's Markdown API.
 - Not yet run on GitHub Actions: pushing workflow files needs a token with the `workflow` scope.
+
+## 2026-11-13: README Models section (`docs/readme-models`)
+
+### Added
+- README "Models" section: which model each tool and language option uses (Resemble Enhance for Enhance speech; Whisper Tiny for Auto, English and Hindi; Bangla Zipformer for Bangla; no model for DSP tools), with runtime, files, download size (from the pinned Hugging Face revisions), license, how each pipeline runs, memory needs, verification, storage and deletion.
