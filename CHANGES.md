@@ -269,3 +269,22 @@ Entries are appended in order. Newest entries are at the bottom.
 ### Released
 - Published https://github.com/sayedshaun/audiops/releases/tag/v0.1.1 from `f1df2e3`. CI built and attached the Linux DEB/RPM and Windows MSI/EXE and wrote the notes from `CHANGELOG.md`. The Android APKs and AAB were built locally from the same commit with the release key (signing secrets are still not on GitHub), replaced the unsigned CI APKs, and `SHA256SUMS.txt` was regenerated (10 files).
 - Verified the downloaded arm64 APK: checksum OK, release certificate `c147c216…`, versionName 0.1.1, versionCode 1001. The same build passed Enhance speech on the Moto g96 from a fresh install.
+
+## 2026-11-13: Background jobs on Android (`feature/foreground-service`)
+
+### Added
+- `JobService`: a foreground service in the main process that runs while any job is queued or running (type `mediaProcessing` on Android 15+, `dataSync` on 10–14), holds a partial wake lock (6 h cap, matching the platform's daily limit; `onTimeout` cancels the jobs and stops), and shows an ongoing notification: tool name, progress text and bar, "N more waiting", and Cancel / Cancel all. Updates are throttled to two per second.
+- `JobNotifications`: follows `AudiopsState.jobs`, publishes the notice and starts the service when work begins, and posts a "finished"/"failed" notification (tap opens the Activity tab) for jobs that end while no Activity is started. Two channels: "Running jobs" (low importance) and "Finished jobs".
+- `AudiopsViewModel.cancelAll()` cancels queued jobs and the running one with a single "Cancelled" message; covered by a new `AudiopsViewModelTest` case.
+- Notification text in shared Compose resources (`ui/NotificationText.kt`, `Job.progressLabel()` alongside the composable `progressText()`); new strings under "Android notifications".
+- Permissions: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC`, `FOREGROUND_SERVICE_MEDIA_PROCESSING`, `POST_NOTIFICATIONS` (asked once, when the first job starts) and `WAKE_LOCK`. Monochrome `ic_notification`.
+
+### Changed
+- The Android `AudiopsViewModel` now belongs to `AudiopsApplication` instead of `MainActivity`, so swiping the task away no longer cancels jobs. Tab, tool, input and language are saved into the Activity's instance state and restored after process death, as before.
+
+### Verified (Android 17 emulator, debug build upgraded over 0.1.0 with data kept)
+- Permission prompt on the first job; service foreground with type `0x2000` (media processing); `Audiops:jobs` wake lock held; main process oom_adj 50 and `:enhance` 100 while backgrounded.
+- Swiped the task away from Recents during enhancement: same process kept running, progress continued to 99%, "Enhance speech finished." notification posted, service stopped, wake lock released, worker gone. Tapping the notification opened the Activity tab with the result.
+- Cancel from the notification stopped the job (service and `:enhance` gone, job shown as Cancelled).
+- After `am kill` in the background, relaunching from Recents restored the Remove silence screen and the chosen file.
+- `make ci` passes.

@@ -217,6 +217,18 @@ class AudiopsViewModel(
         }
     }
 
+    /** Cancels every queued and running job (the notification's Cancel action), with one message. */
+    fun cancelAll() {
+        val active = _state.value.activeJobs
+        if (active.isEmpty()) return
+        active.filter { it.status == JobStatus.QUEUED }.forEach { job ->
+            finish(job.id) { it.copy(status = JobStatus.CANCELLED, finishedAt = currentTimeMillis(), progress = null) }
+        }
+        val running = runningJob
+        // The running job reports its own cancellation (see execute).
+        if (running != null) running.cancel() else _messages.trySend(UiMessage.Cancelled)
+    }
+
     /** Removes a finished job and its output file. */
     fun delete(jobId: String) {
         val job = _state.value.jobs.firstOrNull { it.id == jobId } ?: return

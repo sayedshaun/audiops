@@ -160,6 +160,14 @@
     <string name="time_hours">%1$d h ago</string>
     <string name="time_days">%1$d d ago</string>
 
+    <!-- Android notifications -->
+    <string name="notification_channel_running">Running jobs</string>
+    <string name="notification_channel_running_description">Shows progress while Audiops works in the background.</string>
+    <string name="notification_channel_finished">Finished jobs</string>
+    <string name="notification_channel_finished_description">Tells you when a job finishes while Audiops is in the background.</string>
+    <string name="notification_waiting">%1$d more waiting</string>
+    <string name="notification_cancel_all">Cancel all</string>
+
     <!-- Messages and errors -->
     <string name="message_job_finished">%1$s finished.</string>
     <string name="message_job_failed">%1$s failed.</string>
