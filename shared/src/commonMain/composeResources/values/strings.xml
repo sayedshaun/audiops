@@ -3,7 +3,6 @@
     <string name="app_name">Audiops</string>
     <string name="back">Back</string>
     <string name="open_link">Open link</string>
-    <string name="badge_on_device">On device</string>
     <string name="badge_android_only">Android only</string>
 
     <!-- Navigation -->
@@ -13,8 +12,8 @@
 
     <!-- Tools tab -->
     <string name="home_subtitle">On-device audio tools</string>
-    <string name="home_hero_title">Clearer audio, without the cloud.</string>
-    <string name="home_hero_body">Every tool runs on this device. Nothing you select is uploaded.</string>
+    <string name="home_hero_title">Transform audio, without the cloud.</string>
+    <string name="home_hero_body">Every tool runs on this device. Nothing is uploaded.</string>
     <string name="home_footer">AI models download once, then run on this device. Other tools need no download.</string>
     <string name="banner_processing">Processing %1$d</string>
     <string name="category_ai">AI</string>

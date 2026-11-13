@@ -10,6 +10,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,16 +23,12 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.History
-import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -75,7 +72,6 @@ import com.audiops.app.UserSettings
 import com.audiops.shared.resources.Res
 import com.audiops.shared.resources.app_name
 import com.audiops.shared.resources.badge_android_only
-import com.audiops.shared.resources.badge_on_device
 import com.audiops.shared.resources.banner_processing
 import com.audiops.shared.resources.home_footer
 import com.audiops.shared.resources.home_hero_body
@@ -275,68 +271,97 @@ private fun ToolsTab(state: AudiopsState, unsupported: Set<Tool>, onOpen: (Tool)
             LargeFlexibleTopAppBar(
                 title = { Text(stringResource(Res.string.app_name)) },
                 subtitle = { Text(stringResource(Res.string.home_subtitle)) },
-                actions = { OnDeviceBadge(Modifier.padding(end = 12.dp)) },
                 scrollBehavior = scrollBehavior,
             )
         },
     ) { padding ->
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 168.dp),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = padding.calculateTopPadding() + 8.dp,
-                bottom = 24.dp,
-            ),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                val running = state.activeJobs.firstOrNull()
-                if (running != null) {
-                    ProcessingBanner(running, state.activeJobs.size, onShowActivity)
-                } else {
-                    HeroBanner(
-                        title = stringResource(Res.string.home_hero_title),
-                        body = stringResource(Res.string.home_hero_body),
-                    )
+        // Each category fills its rows: tiles stretch to share the width, so wide windows
+        // (desktop) have no empty cells at the end of a row.
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val columns = ((maxWidth - 32.dp + TileGap) / (TileMinWidth + TileGap)).toInt().coerceAtLeast(1)
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = padding.calculateTopPadding() + 8.dp,
+                    bottom = 24.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(TileGap),
+            ) {
+                item(key = "banner") {
+                    val running = state.activeJobs.firstOrNull()
+                    if (running != null) {
+                        ProcessingBanner(running, state.activeJobs.size, onShowActivity)
+                    } else {
+                        HeroBanner(
+                            title = stringResource(Res.string.home_hero_title),
+                            body = stringResource(Res.string.home_hero_body),
+                        )
+                    }
                 }
-            }
-            ToolCategory.entries.forEach { category ->
-                item(span = { GridItemSpan(maxLineSpan) }) {
+                ToolCategory.entries.forEach { category ->
+                    item(key = "title-${category.name}") {
+                        Text(
+                            stringResource(category.title),
+                            style = MaterialTheme.typography.titleMediumEmphasized,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 2.dp),
+                        )
+                    }
+                    balancedRows(Tool.entries.filter { it.category == category }, columns).forEach { row ->
+                        item(key = row.joinToString { it.name }) {
+                            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(TileGap)) {
+                                row.forEach { tool ->
+                                    ToolTile(
+                                        tool,
+                                        available = tool !in unsupported,
+                                        onClick = { onOpen(tool) },
+                                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                item(key = "footer") {
                     Text(
-                        stringResource(category.title),
-                        style = MaterialTheme.typography.titleMediumEmphasized,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 2.dp),
+                        stringResource(Res.string.home_footer),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp, top = 16.dp),
                     )
                 }
-                items(Tool.entries.filter { it.category == category }, key = { it.name }) { tool ->
-                    ToolTile(tool, available = tool !in unsupported, onClick = { onOpen(tool) })
-                }
-            }
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Text(
-                    stringResource(Res.string.home_footer),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp, top = 16.dp),
-                )
             }
         }
     }
 }
 
+private val TileMinWidth = 168.dp
+private val TileGap = 10.dp
+
+/** Splits [items] into rows of at most [columns], as even as possible (5 in 3 columns: 3 + 2). */
+internal fun <T> balancedRows(items: List<T>, columns: Int): List<List<T>> {
+    if (items.isEmpty()) return emptyList()
+    val rows = (items.size + columns - 1) / columns
+    val base = items.size / rows
+    val extra = items.size % rows
+    var start = 0
+    return List(rows) { index ->
+        val size = base + if (index < extra) 1 else 0
+        items.subList(start, start + size).also { start += size }
+    }
+}
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ToolTile(tool: Tool, available: Boolean, onClick: () -> Unit) {
+private fun ToolTile(tool: Tool, available: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     val (container, content) = if (available) tool.category.colors(colors) else colors.surfaceContainerHighest to colors.onSurfaceVariant
     Card(
         onClick = onClick,
         enabled = available,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 164.dp),
+        modifier = modifier.heightIn(min = 164.dp),
         shape = MaterialTheme.shapes.extraLarge,
         // Unavailable tools recede (lower-emphasis container) instead of turning lighter.
         colors = CardDefaults.cardColors(
@@ -406,22 +431,6 @@ private fun ProcessingBanner(job: Job, count: Int, onClick: () -> Unit) {
             )
             Spacer(Modifier.height(12.dp))
             WorkStatus(job.progressText(), job.progress?.fraction)
-        }
-    }
-}
-
-@Composable
-private fun OnDeviceBadge(modifier: Modifier = Modifier) {
-    val colors = MaterialTheme.colorScheme
-    Surface(modifier = modifier, color = colors.secondaryContainer, shape = CircleShape) {
-        Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.Lock, contentDescription = null, modifier = Modifier.size(16.dp), tint = colors.onSecondaryContainer)
-            Spacer(Modifier.width(6.dp))
-            Text(
-                stringResource(Res.string.badge_on_device),
-                style = MaterialTheme.typography.labelLarge,
-                color = colors.onSecondaryContainer,
-            )
         }
     }
 }

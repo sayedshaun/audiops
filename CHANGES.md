@@ -288,3 +288,13 @@ Entries are appended in order. Newest entries are at the bottom.
 - Cancel from the notification stopped the job (service and `:enhance` gone, job shown as Cancelled).
 - After `am kill` in the background, relaunching from Recents restored the Remove silence screen and the chosen file.
 - `make ci` passes.
+
+## 2026-11-13: Tools tab layout (`fix/home-header`)
+
+### Changed
+- Removed the non-interactive "On device" badge from the Tools top bar (and its string).
+- Hero banner: the decorative shapes now sit in a `matchParentSize` layer, so they no longer force a 200 dp minimum height. Title `titleLargeEmphasized`, body `bodyMedium`, waveform 20 dp, padding 20/16 dp: 386 px instead of 525 px tall on a 1080 px-wide phone. Copy: "Transform audio, without the cloud." / "Every tool runs on this device. Nothing is uploaded."
+- Tools grid: a `LazyColumn` of rows in place of an adaptive `LazyVerticalGrid`. The column count still comes from the 168 dp minimum tile width, but each category is split into balanced rows (`balancedRows`), and the tiles in a row share the width and match heights. Wide windows have no empty cells: on desktop each category fills one row. On phones the third Edit tool spans the full width. New `BalancedRowsTest`.
+
+### Verified
+- Android 17 emulator, light and dark; desktop off-screen renders at 1375 px and 520 px.

@@ -94,6 +94,7 @@ Unit tests live in `shared/src/desktopTest` (run on the JVM, cover common and `j
 | `RepositoryTest` | History and settings DataStore persistence, limits, corrupt and unknown values |
 | `AudiopsViewModelTest` | Job queue with a fake engine: success, failure, no speech, unsupported tools, ordering, cancel, delete, navigation |
 | `AudioChunkingTest`, `ResembleMathTest`, `WavWriterTest` | AI pre/post-processing and WAV output |
+| `BalancedRowsTest` | How the Tools tab splits each category into rows |
 | `DesktopAudioEngineTest`, `DesktopRenderTest` | Desktop decoding; off-screen renders of the main screens |
 
 New behaviour needs a test: a new `AudioOperation` gets a `DspTest` case and a `ModelTest` round trip; ViewModel changes get an `AudiopsViewModelTest` case.

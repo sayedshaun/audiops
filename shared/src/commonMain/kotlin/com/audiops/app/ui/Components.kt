@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -128,36 +129,39 @@ fun HeroBanner(title: String, body: String, modifier: Modifier = Modifier) {
             .clip(MaterialTheme.shapes.extraLargeIncreased)
             .background(Brush.linearGradient(listOf(colors.primaryContainer, colors.tertiaryContainer))),
     ) {
-        // Decorative shapes, hidden from accessibility services.
-        Box(
-            Modifier
-                .size(200.dp)
-                .align(Alignment.TopEnd)
-                .offset(x = 64.dp, y = (-56).dp)
-                .graphicsLayer { rotationZ = 18f }
-                .clip(MaterialShapes.Cookie9Sided.toShape())
-                .background(colors.primary.copy(alpha = 0.14f))
-                .clearAndSetSemantics { },
-        )
-        Box(
-            Modifier
-                .size(96.dp)
-                .align(Alignment.BottomEnd)
-                .offset(x = (-24).dp, y = 36.dp)
-                .clip(MaterialShapes.Sunny.toShape())
-                .background(colors.tertiary.copy(alpha = 0.16f))
-                .clearAndSetSemantics { },
-        )
-        Column(Modifier.padding(24.dp)) {
+        // Decorative shapes, hidden from accessibility services. matchParentSize keeps them
+        // out of the measurement, so the text alone decides the banner's height.
+        Box(Modifier.matchParentSize().clearAndSetSemantics { }) {
+            Box(
+                Modifier
+                    .requiredSize(200.dp)
+                    .align(Alignment.TopEnd)
+                    .offset(x = 64.dp, y = (-56).dp)
+                    .graphicsLayer { rotationZ = 18f }
+                    .clip(MaterialShapes.Cookie9Sided.toShape())
+                    .background(colors.primary.copy(alpha = 0.14f))
+                    .clearAndSetSemantics { },
+            )
+            Box(
+                Modifier
+                    .requiredSize(96.dp)
+                    .align(Alignment.BottomEnd)
+                    .offset(x = (-24).dp, y = 36.dp)
+                    .clip(MaterialShapes.Sunny.toShape())
+                    .background(colors.tertiary.copy(alpha = 0.16f))
+                    .clearAndSetSemantics { },
+            )
+        }
+        Column(Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
             Text(
                 title,
                 color = colors.onPrimaryContainer,
-                style = MaterialTheme.typography.headlineMediumEmphasized,
+                style = MaterialTheme.typography.titleLargeEmphasized,
             )
-            Spacer(Modifier.height(8.dp))
-            Text(body, color = colors.onPrimaryContainer.copy(alpha = 0.85f), style = MaterialTheme.typography.bodyLarge)
-            Spacer(Modifier.height(20.dp))
-            Waveform(Modifier.fillMaxWidth().height(36.dp), colors.primary.copy(alpha = 0.6f), bars = 43)
+            Spacer(Modifier.height(6.dp))
+            Text(body, color = colors.onPrimaryContainer.copy(alpha = 0.85f), style = MaterialTheme.typography.bodyMedium)
+            Spacer(Modifier.height(12.dp))
+            Waveform(Modifier.fillMaxWidth().height(20.dp), colors.primary.copy(alpha = 0.6f), bars = 43)
         }
     }
 }

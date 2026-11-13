@@ -31,7 +31,7 @@ private fun PreviewSurface(content: @Composable () -> Unit) {
 @ThemePreviews
 @Composable
 private fun HeroPreview() = PreviewSurface {
-    HeroBanner(title = "Clearer audio, without the cloud.", body = "Recordings are processed on this device.")
+    HeroBanner(title = "Transform audio, without the cloud.", body = "Recordings are processed on this device.")
 }
 
 @ThemePreviews
