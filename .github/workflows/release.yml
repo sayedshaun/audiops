@@ -8,7 +8,11 @@ name: Release
 #   ANDROID_KEYSTORE_PASSWORD keystore password
 #   ANDROID_KEY_ALIAS         key alias
 #   ANDROID_KEY_PASSWORD      key password
-# Without them the APK is published unsigned (marked "unsigned" in its name).
+# Without them the APKs are published unsigned (marked "unsigned" in their names), and
+# Android will not install an unsigned APK.
+#
+# Dry run: Actions -> Release -> Run workflow with an empty tag builds every artifact from the
+# selected branch (version 0.0.0-dryrun) and uploads them as workflow artifacts only.
 
 on:
   release:
@@ -16,14 +20,15 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing release tag to build, for example v1.2.0"
-        required: true
+        description: "Existing release tag to build and publish, for example v1.2.0. Leave empty for a dry run."
+        required: false
+        default: ""
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.event.release.tag_name || inputs.tag }}
+  group: release-${{ github.event.release.tag_name || inputs.tag || github.ref }}
   cancel-in-progress: false
 
 env:
@@ -34,6 +39,8 @@ jobs:
     name: Resolve version
     runs-on: ubuntu-latest
     outputs:
+      dry_run: ${{ steps.v.outputs.dry_run }}
+      ref: ${{ steps.v.outputs.ref }}
       version: ${{ steps.v.outputs.version }}
       numeric: ${{ steps.v.outputs.numeric }}
       code: ${{ steps.v.outputs.code }}
@@ -41,6 +48,14 @@ jobs:
       - id: v
         name: Parse tag
         run: |
+          if [ -z "$TAG" ]; then
+            echo "Dry run: building ${GITHUB_REF} without publishing."
+            { echo "dry_run=true"; echo "ref=${GITHUB_SHA}"; echo "version=0.0.0-dryrun"
+              echo "numeric=0.0.0"; echo "code=1"; } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "dry_run=false" >> "$GITHUB_OUTPUT"
+          echo "ref=$TAG" >> "$GITHUB_OUTPUT"
           if [[ ! "$TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?$ ]]; then
             echo "::error::Tag '$TAG' must look like v1.2.3 (optionally v1.2.3-beta.1)"
             exit 1
@@ -63,7 +78,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ needs.version.outputs.ref }}
 
       - uses: actions/setup-java@v4
         with:
@@ -87,7 +102,9 @@ jobs:
             echo "signed=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Test and build release APK and App Bundle
+      # The App Bundle and the per-ABI APKs need separate Gradle runs (AGP cannot build a
+      # bundle while ABI splits are enabled).
+      - name: Test and build the App Bundle
         env:
           AUDIOPS_KEYSTORE: ${{ steps.signing.outputs.keystore }}
           AUDIOPS_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -97,17 +114,32 @@ jobs:
           ./gradlew --no-daemon
           -PaudiopsVersion=${{ needs.version.outputs.version }}
           -PaudiopsVersionCode=${{ needs.version.outputs.code }}
-          spotlessCheck :shared:desktopTest :app:lintRelease :app:assembleRelease :app:bundleRelease
+          spotlessCheck :shared:desktopTest :app:lintRelease :app:bundleRelease
+
+      - name: Build per-ABI and universal APKs
+        env:
+          AUDIOPS_KEYSTORE: ${{ steps.signing.outputs.keystore }}
+          AUDIOPS_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          AUDIOPS_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          AUDIOPS_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: >
+          ./gradlew --no-daemon
+          -PaudiopsVersion=${{ needs.version.outputs.version }}
+          -PaudiopsVersionCode=${{ needs.version.outputs.code }}
+          -PaudiopsSplitApks=true
+          :app:assembleRelease
 
       - name: Collect artifacts
         run: |
           mkdir -p dist
           v=${{ needs.version.outputs.version }}
-          if [ "${{ steps.signing.outputs.signed }}" = "true" ]; then
-            cp app/build/outputs/apk/release/app-release.apk "dist/audiops-$v-android.apk"
+          suffix=""
+          [ "${{ steps.signing.outputs.signed }}" = "true" ] || suffix="-unsigned"
+          for abi in arm64-v8a armeabi-v7a x86_64 x86 universal; do
+            cp "app/build/outputs/apk/release/app-$abi-release$suffix.apk" "dist/audiops-$v-android-$abi$suffix.apk"
+          done
+          if [ -z "$suffix" ]; then
             cp app/build/outputs/bundle/release/app-release.aab "dist/audiops-$v-android.aab"
-          else
-            cp app/build/outputs/apk/release/app-release-unsigned.apk "dist/audiops-$v-android-unsigned.apk"
           fi
           ls -la dist
 
@@ -135,7 +167,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ needs.version.outputs.ref }}
 
       - uses: actions/setup-java@v4
         with:
@@ -180,8 +212,15 @@ jobs:
   publish:
     name: Publish to the release
     needs: [version, android, desktop]
+    if: needs.version.outputs.dry_run != 'true'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.ref }}
+          sparse-checkout: CHANGELOG.md
+          sparse-checkout-cone-mode: false
+
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -195,3 +234,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$TAG" dist/* --clobber --repo "$GITHUB_REPOSITORY"
+
+      - name: Release notes from CHANGELOG.md (only when the release has none)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          body=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body -q .body)
+          if [ -n "$body" ]; then echo "Release already has notes; leaving them."; exit 0; fi
+          awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]" { on = 1; next }
+            on && /^## \[/ { exit }
+            on && /^\[[^]]+\]: / { exit }
+            on { print }
+          ' CHANGELOG.md > notes.md
+          if [ -s notes.md ]; then
+            printf '\n**Which Android file?** Most phones: `arm64-v8a`. Not sure: `universal`.\n' >> notes.md
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file notes.md
+          else
+            echo "::warning::No CHANGELOG.md section for $VERSION"
+          fi

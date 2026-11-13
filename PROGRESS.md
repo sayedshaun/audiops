@@ -1,6 +1,6 @@
 # Progress
 
-Snapshot as of 2026-11-13, branch `chore/tests-format-hooks`. Updated in place; the history is in `CHANGES.md`.
+Snapshot as of 2026-11-13, branch `release/prepare-0.1.0`. Updated in place; the history is in `CHANGES.md`.
 
 ## Status
 
@@ -8,6 +8,7 @@ Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine o
 
 ### Done
 - **Licence:** Apache 2.0 (`LICENSE`, `NOTICE`).
+- **Release 0.1.0 prepared:** CHANGELOG section cut; release signing key created (kept outside the repo in `~/.audiops-release/`); signed per-ABI APKs (arm64 ≈ 40 MB), universal APK and AAB verified locally; every model pinned and SHA-256 verified; the release workflow has a dry-run mode and writes release notes from CHANGELOG.md.
 - **Repository:** public at github.com/sayedshaun/audiops, with README, logo, banner, CONTRIBUTING, SECURITY, issue and PR templates, and a release workflow that builds and attaches Android, Linux and Windows artifacts on every published release.
 - **Platforms:** `:shared` (Compose Multiplatform), `:app` (Android), `:desktopApp` (Linux/Windows; DEB/RPM/MSI/EXE packaging).
 - **Tools:** Enhance, Transcribe (Android); Noise reduction, Remove silence, Trim, Fade, Volume, Speed and pitch, Equalizer, Convert, Analyze (both platforms).
@@ -27,10 +28,8 @@ Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine o
 ## Open questions
 
 1. **Target SDK 37** (lint flags 36): needs a device test pass.
-2. **APK size** (~148 MB, all ABIs): publish an App Bundle or add ABI splits.
-3. **LiteRT 2.3.2** is available (using 2.3.0).
-4. **Resemble model digests** for SHA-256 verification, and a lighter vocoder export (fp16/int8 activations) so enhancement fits 4 GB phones.
-5. **Release signing secrets:** add `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD` to publish a signed APK and AAB (see CONTRIBUTING.md).
+2. **LiteRT 2.3.2** is available (using 2.3.0).
+3. **Lighter vocoder export** (fp16/int8 activations) so enhancement fits 4 GB phones.
 
 ## Next steps
 
