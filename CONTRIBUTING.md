@@ -66,3 +66,17 @@ Add these repository secrets (Settings → Secrets and variables → Actions):
 | `ANDROID_KEY_PASSWORD` | Key password |
 
 Without them the workflow still publishes unsigned APKs, which Android refuses to install. Keep the keystore and its password safe and backed up: every future update must be signed with the same key, and a lost key means users must uninstall and reinstall.
+
+### Signing locally (when the secrets are not on GitHub)
+
+If the signing secrets are missing, the workflow attaches unsigned APKs, which Android will not install. Replace them with locally signed files built from the release tag:
+
+```sh
+git checkout vX.Y.Z
+export AUDIOPS_KEYSTORE=/path/to/release.jks AUDIOPS_KEYSTORE_PASSWORD=… AUDIOPS_KEY_ALIAS=… AUDIOPS_KEY_PASSWORD=…
+./gradlew -PaudiopsVersion=X.Y.Z -PaudiopsVersionCode=<code> :app:bundleRelease
+./gradlew -PaudiopsVersion=X.Y.Z -PaudiopsVersionCode=<code> -PaudiopsSplitApks=true :app:assembleRelease
+```
+
+Copy `app-<abi>-release.apk` to `audiops-X.Y.Z-android-<abi>.apk` and `app-release.aab` to `audiops-X.Y.Z-android.aab`, upload them with `gh release upload vX.Y.Z … --clobber`, delete the `-unsigned` assets, and regenerate `SHA256SUMS.txt` (keep the desktop lines from CI, add `sha256sum` of the new files).
+
