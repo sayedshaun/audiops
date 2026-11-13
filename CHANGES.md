@@ -168,3 +168,6 @@ Entries are appended in order. Newest entries are at the bottom.
 
 ### Added
 - `LICENSE`: Apache License 2.0 (canonical text) for Audiops' own code, and `NOTICE` with the copyright line and third-party attributions. README licence section and badge, AGENTS.md licence rules and `CHANGELOG.md` updated. Desktop installers now pick up `LICENSE` automatically.
+
+### Fixed
+- `AudiopsViewModelTest` failed once on CI (`IllegalStateException` in `TestMainDispatcher`): a cancelled ViewModel from the previous test resumed on `Main` while the next test swapped it. Teardown now cancels each ViewModel and joins its coroutines before resetting `Main`. Passed 8 local reruns and 4 full-suite runs pinned to 2 cores.
