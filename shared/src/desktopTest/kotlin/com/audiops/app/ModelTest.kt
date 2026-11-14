@@ -45,7 +45,12 @@ class ModelTest {
         }
     }
 
-    @Test fun everyLanguageSurvivesAJsonRoundTripWithAUniqueWhisperCode() {
+    @Test fun onlyAutoBanglaAndUrduAreOffered() {
+        assertEquals(listOf(SpeechLanguage.AUTO, SpeechLanguage.BANGLA, SpeechLanguage.URDU), transcriptionLanguages)
+        assertEquals("bn", SpeechLanguage.BANGLA.code)
+    }
+
+    @Test fun everyLanguageSurvivesAJsonRoundTripWithAUniqueCode() {
         SpeechLanguage.entries.forEach { language ->
             val spec: JobSpec = JobSpec.Transcribe(language)
             assertEquals(spec, json.decodeFromString<JobSpec>(json.encodeToString(spec)))

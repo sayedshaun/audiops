@@ -316,3 +316,31 @@ Entries are appended in order. Newest entries are at the bottom.
 
 ### Verified
 - Android 17 emulator: the Storage rows, the language dialog (main languages, divider, scrolling), the About and Licenses pages, Back keeping the scroll position, and the Transcribe field in dark mode. `make ci` passes.
+
+## 2026-11-14: Omnilingual ASR for most languages, Whisper fallback and Urdu, Bangla kept (`feature/omnilingual-asr`)
+
+### Decision
+- Whisper Tiny is replaced by Omnilingual ASR 300M (CTC, INT8) for every language except Bangla, which keeps Bangla Zipformer. Benchmark on 25 FLEURS clips per language, same clips for every model, 4 threads, desktop CPU (`scratchpad/bakeoff`, not committed):
+  - word error rate, Omnilingual v1 file (the one shipped, `results-omnilingual-300m-v1.json`): bn 33%, hi 33%, ur 97%, en 19%, ar 21%, fr 22%, es 10%, id 19%; average 32%; peak RSS 1.2 GB; model 365 MB. Speed was measured while other builds used the same CPU, so the real-time factors (0.18 to 0.46) are pessimistic; the v2 run gave 0.17 to 0.18 across all languages.
+  - Whisper Tiny (shipped before): bn 145%, hi 147%, ur 84%, en 18%, ar 67%
+  - Bangla Zipformer on Bangla: 4% (Omnilingual: 35% with the v2 file)
+  - Whisper Small: best on English, Spanish, French, Indonesian, but 1 to 2 times slower than real time (too slow for a phone) and 375 MB
+  - Dolphin Small: fast but returns nothing for English, French, Spanish and Arabic
+- Omnilingual is Apache 2.0 (`licenses/OMNILINGUAL-ASR-APACHE-2.0.txt`). The model is `csukuangfj/sherpa-onnx-omnilingual-asr-1600-languages-300M-ctc-int8-2025-11-12` on Hugging Face at revision `6abf1ece…`, verified with SHA-256 (the v2 file is only on GitHub, so it is not used).
+
+### Changed
+- `OmnilingualTranscriber` (sherpa-onnx `OfflineOmnilingualAsrCtcModelConfig`, greedy search, 20-second sections, 4 threads) replaces `WhisperTranscriber`. `AudioPipelines.transcribe` sends `bn` to Bangla and everything else to Omnilingual. The first transcription deletes the old `whisper-tiny` folder.
+- `AiModel.WHISPER` becomes `AiModel.OMNILINGUAL` (Settings → Storage shows "Omnilingual ASR"). `ModelFiles` storage folder `omnilingual-asr`.
+- The language choice offers only Auto and Bangla (`transcriptionLanguages`). The 17 other `SpeechLanguage` entries are kept so that saved history still decodes; they are treated as Auto. Stored default languages outside the offered set fall back to Auto.
+- Licences: `licenses/WHISPER-MIT.txt` removed; `licenses/OMNILINGUAL-ASR-APACHE-2.0.txt` added and bundled in the third-party notices; NOTICE, README and AGENTS updated; architecture diagrams say "Omnilingual ASR / Bangla Zipformer".
+
+### Verified
+- `:shared:desktopTest`, `:desktopApp:test` and `:app:compileDebugKotlin` pass after the change (see the verification notes in the PR).
+
+### Routing (final)
+- Bangla: Bangla Zipformer.
+- Urdu: Whisper Tiny (explicit choice): 84% word error against Omnilingual's 97%; Whisper Small was better (51%) but too large and slow for a phone.
+- Auto and all other languages: Omnilingual. If it returns no text for the clip, Auto retries with Whisper Tiny and automatic language detection. Found on device: the JFK clip ("ask not what your country…") gave no Omnilingual output; Whisper Tiny transcribes it correctly.
+- Languages not measured (about 1,590 of Omnilingual's 1,600) go through Auto; their quality is unknown.
+- Picker: Auto, Bangla, Urdu. Whisper Tiny is downloaded only when first needed (Urdu or fallback).
+- Licences: `licenses/WHISPER-MIT.txt` restored, Whisper entries back in Settings, notices and NOTICE.

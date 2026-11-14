@@ -72,11 +72,20 @@ internal object AudioPipelines {
         }
     }
 
-    /** Transcribes decoded [audio]. [language] is `bn` for Bangla (dedicated model), a Whisper code, or empty for auto. */
-    fun transcribe(context: Context, audio: File, language: String, listener: ProcessingListener): String = if (language == "bn") {
-        BanglaTranscriber.transcribe(context, audio, listener)
-    } else {
-        WhisperTranscriber.transcribe(context, audio, language, listener)
+    /**
+     * Transcribes decoded [audio]. [language] is a Whisper code (`bn` for Bangla, `ur` for Urdu) or
+     * empty for Auto. Bangla uses its dedicated model and Urdu Whisper Tiny (it is the less weak
+     * of the two on Urdu in our benchmark). Auto uses Omnilingual, and falls back to Whisper Tiny
+     * with automatic language detection when Omnilingual returns no text.
+     */
+    fun transcribe(context: Context, audio: File, language: String, listener: ProcessingListener): String = when (language) {
+        "bn" -> BanglaTranscriber.transcribe(context, audio, listener)
+
+        "ur" -> WhisperTranscriber.transcribe(context, audio, language, listener)
+
+        else -> OmnilingualTranscriber.transcribe(context, audio, listener).ifBlank {
+            WhisperTranscriber.transcribe(context, audio, "", listener)
+        }
     }
 
     private fun crossfade(previous: FloatArray, enhanced: FloatArray): FloatArray {

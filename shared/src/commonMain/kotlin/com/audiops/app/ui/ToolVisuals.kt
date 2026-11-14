@@ -67,5 +67,5 @@ fun ToolCategory.colors(scheme: ColorScheme): Pair<Color, Color> = when (this) {
 val AiModel.icon: ImageVector
     get() = when (this) {
         AiModel.ENHANCE -> Tool.ENHANCE.icon
-        AiModel.WHISPER, AiModel.BANGLA -> Tool.TRANSCRIBE.icon
+        AiModel.OMNILINGUAL, AiModel.WHISPER, AiModel.BANGLA -> Tool.TRANSCRIBE.icon
     }

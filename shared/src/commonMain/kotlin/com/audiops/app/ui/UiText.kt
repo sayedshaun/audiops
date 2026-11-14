@@ -74,6 +74,8 @@ import com.audiops.shared.resources.model_bangla
 import com.audiops.shared.resources.model_bangla_purpose
 import com.audiops.shared.resources.model_enhance
 import com.audiops.shared.resources.model_enhance_purpose
+import com.audiops.shared.resources.model_omnilingual
+import com.audiops.shared.resources.model_omnilingual_purpose
 import com.audiops.shared.resources.model_whisper
 import com.audiops.shared.resources.model_whisper_purpose
 import com.audiops.shared.resources.stage_model_download_percent
@@ -152,6 +154,7 @@ val SpeechLanguage.label: StringResource
 val AiModel.title: StringResource
     get() = when (this) {
         AiModel.ENHANCE -> Res.string.model_enhance
+        AiModel.OMNILINGUAL -> Res.string.model_omnilingual
         AiModel.WHISPER -> Res.string.model_whisper
         AiModel.BANGLA -> Res.string.model_bangla
     }
@@ -160,6 +163,7 @@ val AiModel.title: StringResource
 val AiModel.purpose: StringResource
     get() = when (this) {
         AiModel.ENHANCE -> Res.string.model_enhance_purpose
+        AiModel.OMNILINGUAL -> Res.string.model_omnilingual_purpose
         AiModel.WHISPER -> Res.string.model_whisper_purpose
         AiModel.BANGLA -> Res.string.model_bangla_purpose
     }

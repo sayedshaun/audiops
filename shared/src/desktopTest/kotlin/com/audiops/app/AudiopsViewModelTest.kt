@@ -69,7 +69,7 @@ private class FakeEngine(override val supportsEnhance: Boolean = true, override 
         deleted += path
     }
 
-    val models: MutableMap<AiModel, Long> = Collections.synchronizedMap(mutableMapOf(AiModel.WHISPER to 75L, AiModel.BANGLA to 30L))
+    val models: MutableMap<AiModel, Long> = Collections.synchronizedMap(mutableMapOf(AiModel.OMNILINGUAL to 75L, AiModel.BANGLA to 30L))
 
     override fun modelStorage(): Map<AiModel, Long> = models.toMap()
 
@@ -235,8 +235,8 @@ class AudiopsViewModelTest {
         val engine = FakeEngine()
         val vm = viewModel(engine)
         val listed = runBlocking { withTimeout(10_000) { vm.modelStorage.first { it != null } } }
-        assertEquals(mapOf(AiModel.WHISPER to 75L, AiModel.BANGLA to 30L), listed)
-        vm.deleteModel(AiModel.WHISPER)
+        assertEquals(mapOf(AiModel.OMNILINGUAL to 75L, AiModel.BANGLA to 30L), listed)
+        vm.deleteModel(AiModel.OMNILINGUAL)
         val after = runBlocking { withTimeout(10_000) { vm.modelStorage.first { it == mapOf(AiModel.BANGLA to 30L) } } }
         assertEquals(mapOf(AiModel.BANGLA to 30L), after)
         assertEquals(UiMessage.ModelsDeleted, runBlocking { withTimeout(10_000) { vm.messages.first() } })

@@ -68,6 +68,7 @@ class AudiopsViewModel(
             input = savedState.get<String>(KEY_ID)?.let { AudioInput(it, savedState.get<String>(KEY_NAME).orEmpty()) },
             language = savedState.get<String>(KEY_LANGUAGE)
                 ?.let { name -> SpeechLanguage.entries.firstOrNull { it.name == name } }
+                ?.takeIf { it in transcriptionLanguages }
                 ?: SpeechLanguage.AUTO,
         ),
     )

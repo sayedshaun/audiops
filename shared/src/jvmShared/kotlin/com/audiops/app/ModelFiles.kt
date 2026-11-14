@@ -8,6 +8,7 @@ object ModelFiles {
     /** Top-level folders under the model root for each model (Enhance includes its XNNPACK weight cache). */
     private val FOLDERS = mapOf(
         AiModel.ENHANCE to listOf("resemble-enhance", "xnnpack-cache"),
+        AiModel.OMNILINGUAL to listOf("omnilingual-asr"),
         AiModel.WHISPER to listOf("whisper-tiny"),
         AiModel.BANGLA to listOf("bangla-zipformer"),
     )

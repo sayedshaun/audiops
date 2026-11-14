@@ -25,7 +25,7 @@
     <string name="tool_enhance_title">Enhance speech</string>
     <string name="tool_enhance_description">AI clarity boost for voice recordings.</string>
     <string name="tool_transcribe_title">Transcribe</string>
-    <string name="tool_transcribe_description">Speech to text in Bangla, English, Hindi and 15 more languages.</string>
+    <string name="tool_transcribe_description">Speech to text in Bangla and many other languages.</string>
     <string name="tool_denoise_title">Noise reduction</string>
     <string name="tool_denoise_description">Remove hiss, hum and steady background noise.</string>
     <string name="tool_silence_title">Remove silence</string>
@@ -74,8 +74,8 @@
     <string name="player_unavailable">Can\'t play</string>
 
     <string name="enhance_hint">The first run downloads about 570 MB of model files. Longer recordings take more time.</string>
-    <string name="transcribe_hint">The first run downloads a model: about 74 MB for Bangla, about 103 MB for other languages.</string>
-    <string name="transcribe_language_hint">Bangla uses a dedicated Bangla model. Every other language uses Whisper Tiny: most accurate for English, less so for the others. Auto can misidentify short clips.</string>
+    <string name="transcribe_hint">The first run downloads models: about 470 MB for most languages, about 74 MB for Bangla, about 103 MB for Urdu.</string>
+    <string name="transcribe_language_hint">Auto uses Omnilingual ASR, which covers over 1,600 languages. Bangla uses a dedicated model, and Urdu uses Whisper Tiny, which is less weak on Urdu.</string>
     <string name="language_field">Language</string>
     <string name="language_auto">Auto</string>
     <string name="language_bangla">Bangla</string>
@@ -224,8 +224,10 @@
     <string name="settings_model_summary">%1$s · %2$s</string>
     <string name="model_enhance">Resemble Enhance</string>
     <string name="model_enhance_purpose">Enhance speech</string>
+    <string name="model_omnilingual">Omnilingual ASR</string>
+    <string name="model_omnilingual_purpose">Transcribe, most languages</string>
     <string name="model_whisper">Whisper Tiny</string>
-    <string name="model_whisper_purpose">Transcribe, all languages except Bangla</string>
+    <string name="model_whisper_purpose">Transcribe Urdu, and as a fallback when Omnilingual finds no speech</string>
     <string name="model_bangla">Bangla Zipformer</string>
     <string name="model_bangla_purpose">Transcribe in Bangla</string>
     <string name="settings_models_none">No models downloaded</string>
@@ -251,6 +253,8 @@
     <string name="license_notices_summary">Full license text for every component</string>
     <string name="license_resemble">Resemble Enhance</string>
     <string name="license_resemble_summary">MIT License · Resemble AI</string>
+    <string name="license_omnilingual">Omnilingual ASR</string>
+    <string name="license_omnilingual_summary">Apache License 2.0 · Meta Platforms (ONNX export: k2-fsa sherpa-onnx)</string>
     <string name="license_whisper">Whisper Tiny</string>
     <string name="license_whisper_summary">MIT License · OpenAI (ONNX export: Apache License 2.0)</string>
     <string name="license_sherpa">sherpa-onnx and ONNX Runtime</string>
