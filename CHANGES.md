@@ -344,3 +344,10 @@ Entries are appended in order. Newest entries are at the bottom.
 - Languages not measured (about 1,590 of Omnilingual's 1,600) go through Auto; their quality is unknown.
 - Picker: Auto, Bangla, Urdu. Whisper Tiny is downloaded only when first needed (Urdu or fallback).
 - Licences: `licenses/WHISPER-MIT.txt` restored, Whisper entries back in Settings, notices and NOTICE.
+
+## 2026-11-14: Release v0.1.2 (`docs/record-0.1.2`)
+
+### Released
+- Published https://github.com/sayedshaun/audiops/releases/tag/v0.1.2 from `main` (`8a42ec9`, changelog PR #17). CI built and attached the Linux and Windows packages and wrote the notes from `CHANGELOG.md`. The Android APKs and AAB were built locally from the same commit with the release key (`versionCode` 1002), replaced the unsigned CI files, and `SHA256SUMS.txt` was regenerated (10 files).
+- Verified the downloaded arm64 APK: checksum OK, release certificate `c147c216…`, versionName 0.1.2, versionCode 1002.
+- Not yet tested on the Moto g96 (the phone was disconnected during this release).
