@@ -13,15 +13,15 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-14
+
 ### Added
 - **Jobs keep running in the background on Android.** Enhance speech and other jobs continue when you switch apps, turn the screen off or swipe Audiops away from Recents. A notification shows the running job and its progress, with a Cancel button, and another tells you when a job finishes or fails while Audiops is closed. Tap it to open the Activity tab. Android 13+ asks for notification permission when you start your first job.
 
 ### Changed
 - **Better transcription for most languages.** Auto now uses Omnilingual ASR 300M (Meta, Apache 2.0), which detects the language itself and covers over 1,600 languages. In our test on 25 clips per language it was about four times more accurate than Whisper Tiny on Bangla and Hindi, and about as fast. If it finds no speech, Auto retries with Whisper Tiny. **Bangla** keeps its dedicated model, and **Urdu** uses Whisper Tiny, which is less weak on Urdu. The language choice is now Auto, Bangla or Urdu. Omnilingual downloads about 366 MB on first use. Its output has no punctuation or capital letters.
 - **Settings is shorter.** About now has two rows: **About Audiops** (version, privacy, source code, the app's license) and **Open-source licenses** (every third-party license). Each opens its own page.
-- **Storage lists each downloaded model** (Resemble Enhance, Whisper Tiny, Bangla Zipformer) with its size, and each can be deleted on its own.
-
-### Changed
+- **Storage lists each downloaded model** (Resemble Enhance, Omnilingual ASR, Whisper Tiny, Bangla Zipformer) with its size, and each can be deleted on its own.
 - **Tidier Tools tab.** Removed the "On device" badge from the top bar; it did nothing when tapped. The banner is shorter and now reads "Transform audio, without the cloud." In wide windows (desktop, tablets) the tool cards stretch to fill each row instead of leaving empty space.
 
 ## [0.1.1] - 2026-11-13
