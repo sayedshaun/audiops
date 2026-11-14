@@ -23,10 +23,10 @@ enum class Tool(val category: ToolCategory) {
 }
 
 /**
- * Spoken languages for transcription; labels are resolved by the UI. [code] is the Whisper language code ("" detects the language);
- * Bangla uses its dedicated model. The first four are the app's main languages; the rest are
- * widely spoken languages that multilingual Whisper Tiny supports. Stored by name, so new
- * entries can be added anywhere.
+ * Spoken languages for transcription; labels are resolved by the UI. [code] is `bn` for Bangla
+ * (its dedicated model) and empty otherwise (Omnilingual detects the language itself).
+ * [AUTO], [BANGLA] and [URDU] are offered in the app. The other entries are kept so that
+ * history saved by earlier versions still decodes; they are treated as Auto.
  */
 @Serializable
 enum class SpeechLanguage(val code: String) {
@@ -51,8 +51,11 @@ enum class SpeechLanguage(val code: String) {
     VIETNAMESE("vi"),
 }
 
+/** The languages offered in the app. Omnilingual covers the rest through Auto. */
+val transcriptionLanguages = listOf(SpeechLanguage.AUTO, SpeechLanguage.BANGLA, SpeechLanguage.URDU)
+
 /** Downloadable AI models, listed and deleted one by one in Settings → Storage. */
-enum class AiModel { ENHANCE, WHISPER, BANGLA }
+enum class AiModel { ENHANCE, OMNILINGUAL, WHISPER, BANGLA }
 
 /** Equalizer presets, each a fixed chain of filters. */
 @Serializable

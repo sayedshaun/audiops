@@ -27,7 +27,7 @@ Nothing you open is uploaded. AI models download once, then run offline.
 | | Tool | What it does |
 | :-: | --- | --- |
 | ✨ | **Enhance speech** | AI restoration of voice recordings ([Resemble Enhance](https://huggingface.co/SayedShaun/resemble-enhance-litert), LiteRT, mobile export). |
-| 🗣️ | **Transcribe** | Speech to text in Bangla, English, Hindi and 15 more major languages (Whisper Tiny and [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx) on sherpa-onnx). |
+| 🗣️ | **Transcribe** | Speech to text in Bangla, Urdu and many other languages ([Omnilingual ASR](https://huggingface.co/csukuangfj/sherpa-onnx-omnilingual-asr-1600-languages-300M-ctc-int8-2025-11-12), [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny) and [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx); sherpa-onnx). |
 | 🌊 | **Noise reduction** | Learns the noise from quiet passages and removes hiss, hum and steady background sound. |
 | ⏸️ | **Remove silence** | Shortens long pauses and keeps natural padding. |
 | ✂️ | **Trim** | Keep the part you need, chosen on the waveform. |
@@ -49,7 +49,8 @@ Only the two AI tools use machine-learning models. Every other tool is classic s
 | Tool (option) | Model | Runtime | Files | Download | License |
 | --- | --- | --- | --- | --: | --- |
 | **Enhance speech** | [Resemble Enhance](https://huggingface.co/SayedShaun/resemble-enhance-litert) `mobile` set: INT8 dynamic networks + a vocoder re-exported for XNNPACK (FP16) | [LiteRT](https://ai.google.dev/edge/litert), CPU | 5 networks + mel filter bank | ~570 MB | MIT |
-| **Transcribe** (Auto, English, Hindi, Arabic, Chinese, French, German, Indonesian, Italian, Japanese, Korean, Persian, Portuguese, Russian, Spanish, Turkish, Urdu, Vietnamese) | [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny), INT8 ONNX | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), CPU | encoder, decoder, tokens | ~104 MB | MIT (OpenAI Whisper weights) · Apache 2.0 (ONNX export) |
+| **Transcribe** (Auto, most languages; Whisper Tiny fallback) | [Omnilingual ASR 300M](https://huggingface.co/csukuangfj/sherpa-onnx-omnilingual-asr-1600-languages-300M-ctc-int8-2025-11-12/tree/6abf1ece20cd2308bdb7d13cd78ec1c44fa4c094), CTC INT8 | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), CPU | model, tokens | ~366 MB | Apache 2.0 (Meta Platforms) |
+| **Transcribe** (Urdu) | [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny), INT8 ONNX | sherpa-onnx, CPU | encoder, decoder, tokens | ~103 MB | MIT (OpenAI) · Apache 2.0 (ONNX export) |
 | **Transcribe** (Bangla) | [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx/tree/5442ca3d447572aaa5ef6913684d8f24d6d916cc), INT8 transducer | sherpa-onnx, CPU | encoder, decoder, joiner, tokens | ~74 MB | CC BY-SA 4.0 |
 | All other tools | None | Kotlin DSP | – | – | – |
 
@@ -57,18 +58,18 @@ Only the two AI tools use machine-learning models. Every other tool is classic s
 
 - **Enhance speech** always uses Resemble Enhance. Audio is converted to 44.1 kHz mono and processed in one-second chunks with 50% overlap through five networks: a **denoiser**, an **encoder**, a **flow-matching step** (16 midpoint steps, 32 evaluations), a **decoder** and a **vocoder** that produces the waveform. Long recordings go through in 20-second windows joined with a crossfade.
 - **Transcribe** picks the model from the language you choose:
-  - **Auto** uses Whisper Tiny with automatic language detection. It can misidentify very short clips.
-  - **English** and **Hindi** use Whisper Tiny with the language fixed, which avoids detection mistakes.
-  - **Bangla** uses the dedicated Bangla Zipformer, a model trained specifically for Bangla speech.
+  - **Auto** uses Omnilingual ASR 300M, which detects the language itself and covers over 1,600 languages. If Omnilingual finds no speech, Auto retries with Whisper Tiny and automatic language detection. Omnilingual reads 20-second sections.
+  - **Urdu** uses Whisper Tiny. Both models are weak on Urdu; Omnilingual often writes it in Devanagari, so Whisper Tiny scored better in our benchmark.
+  - **Bangla** uses the dedicated Bangla Zipformer, a model trained specifically for Bangla speech. It reads 20-second sections with beam search.
 
-  Whisper reads 30-second sections with greedy decoding; Bangla Zipformer reads 20-second sections with beam search.
+  Omnilingual's output has no punctuation or capital letters.
 
 ### Download, verification and storage
 
 - Each model downloads **once**, on first use of its tool, over HTTPS from Hugging Face. After that the tool works fully offline.
 - Every model file is pinned to a fixed revision and **verified with SHA-256** before use. When a model is updated, the old revision is deleted.
 - Models live in app-private storage that is excluded from backups. See their size, or delete them, in **Settings → Storage → Downloaded models**; they download again when needed.
-- **Memory:** Whisper and Bangla run comfortably on any supported phone. Resemble Enhance loads one network at a time and keeps repacked weights in a file-backed cache, so it peaks at about 1.5 GB (it completes on a 4 GB emulator); 6 GB of RAM or more is comfortable. It runs in a separate process: if a phone runs out of memory, Audiops stays open and says so.
+- **Memory:** Omnilingual, Whisper and Bangla run comfortably on any supported phone. Resemble Enhance loads one network at a time and keeps repacked weights in a file-backed cache, so it peaks at about 1.5 GB (it completes on a 4 GB emulator); 6 GB of RAM or more is comfortable. It runs in a separate process: if a phone runs out of memory, Audiops stays open and says so.
 - **Desktop:** the AI tools are Android-only for now (marked "Android only" in the app).
 
 ## Screenshots
@@ -169,6 +170,7 @@ Bug reports, ideas and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBU
 ## Acknowledgements
 
 - [Resemble Enhance](https://github.com/resemble-ai/resemble-enhance) by Resemble AI (MIT) · [license](licenses/RESEMBLE-ENHANCE-MIT.txt)
+- [Omnilingual ASR](https://github.com/facebookresearch/omnilingual-asr) by Meta Platforms (Apache 2.0) · [license](licenses/OMNILINGUAL-ASR-APACHE-2.0.txt); INT8 ONNX export from [k2-fsa sherpa-onnx](https://huggingface.co/csukuangfj/sherpa-onnx-omnilingual-asr-1600-languages-300M-ctc-int8-2025-11-12)
 - [Whisper](https://github.com/openai/whisper) by OpenAI (MIT) · [license](licenses/WHISPER-MIT.txt); Tiny INT8 ONNX export from [ippocode/indic-asr-onnx](https://huggingface.co/ippocode/indic-asr-onnx) (Apache 2.0)
 - [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) by k2-fsa (Apache 2.0) · [license](licenses/SHERPA-ONNX-APACHE-2.0.txt), with [ONNX Runtime](https://github.com/microsoft/onnxruntime) by Microsoft (MIT) · [license](licenses/ONNXRUNTIME-MIT.txt)
 - [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx) (CC BY-SA 4.0) · [license](licenses/BANGLA-ZIPFORMER-CC-BY-SA-4.0.txt)

@@ -107,6 +107,8 @@ import com.audiops.shared.resources.license_litert
 import com.audiops.shared.resources.license_litert_summary
 import com.audiops.shared.resources.license_notices
 import com.audiops.shared.resources.license_notices_summary
+import com.audiops.shared.resources.license_omnilingual
+import com.audiops.shared.resources.license_omnilingual_summary
 import com.audiops.shared.resources.license_resemble
 import com.audiops.shared.resources.license_resemble_summary
 import com.audiops.shared.resources.license_sherpa
@@ -177,7 +179,18 @@ private val licenses = listOf(
         "https://huggingface.co/SayedShaun/resemble-enhance-litert",
         androidOnly = true,
     ),
-    LicenseEntry(Res.string.license_whisper, Res.string.license_whisper_summary, "https://github.com/openai/whisper", androidOnly = true),
+    LicenseEntry(
+        Res.string.license_omnilingual,
+        Res.string.license_omnilingual_summary,
+        "https://github.com/facebookresearch/omnilingual-asr",
+        androidOnly = true,
+    ),
+    LicenseEntry(
+        Res.string.license_whisper,
+        Res.string.license_whisper_summary,
+        "https://github.com/openai/whisper",
+        androidOnly = true,
+    ),
     LicenseEntry(Res.string.license_sherpa, Res.string.license_sherpa_summary, "https://github.com/k2-fsa/sherpa-onnx", androidOnly = true),
     LicenseEntry(
         Res.string.license_bangla,

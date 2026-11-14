@@ -42,7 +42,7 @@
 <text x="82" y="598" font-size="20" font-weight="700" fill="#ECE7F5">AndroidAudioEngine</text>
 <text x="82" y="626" font-size="15" fill="#B4ADC8">MediaCodec decoder (MP3, AAC, OGG, FLAC…)</text>
 <text x="82" y="649" font-size="15" fill="#B4ADC8">Resemble Enhance (LiteRT) in the :enhance process</text>
-<text x="82" y="672" font-size="15" fill="#B4ADC8">Whisper / Bangla Zipformer (sherpa-onnx)</text>
+<text x="82" y="672" font-size="15" fill="#B4ADC8">Omnilingual ASR / Whisper Tiny / Bangla Zipformer (sherpa-onnx)</text>
 <text x="82" y="695" font-size="15" fill="#B4ADC8">System pickers, dynamic colour</text>
 <rect x="620" y="540" width="520" height="188" rx="18" fill="#262138" stroke="#433A6B" stroke-width="1.5"/>
 <text x="642" y="570" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="600" fill="#C9BEFF">desktopApp · Linux, Windows</text>

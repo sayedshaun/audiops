@@ -49,6 +49,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
                 keepScreenOn = prefs[KEEP_SCREEN_ON] ?: true,
                 defaultLanguage = prefs[DEFAULT_LANGUAGE]
                     ?.let { name -> SpeechLanguage.entries.firstOrNull { it.name == name } }
+                    ?.takeIf { it in transcriptionLanguages }
                     ?: SpeechLanguage.AUTO,
             )
         }

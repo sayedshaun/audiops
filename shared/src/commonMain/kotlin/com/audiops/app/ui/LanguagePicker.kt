@@ -6,15 +6,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -33,13 +30,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.audiops.app.SpeechLanguage
+import com.audiops.app.transcriptionLanguages
 import com.audiops.shared.resources.Res
 import com.audiops.shared.resources.action_cancel
-import com.audiops.shared.resources.language_field
+import com.audiops.shared.resources.settings_default_language
 import org.jetbrains.compose.resources.stringResource
-
-/** The app's main languages, listed first and separated from the others in [LanguageDialog]. */
-private val mainLanguages = setOf(SpeechLanguage.AUTO, SpeechLanguage.BANGLA, SpeechLanguage.ENGLISH, SpeechLanguage.HINDI)
 
 /** A field showing the transcription language; opens [LanguageDialog]. */
 @Composable
@@ -57,7 +52,7 @@ fun LanguageField(selected: SpeechLanguage, onSelect: (SpeechLanguage) -> Unit, 
     )
     if (open) {
         LanguageDialog(
-            title = stringResource(Res.string.language_field),
+            title = stringResource(Res.string.settings_default_language),
             selected = selected,
             onSelect = {
                 onSelect(it)
@@ -68,7 +63,7 @@ fun LanguageField(selected: SpeechLanguage, onSelect: (SpeechLanguage) -> Unit, 
     }
 }
 
-/** Single-choice list of every [SpeechLanguage]: main languages first, then the rest. Scrolls on small screens. */
+/** Single-choice list of the offered languages: Auto (Omnilingual detects the language) and Bangla. */
 @Composable
 fun LanguageDialog(title: String, selected: SpeechLanguage, onSelect: (SpeechLanguage) -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
@@ -76,11 +71,8 @@ fun LanguageDialog(title: String, selected: SpeechLanguage, onSelect: (SpeechLan
         icon = { Icon(Icons.Rounded.Translate, contentDescription = null) },
         title = { Text(title) },
         text = {
-            Column(Modifier.selectableGroup().verticalScroll(rememberScrollState())) {
-                SpeechLanguage.entries.forEachIndexed { index, language ->
-                    if (index > 0 && language !in mainLanguages && SpeechLanguage.entries[index - 1] in mainLanguages) {
-                        HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                    }
+            Column(Modifier.selectableGroup()) {
+                transcriptionLanguages.forEach { language ->
                     Row(
                         Modifier
                             .fillMaxWidth()

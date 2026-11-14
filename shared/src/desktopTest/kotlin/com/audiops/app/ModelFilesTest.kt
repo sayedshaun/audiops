@@ -23,8 +23,8 @@ class ModelFilesTest {
     }
 
     @Test fun verifiedFilesAreReusedWithoutDownloadingAndOldRevisionsAreRemoved() {
-        val model = write("whisper-tiny/new/model.onnx", "weights")
-        val old = write("whisper-tiny/old/model.onnx", "old weights")
+        val model = write("omnilingual-asr/new/model.onnx", "weights")
+        val old = write("omnilingual-asr/old/model.onnx", "old weights")
         val other = write("bangla-zipformer/rev/model.onnx", "other model")
         var downloads = 0
         val listener = object : ProcessingListener {
@@ -35,7 +35,7 @@ class ModelFilesTest {
         // An unreachable URL proves nothing is downloaded when the digest matches.
         val directory = ModelFiles.ensure(
             root,
-            "whisper-tiny/new",
+            "omnilingual-asr/new",
             "https://invalid.example",
             mapOf("model.onnx" to ModelFiles.sha256(model)),
             listener,
@@ -71,13 +71,13 @@ class ModelFilesTest {
     @Test fun storageIsCountedAndDeletedPerModel() {
         write("resemble-enhance/rev/a.tflite", "12345")
         write("xnnpack-cache/rev-a.xnnpack", "12")
-        write("whisper-tiny/rev/b.onnx", "123")
+        write("omnilingual-asr/rev/b.onnx", "123")
         write("unrelated/c.txt", "1234567")
-        assertEquals(mapOf(AiModel.ENHANCE to 7L, AiModel.WHISPER to 3L), ModelFiles.storage(root))
+        assertEquals(mapOf(AiModel.ENHANCE to 7L, AiModel.OMNILINGUAL to 3L), ModelFiles.storage(root))
         ModelFiles.delete(root, AiModel.ENHANCE)
-        assertEquals(mapOf(AiModel.WHISPER to 3L), ModelFiles.storage(root))
+        assertEquals(mapOf(AiModel.OMNILINGUAL to 3L), ModelFiles.storage(root))
         assertFalse("weight cache deleted with Enhance", File(root, "xnnpack-cache").exists())
-        ModelFiles.delete(root, AiModel.WHISPER)
+        ModelFiles.delete(root, AiModel.OMNILINGUAL)
         assertEquals(emptyMap<AiModel, Long>(), ModelFiles.storage(root))
         assertTrue(File(root, "unrelated/c.txt").exists())
     }

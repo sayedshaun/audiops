@@ -15,6 +15,7 @@ Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine o
 - **Platforms:** `:shared` (Compose Multiplatform), `:app` (Android), `:desktopApp` (Linux/Windows; DEB/RPM/MSI/EXE packaging).
 - **Tools:** Enhance, Transcribe (Android); Noise reduction, Remove silence, Trim, Fade, Volume, Speed and pitch, Equalizer, Convert, Analyze (both platforms).
 - **UX:** bottom navigation / rail, Activity tab with queue and history, waveform preview, playback, save via system dialogs, cancel, haptics, auto-scroll to results, settings (theme, dynamic colour, pure black, default language, keep screen on, storage).
+- **Transcription models (unreleased):** Auto uses Omnilingual ASR 300M with a Whisper Tiny fallback; Urdu uses Whisper Tiny; Bangla uses Bangla Zipformer (`CHANGES.md`, 2026-11-14). The language choice is Auto, Bangla or Urdu.
 - **Background jobs (Android, unreleased):** a foreground service with a progress notification and Cancel keeps jobs running when the app is in the background, the screen is off or the task is swiped away; finished/failed notifications; verified on the Android 17 emulator.
 - **Robustness:** constant-memory streaming DSP; staged AI enhancement in an isolated process (a memory kill no longer closes the app); cancellable downloads with byte progress; decode 3× faster; R8 release build verified to run.
 - **Tests:** 53 shared JVM tests (DSP, throughput, model serialization, history/settings storage, ViewModel job queue), 3 desktop engine tests, 4 off-screen desktop render tests; all pass. Lint 0 errors.
@@ -36,7 +37,7 @@ Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine o
 
 ## Next steps
 
-1. Test background jobs and a long (3–5 minute) file on the Moto g96 (screen off, swipe away, Android 16).
+1. Test background jobs, Transcribe with Omnilingual (including Urdu, which comes out in Devanagari), and a long (3–5 minute) file on the Moto g96 (screen off, swipe away, Android 16).
 2. Launch and screenshot the desktop app on Linux and Windows.
 3. Faster enhancement (fewer flow steps or a quality setting), after measuring where the time goes.
 4. Desktop transcription via sherpa-onnx JVM.

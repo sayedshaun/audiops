@@ -18,7 +18,7 @@ Audiops is an open-source, on-device audio toolkit. Audio never leaves the devic
 
 | Category | Tools | Engine |
 | --- | --- | --- |
-| AI | Enhance speech, Transcribe | Resemble Enhance (LiteRT "mobile" set: INT8 dynamic + re-exported FP16 vocoder, ~570 MB); Whisper Tiny (Auto plus 17 languages, `SpeechLanguage`) and Bangla Zipformer (sherpa-onnx) |
+| AI | Enhance speech, Transcribe | Resemble Enhance (LiteRT "mobile" set: INT8 dynamic + re-exported FP16 vocoder, ~570 MB); Omnilingual ASR 300M (Auto, with a Whisper Tiny fallback), Whisper Tiny (Urdu), Bangla Zipformer (Bangla) (sherpa-onnx) |
 | Clean up | Noise reduction, Remove silence | Spectral subtraction; frame-based silence gate |
 | Edit | Trim, Fade, Volume (peak, loudness BS.1770, gain) | Streaming DSP |
 | Effects | Speed and pitch, Equalizer | WSOLA time-stretch + cubic resampler; RBJ biquads |
@@ -111,7 +111,7 @@ Unidirectional data flow: **ViewModel → immutable `AudiopsState` → stateless
 - **DSP:** `AudioProcessor` blocks in `dsp/`; `DspPipeline` chains them over decoded 44.1 kHz mono PCM16, splitting into stages where an operation must measure its input first (normalize, denoise). New operations: add an `AudioOperation` subtype (serializable), map it in `DspPipeline.processorFor`, add UI in `ToolScreen.kt`, and add tests in `DspTest` and `ModelTest`.
 - **Errors:** pipelines throw with a clear message; the ViewModel records a `FailureKind` and detail; the UI localizes it. One-shot messages go to the snackbar as `UiMessage`.
 - **Strings:** all user-visible text is in `shared/src/commonMain/composeResources/values/strings.xml` (Compose resources: write `%` once, not `%%`). Only the launcher label lives in `app/src/main/res`.
-- **Models:** every model (Resemble Enhance, Whisper, Bangla) is pinned to a Hugging Face commit and verified by SHA-256 (`ModelFiles.ensure`); never change a revision or digest without re-verifying. Hugging Face lists LFS digests at `https://huggingface.co/api/models/<repo>/revision/<commit>?blobs=true`.
+- **Models:** every model (Resemble Enhance, Omnilingual, Whisper, Bangla) is pinned to a Hugging Face commit and verified by SHA-256 (`ModelFiles.ensure`); never change a revision or digest without re-verifying. Hugging Face lists LFS digests at `https://huggingface.co/api/models/<repo>/revision/<commit>?blobs=true`.
 
 ## Design system: Material 3 Expressive
 

@@ -21,5 +21,6 @@ Bundled:
 
 Downloaded on first use (Android):
 - Resemble Enhance by Resemble AI (MIT)
+- Omnilingual ASR by Meta Platforms (Apache 2.0); ONNX export by k2-fsa sherpa-onnx (Apache 2.0)
 - Whisper Tiny by OpenAI (MIT); ONNX export by ippocode/indic-asr-onnx (Apache 2.0)
 - Bangla Zipformer by SayedShaun (CC BY-SA 4.0)
