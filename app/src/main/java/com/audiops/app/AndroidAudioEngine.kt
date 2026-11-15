@@ -36,6 +36,12 @@ class AndroidAudioEngine(context: Context) :
     override fun transcribe(source: String, language: String, model: TranscriptionModel, listener: ProcessingListener): String =
         withDecoded(source) { pcm -> storeTranscript(AudioPipelines.transcribe(context, pcm, language, model, listener)) }
 
+    override val saveFormats: List<SaveFormat> = AudioEncoder.formats
+
+    override fun saveAudio(path: String, format: SaveFormat, destination: String) {
+        if (format == SaveFormat.WAV) copyFile(path, destination) else AudioEncoder.encode(context, File(path), format, destination.toUri())
+    }
+
     override fun speak(text: String, voiceId: String, speed: Float, listener: ProcessingListener): String {
         val voice = requireNotNull(ttsVoice(voiceId)) { "Unknown voice: $voiceId" }
         val output = newOutput("wav")

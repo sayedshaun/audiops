@@ -212,6 +212,8 @@ fun SpeakScreen(latestJob: Job?, snackbar: SnackbarHostState, actions: ToolActio
                         actions = JobCardActions(
                             actions.onCancel,
                             actions.onSave,
+                            actions.saveFormats,
+                            actions.onSaveAudio,
                             actions.onSaveSubtitles,
                             actions.onCopied,
                             actions.readText,

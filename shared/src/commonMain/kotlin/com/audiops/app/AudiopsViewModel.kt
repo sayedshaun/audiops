@@ -269,6 +269,19 @@ class AudiopsViewModel(
         }
     }
 
+    /** The formats audio can be saved in on this device. */
+    val saveFormats: List<SaveFormat> get() = engine.saveFormats
+
+    /** Saves the processed audio of [job] to [destination] as [format]. */
+    fun saveAudio(job: Job, format: SaveFormat, destination: String?) {
+        val path = job.outputPath ?: return
+        destination ?: return
+        viewModelScope.launch {
+            val result = runCatching { runOnWorker { engine.saveAudio(path, format, destination) } }
+            _messages.trySend(result.exceptionOrNull()?.let { UiMessage.SaveFailed(it.message) } ?: UiMessage.Saved)
+        }
+    }
+
     /** Saves the subtitles of a transcription job to [destination] as [format]. */
     fun saveSubtitles(job: Job, format: SubtitleFormat, destination: String?) {
         val path = job.subtitlesPath ?: return

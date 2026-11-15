@@ -64,6 +64,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.audiops.app.Job
 import com.audiops.app.JobStatus
+import com.audiops.app.SaveFormat
 import com.audiops.app.SubtitleFormat
 import com.audiops.shared.resources.Res
 import com.audiops.shared.resources.action_cancel
@@ -92,6 +93,8 @@ data class ActivityActions(
     val onClear: () -> Unit,
     val onReopen: (Job) -> Unit,
     val onSave: (Job, destination: String?) -> Unit,
+    val saveFormats: List<SaveFormat>,
+    val onSaveAudio: (Job, SaveFormat, destination: String?) -> Unit,
     val onSaveSubtitles: (Job, SubtitleFormat, destination: String?) -> Unit,
     val onCopied: () -> Unit,
     val readText: suspend (path: String) -> String?,
@@ -264,7 +267,18 @@ private fun JobSheet(job: Job, actions: ActivityActions, onDismiss: () -> Unit) 
                     )
                 }
             }
-            JobCard(job, JobCardActions(actions.onCancel, actions.onSave, actions.onSaveSubtitles, actions.onCopied, actions.readText))
+            JobCard(
+                job,
+                JobCardActions(
+                    actions.onCancel,
+                    actions.onSave,
+                    actions.saveFormats,
+                    actions.onSaveAudio,
+                    actions.onSaveSubtitles,
+                    actions.onCopied,
+                    actions.readText,
+                ),
+            )
             if (!job.status.active) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilledTonalButton(
