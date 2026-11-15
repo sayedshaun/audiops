@@ -159,6 +159,10 @@ class AudiopsViewModel(
         _messages.trySend(UiMessage.InputReady(name))
     }
 
+    fun recordFailed(detail: String?) {
+        _messages.trySend(UiMessage.RecordFailed(detail))
+    }
+
     fun inputShareFailed(detail: String?) {
         _messages.trySend(UiMessage.ImportFailed(detail))
     }

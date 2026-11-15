@@ -42,6 +42,7 @@ import com.audiops.shared.resources.error_interrupted
 import com.audiops.shared.resources.error_no_speech
 import com.audiops.shared.resources.error_out_of_memory
 import com.audiops.shared.resources.error_processing_failed
+import com.audiops.shared.resources.error_record
 import com.audiops.shared.resources.error_save
 import com.audiops.shared.resources.error_unknown
 import com.audiops.shared.resources.error_unreadable
@@ -96,6 +97,7 @@ import com.audiops.shared.resources.model_pocket_tts
 import com.audiops.shared.resources.model_pocket_tts_purpose
 import com.audiops.shared.resources.model_whisper
 import com.audiops.shared.resources.model_whisper_purpose
+import com.audiops.shared.resources.record_permission_needed
 import com.audiops.shared.resources.stage_model_download_percent
 import com.audiops.shared.resources.stage_percent
 import com.audiops.shared.resources.stage_preparing
@@ -461,6 +463,7 @@ suspend fun UiMessage.text(): String = when (this) {
     UiMessage.HistoryCleared -> getString(Res.string.message_history_cleared)
     UiMessage.Copied -> getString(Res.string.message_copied)
     is UiMessage.InputReady -> getString(Res.string.message_input_ready, name)
+    is UiMessage.RecordFailed -> getString(Res.string.error_record, detail ?: getString(Res.string.record_permission_needed))
     is UiMessage.ImportFailed -> getString(Res.string.error_import, detail ?: getString(Res.string.error_unknown))
 }
 
