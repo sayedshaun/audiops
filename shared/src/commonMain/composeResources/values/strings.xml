@@ -233,6 +233,11 @@
     <string name="model_bangla">Bangla Zipformer</string>
     <string name="model_bangla_purpose">Transcribe in Bangla</string>
     <string name="settings_models_none">No models downloaded</string>
+    <string name="settings_models_empty_summary">Models download the first time an AI tool needs them</string>
+    <plurals name="settings_models_count">
+        <item quantity="one">%1$d model · %2$s</item>
+        <item quantity="other">%1$d models · %2$s</item>
+    </plurals>
     <string name="settings_models_measuring">Calculating…</string>
     <string name="settings_models_busy">Unavailable while processing</string>
     <string name="settings_models_delete_title">Delete %1$s?</string>

@@ -364,3 +364,11 @@ Entries are appended in order. Newest entries are at the bottom.
 - `DpdfNetDenoiser` (app): downloads `dpdfnet2_48khz_hr.onnx` from the sherpa-onnx `speech-enhancement-models` release (SHA-256 `0b399f8a…`), runs `OfflineSpeechDenoiser` at 48 kHz with the attenuation limit from strength (Light 9 dB, Medium 18 dB, Strong 0 = none), and releases it when the stream ends.
 - `AiModel.NOISE` ("DPDFNet" in Settings → Storage), licence in `licenses/DPDFNET-APACHE-2.0.txt`, notices, NOTICE, Settings licence list, README.
 - `AiDenoiseTest`: exact identity through chunking for several block sizes, chunk windows, resampling round trip and length, and the pipeline hook.
+
+## 2026-11-15: Settings Models page (`feature/settings-models-page`)
+
+### Changed
+- Settings → Storage: the per-model rows are replaced by one **Downloaded models** row (summary: count and total size, Calculating…, or No models downloaded) with a chevron that opens a new `SettingsPage.MODELS` sub-page.
+- `ModelsPage` lists every downloaded model (icon, title, purpose · size, Delete; Delete disabled while a job runs) and owns the delete confirmation dialog. With no models it shows an empty-state row.
+- New strings: `settings_models_count` (plurals, the first plural in the app) and `settings_models_empty_summary`.
+- Checked on the emulator in light and dark; Back returns to the main page.
