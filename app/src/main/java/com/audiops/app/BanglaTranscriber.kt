@@ -23,7 +23,7 @@ internal object BanglaTranscriber {
         "tokens.txt" to "8edb5b3ef2587207c86cc3966f3f729ec3845250d3b040e5ba916ce935fcae2b",
     )
 
-    fun transcribe(context: Context, audio: File, listener: ProcessingListener): String {
+    fun transcribe(context: Context, audio: File, listener: ProcessingListener): Transcript {
         val directory = ModelFiles.ensure(context.noBackupFilesDir, "bangla-zipformer/$REVISION", BASE_URL, digests, listener)
         fun path(name: String) = File(directory, name).absolutePath
         val recognizer = OfflineRecognizer(
@@ -44,22 +44,7 @@ internal object BanglaTranscriber {
             ),
         )
         try {
-            val sections = AudioChunks.sectionCount(audio, SECTION_SECONDS)
-            val parts = mutableListOf<String>()
-            var index = 0
-            AudioChunks.forEachChunk(audio, SECTION_SECONDS) { samples ->
-                throwIfCancelled()
-                listener.onSection(++index, sections)
-                val stream = recognizer.createStream()
-                try {
-                    stream.acceptWaveform(samples, PIPELINE_RATE)
-                    recognizer.decode(stream)
-                    recognizer.getResult(stream).text.trim().takeIf { it.isNotEmpty() }?.let(parts::add)
-                } finally {
-                    stream.release()
-                }
-            }
-            return parts.joinToString(" ")
+            return transcribeSections(audio, recognizer, SECTION_SECONDS, listener)
         } finally {
             recognizer.release()
         }

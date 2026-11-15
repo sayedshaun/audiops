@@ -206,6 +206,8 @@ data class Job(
     val outputPath: String? = null,
     /** First characters of a transcript, for lists. */
     val preview: String? = null,
+    /** SubRip (SRT) subtitles of a transcript, when the transcription produced timing. */
+    val subtitlesPath: String? = null,
     val report: AudioReport? = null,
     val failure: FailureKind? = null,
     val failureDetail: String? = null,

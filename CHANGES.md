@@ -415,3 +415,12 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - APK: MediaPipe adds `libmediapipe_tasks_audio_jni.so` and `libmediapipe_tasks_jni.so` (about 32 MB per ABI before compression).
 - Tests: voice catalogue (unique ids, pinned revisions and digests, 28 languages), text splitting, `JobSpec.Speak` round trip, ViewModel speech job.
 - Emulator (Android 17, x86_64): PocketTTS (alba) 3.4 s of audio for the test sentence; Piper (en_GB cori) 3.4 s. Parakeet transcribed both back (Piper: "Audio turns text..." for "Audiops").
+
+## 2026-11-15: Subtitles (`feature/subtitles`, on top of `feature/text-to-speech`)
+
+### Changed
+- `Transcript(text, cues)`, `Cue`, `Subtitles.srt` / `toVtt`, and `Cues.forSection` (commonMain, pure Kotlin): cues are cut at sentence ends and at 80 characters, wrapped to two lines of about 42 characters, and timed from the recognizer's token times by cumulative non-space character count; without token times (Whisper) they are spread over the section by length. Cues are kept in order and inside the section.
+- The four sherpa-onnx transcribers share `transcribeSections` (app/SherpaTranscription.kt), which returns a `Transcript`; `AudioPipelines.transcribe` returns it too.
+- `JvmAudioEngine.storeTranscript` writes `<name>.txt` and `<name>.srt`; `AudioEngine.subtitlesFor(path)` finds the SRT, `deleteFile` removes it with the transcript. `Job.subtitlesPath` (optional, so older history still loads). `AudiopsViewModel.saveSubtitles(job, SRT|VTT, destination)` converts SRT to VTT when saving.
+- UI: Subtitles (SRT) and Subtitles (VTT) buttons on the transcript card when subtitles exist; `onSaveSubtitles` threaded through `ToolActions`, `ActivityActions` and `JobCardActions`.
+- Tests: SRT/VTT format, token-time placement, fallback timing, ordering, wrapping, blank text, ViewModel keeps `subtitlesPath`.

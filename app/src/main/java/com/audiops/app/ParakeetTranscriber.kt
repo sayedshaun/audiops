@@ -31,7 +31,7 @@ internal object ParakeetTranscriber {
         "lt", "lv", "mt", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "uk",
     )
 
-    fun transcribe(context: Context, audio: File, listener: ProcessingListener): String {
+    fun transcribe(context: Context, audio: File, listener: ProcessingListener): Transcript {
         val directory = ModelFiles.ensure(context.noBackupFilesDir, "parakeet-tdt-v3/$REVISION", BASE_URL, digests, listener)
         fun path(name: String) = File(directory, name).absolutePath
         val recognizer = OfflineRecognizer(
@@ -52,22 +52,7 @@ internal object ParakeetTranscriber {
             ),
         )
         try {
-            val sections = AudioChunks.sectionCount(audio, SECTION_SECONDS)
-            val parts = mutableListOf<String>()
-            var index = 0
-            AudioChunks.forEachChunk(audio, SECTION_SECONDS) { samples ->
-                throwIfCancelled()
-                listener.onSection(++index, sections)
-                val stream = recognizer.createStream()
-                try {
-                    stream.acceptWaveform(samples, PIPELINE_RATE)
-                    recognizer.decode(stream)
-                    recognizer.getResult(stream).text.trim().takeIf { it.isNotEmpty() }?.let(parts::add)
-                } finally {
-                    stream.release()
-                }
-            }
-            return parts.joinToString(" ")
+            return transcribeSections(audio, recognizer, SECTION_SECONDS, listener)
         } finally {
             recognizer.release()
         }
