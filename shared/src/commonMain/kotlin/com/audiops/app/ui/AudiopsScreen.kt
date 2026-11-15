@@ -118,7 +118,22 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
         },
         label = "tool",
     ) { tool ->
-        if (tool != null) {
+        if (tool == Tool.SPEAK) {
+            SpeakScreen(
+                latestJob = state.latestJob(tool),
+                snackbar = snackbar,
+                actions = ToolActions(
+                    onBack = { viewModel.back() },
+                    onChoose = viewModel::chooseInput,
+                    onLanguage = viewModel::setLanguage,
+                    onStart = { spec -> viewModel.start(tool, spec) },
+                    onCancel = viewModel::cancel,
+                    onSave = viewModel::saveOutput,
+                    onCopied = viewModel::notifyCopied,
+                    readText = viewModel::readText,
+                ),
+            )
+        } else if (tool != null) {
             ToolScreen(
                 state = ToolScreenState(
                     tool = tool,

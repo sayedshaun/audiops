@@ -83,6 +83,8 @@ dependencies {
     implementation(project(":shared"))
     implementation(files("libs/sherpa-onnx-1.13.8.aar"))
     implementation("com.google.ai.edge.litert:litert:2.3.0")
+    // Text to speech with PocketTTS (MediaPipe TextToSpeech task, self-contained JNI library).
+    implementation("com.google.mediapipe:tasks-audio:1.2.3")
 
     implementation(platform("androidx.compose:compose-bom:2026.09.00"))
     implementation("androidx.activity:activity-compose:1.13.0")

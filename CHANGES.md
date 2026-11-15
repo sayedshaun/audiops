@@ -401,3 +401,17 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - Licence: `licenses/PARAKEET-TDT-CC-BY-4.0.txt`, notices, NOTICE, Settings → Open-source licenses, README.
 - Tests: model round trip and old-history decoding, settings persistence and unknown values, ViewModel passes language and model to the engine, `firstChunk` length.
 - Emulator: Automatic on the JFK clip → "And so, my fellow Americans, ask not what your country can do for you. Ask what you can do for your country." (Omnilingual returned nothing for this clip); Bangla clip → Bangla output; light and dark checked.
+
+## 2026-11-15: Text to speech (`feature/text-to-speech`)
+
+### Decisions
+- Engines: PocketTTS 100M (Kyutai, CC BY 4.0) through MediaPipe `tasks-audio` 1.2.3 (`TextToSpeech`, CPU, one `.litertlm` per language from litert-community/pocket-tts @ `03f949ec`) for en/fr/de/es/it/pt/nl; Piper VITS voices (csukuangfj/vits-piper-*) through the bundled sherpa-onnx for the other 21 languages. Kokoro through sherpa-onnx 1.13.8 was rejected: it now handles only English and Chinese and skips unknown words.
+- Piper needs espeak-ng-data (GPL-3.0). The sherpa-onnx native library already contains espeak-ng, so the licence text (`licenses/ESPEAK-NG-GPL-3.0.txt`), notices, NOTICE and Settings entries were added. The data (9 MB zip, taken from a Piper repo revision) is bundled as an asset and unpacked once to `noBackupFilesDir/espeak-ng-data`. Whether the app's licence should change because of GPL code in the APK is for the user to decide.
+- Voices were chosen per locale by licence: CC0 or public domain first, then CC BY; CC BY-SA (Catalan), non-commercial and unclear licences (Arabic, Hindi, Indonesian, Italian Piper, Chinese, Georgian, Icelandic, Swahili, Welsh, Spanish AR/MX, Serbian, Luxembourgish) were left out. PocketTTS covers Italian. Bangla, Urdu, Hindi, Arabic and Indonesian still have no voice; the user approved optional non-commercial voices (Meta MMS-TTS, CC BY-NC 4.0), which needs an ONNX export published to Hugging Face.
+
+### Changed
+- `Tool.SPEAK`, `JobSpec.Speak(text, voice, speed)`, `AudioEngine.speak` / `supportsSpeak`, `TtsVoices.kt` (35 voices with pinned revisions and SHA-256), `TextChunks` (sentence groups of at most 400 characters), `SpeechSynthesizer` (Android), `SpeakScreen` (text field up to 10,000 characters, language and voice dialogs, speed 0.5 to 2). A speech job has no input recording: `inputId` is empty and `inputName` is the start of the text.
+- `AiModel.POCKET_TTS` and `AiModel.PIPER` appear on Downloaded models (`pocket-tts`; `piper-voices` + `espeak-ng-data`).
+- APK: MediaPipe adds `libmediapipe_tasks_audio_jni.so` and `libmediapipe_tasks_jni.so` (about 32 MB per ABI before compression).
+- Tests: voice catalogue (unique ids, pinned revisions and digests, 28 languages), text splitting, `JobSpec.Speak` round trip, ViewModel speech job.
+- Emulator (Android 17, x86_64): PocketTTS (alba) 3.4 s of audio for the test sentence; Piper (en_GB cori) 3.4 s. Parakeet transcribed both back (Piper: "Audio turns text..." for "Audiops").

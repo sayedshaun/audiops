@@ -13,6 +13,8 @@ object ModelFiles {
         AiModel.OMNILINGUAL to listOf("omnilingual-asr"),
         AiModel.WHISPER to listOf("whisper-tiny"),
         AiModel.BANGLA to listOf("bangla-zipformer"),
+        AiModel.POCKET_TTS to listOf("pocket-tts"),
+        AiModel.PIPER to listOf("piper-voices", "espeak-ng-data"),
     )
 
     /** Bytes used by each downloaded model, in [AiModel] order; models without files are absent. */

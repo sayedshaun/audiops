@@ -28,7 +28,11 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.Job as CoroutineJob
 
 /** Engine double: records calls and lets each test choose what a job returns. */
-private class FakeEngine(override val supportsEnhance: Boolean = true, override val supportsTranscribe: Boolean = true) : AudioEngine {
+private class FakeEngine(
+    override val supportsEnhance: Boolean = true,
+    override val supportsTranscribe: Boolean = true,
+    override val supportsSpeak: Boolean = true,
+) : AudioEngine {
     val deleted: MutableList<String> = Collections.synchronizedList(mutableListOf())
     val processed: MutableList<List<AudioOperation>> = Collections.synchronizedList(mutableListOf())
     val transcribeCalls: MutableList<Pair<String, TranscriptionModel>> = Collections.synchronizedList(mutableListOf())
@@ -41,6 +45,13 @@ private class FakeEngine(override val supportsEnhance: Boolean = true, override 
     @Volatile var transcript = "hello world"
 
     override fun enhance(source: String, listener: ProcessingListener) = "/out/enhanced.wav"
+
+    val spoken: MutableList<Triple<String, String, Float>> = Collections.synchronizedList(mutableListOf())
+
+    override fun speak(text: String, voiceId: String, speed: Float, listener: ProcessingListener): String {
+        spoken += Triple(text, voiceId, speed)
+        return "/out/speech.wav"
+    }
 
     override fun transcribe(source: String, language: String, model: TranscriptionModel, listener: ProcessingListener): String {
         transcribeCalls += language to model
@@ -182,6 +193,18 @@ class AudiopsViewModelTest {
         vm.start(Tool.TRANSCRIBE, JobSpec.Transcribe(SpeechLanguage.URDU, TranscriptionModel.WHISPER))
         vm.awaitJobs(1, JobStatus.DONE)
         assertEquals(listOf("ur" to TranscriptionModel.WHISPER), engine.transcribeCalls.toList())
+    }
+
+    @Test fun speechNeedsNoInputRecording() {
+        val engine = FakeEngine()
+        val vm = viewModel(engine)
+        vm.start(Tool.SPEAK, JobSpec.Speak("  Hello,\n  world.  ", "pocket-alba", 1.5f))
+        val done = vm.awaitJobs(1, JobStatus.DONE).single()
+        assertEquals("/out/speech.wav", done.outputPath)
+        assertEquals("Hello, world.", done.inputName)
+        assertEquals("", done.inputId)
+        assertEquals(listOf(Triple("  Hello,\n  world.  ", "pocket-alba", 1.5f)), engine.spoken.toList())
+        assertEquals(done.id, vm.state.value.latestJob(Tool.SPEAK)?.id)
     }
 
     @Test fun unsupportedToolsFailWithoutRunning() {

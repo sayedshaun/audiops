@@ -22,3 +22,12 @@
 # Keep stack traces readable in crash reports.
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
+
+# MediaPipe Tasks (text to speech) is reached through JNI and reads its protobuf messages by
+# reflection on field names (`fileContent_` and similar). Obfuscating either breaks synthesis at
+# runtime ("Field fileContent_ ... not found") while the debug build still works.
+-keep class com.google.mediapipe.** { *; }
+-keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
+-keep class com.google.protobuf.** { *; }
+-dontwarn com.google.mediapipe.**
+-dontwarn com.google.protobuf.**

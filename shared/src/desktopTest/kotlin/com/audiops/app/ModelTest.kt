@@ -38,6 +38,7 @@ class ModelTest {
             JobSpec.Analyze,
             JobSpec.Transcribe(SpeechLanguage.BANGLA),
             JobSpec.Transcribe(SpeechLanguage.AUTO, TranscriptionModel.PARAKEET),
+            JobSpec.Speak("Hello there.", "pocket-alba", 1.25f),
             JobSpec.Process(operations),
         )
         for (spec in specs) {

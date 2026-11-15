@@ -9,7 +9,8 @@ notices).
 
 Bundled:
 - AndroidX, Jetpack Compose, Compose Multiplatform, Kotlin, kotlinx, Okio, Guava (Apache 2.0)
-- LiteRT by Google (Apache 2.0)
+- LiteRT and MediaPipe Tasks (Audio, Core) by Google (Apache 2.0)
+- eSpeak NG (GPL v3), inside sherpa-onnx, with its data files in the Android app; the full text is in licenses/ESPEAK-NG-GPL-3.0.txt and the source is at https://github.com/espeak-ng/espeak-ng
 - sherpa-onnx by k2-fsa (Apache 2.0), including ONNX Runtime by Microsoft (MIT)
 - Apache Commons Math 3 (Apache 2.0). This product includes software developed at
   The Apache Software Foundation (http://www.apache.org/).
@@ -22,6 +23,8 @@ Bundled:
 Downloaded on first use (Android):
 - Resemble Enhance by Resemble AI (MIT)
 - DPDFNet by Ceva (Apache 2.0); ONNX export by k2-fsa sherpa-onnx (Apache 2.0)
+- PocketTTS voices by Kyutai (CC BY 4.0); LiteRT bundles by litert-community/pocket-tts
+- Piper voices by rhasspy/piper and voice authors (CC0, public domain or CC BY 4.0, per voice); ONNX exports by k2-fsa sherpa-onnx
 - Parakeet TDT 0.6B v3 by NVIDIA (CC BY 4.0); ONNX export by k2-fsa sherpa-onnx
 - Omnilingual ASR by Meta Platforms (Apache 2.0); ONNX export by k2-fsa sherpa-onnx (Apache 2.0)
 - Whisper Tiny by OpenAI (MIT); ONNX export by ippocode/indic-asr-onnx (Apache 2.0)

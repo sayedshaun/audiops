@@ -3,6 +3,7 @@ package com.audiops.app.ui
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.AutoFixHigh
+import androidx.compose.material.icons.rounded.Campaign
 import androidx.compose.material.icons.rounded.Compress
 import androidx.compose.material.icons.rounded.ContentCut
 import androidx.compose.material.icons.rounded.Equalizer
@@ -26,6 +27,7 @@ val Tool.icon: ImageVector
     get() = when (this) {
         Tool.ENHANCE -> Icons.Rounded.AutoFixHigh
         Tool.TRANSCRIBE -> Icons.Rounded.RecordVoiceOver
+        Tool.SPEAK -> Icons.Rounded.Campaign
         Tool.DENOISE -> Icons.Rounded.Waves
         Tool.SILENCE -> Icons.Rounded.Compress
         Tool.TRIM -> Icons.Rounded.ContentCut
@@ -43,6 +45,7 @@ val Tool.shape: RoundedPolygon
     get() = when (this) {
         Tool.ENHANCE -> MaterialShapes.Cookie9Sided
         Tool.TRANSCRIBE -> MaterialShapes.Sunny
+        Tool.SPEAK -> MaterialShapes.Puffy
         Tool.DENOISE -> MaterialShapes.SoftBurst
         Tool.SILENCE -> MaterialShapes.Pill
         Tool.TRIM -> MaterialShapes.Cookie4Sided
@@ -69,4 +72,5 @@ val AiModel.icon: ImageVector
         AiModel.ENHANCE -> Tool.ENHANCE.icon
         AiModel.NOISE -> Tool.DENOISE.icon
         AiModel.PARAKEET, AiModel.OMNILINGUAL, AiModel.WHISPER, AiModel.BANGLA -> Tool.TRANSCRIBE.icon
+        AiModel.POCKET_TTS, AiModel.PIPER -> Tool.SPEAK.icon
     }
