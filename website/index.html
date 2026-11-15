@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Audiops: on-device audio toolkit for Android</title>
+  <meta name="description" content="Clean up, edit, transcribe and analyze audio, entirely on your Android phone. Nothing you open is uploaded. Open source, Apache 2.0.">
+  <meta name="theme-color" content="#5B47C8">
+  <meta property="og:title" content="Audiops: on-device audio toolkit">
+  <meta property="og:description" content="Clean up, edit, transcribe and analyze audio on your phone. Nothing is uploaded.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="images/screenshots/tools.png">
+  <link rel="icon" href="images/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav__inner">
+    <a class="brand" href="#top" aria-label="Audiops home">
+      <img src="images/logo.svg" alt="" width="32" height="32">
+      <span>Audiops</span>
+    </a>
+    <nav class="nav__links" aria-label="Main">
+      <a href="#features">Features</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#build">Build</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- Hero -->
+  <section class="hero" id="top">
+    <div class="wrap hero__grid">
+      <div class="hero__copy">
+        <p class="eyebrow">Open source · Android 8.0+</p>
+        <h1>Transform audio,<br>without the cloud.</h1>
+        <p class="lede">
+          Clean up, edit, transcribe and analyze recordings entirely on your phone.
+          Nothing you open is uploaded. The AI models download once, then run offline.
+        </p>
+        <div class="actions">
+          <a class="btn btn--primary" href="https://github.com/sayedshaun/audiops/releases/latest">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Download APK
+          </a>
+        </div>
+        <ul class="facts" aria-label="Highlights">
+          <li>No accounts</li>
+          <li>No analytics</li>
+          <li>No server</li>
+        </ul>
+      </div>
+
+      <div class="hero__visual">
+        <figure class="phone">
+          <img src="images/screenshots/tools.png" alt="Audiops Tools screen showing the AI and Clean up categories" width="540" height="1200" loading="eager">
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section" id="features">
+    <div class="wrap">
+      <header class="section__head">
+        <p class="eyebrow">Eleven tools, one app</p>
+        <h2>Everything you need for a voice note, a podcast or a lecture.</h2>
+        <p>Pick a tool, choose a file, and keep the result. Results are saved as 16-bit mono WAV. Open MP3, AAC, FLAC, OGG and anything else your phone can decode.</p>
+      </header>
+
+      <div class="categories">
+        <article class="category">
+          <h3><span class="dot dot--ai"></span>AI</h3>
+          <ul class="tools">
+            <li><strong>Enhance speech</strong><span>AI restoration of voice recordings, on device.</span></li>
+            <li><strong>Transcribe</strong><span>Speech to text in Bangla, Urdu and over 1,600 languages, with automatic language detection.</span></li>
+          </ul>
+        </article>
+
+        <article class="category">
+          <h3><span class="dot dot--clean"></span>Clean up</h3>
+          <ul class="tools">
+            <li><strong>Noise reduction</strong><span>Learns the noise from quiet passages and removes hiss, hum and steady background sound.</span></li>
+            <li><strong>Remove silence</strong><span>Shortens long pauses and keeps natural padding around speech.</span></li>
+          </ul>
+        </article>
+
+        <article class="category">
+          <h3><span class="dot dot--edit"></span>Edit</h3>
+          <ul class="tools">
+            <li><strong>Trim</strong><span>Keep the part you need, chosen on the waveform.</span></li>
+            <li><strong>Fade</strong><span>Smooth fade in and fade out.</span></li>
+            <li><strong>Volume</strong><span>Peak normalization, loudness to −14, −16 or −23 LUFS (ITU-R BS.1770), or plain gain.</span></li>
+          </ul>
+        </article>
+
+        <article class="category">
+          <h3><span class="dot dot--effects"></span>Effects</h3>
+          <ul class="tools">
+            <li><strong>Speed and pitch</strong><span>0.5× to 2× tempo without changing pitch, or ±12 semitones without changing tempo.</span></li>
+            <li><strong>Equalizer</strong><span>Voice clarity, bass boost, treble boost, warm, remove rumble and telephone presets.</span></li>
+          </ul>
+        </article>
+
+        <article class="category">
+          <h3><span class="dot dot--utilities"></span>Utilities</h3>
+          <ul class="tools">
+            <li><strong>Convert</strong><span>Anti-aliased resampling to 8, 16, 22.05, 44.1 or 48 kHz.</span></li>
+            <li><strong>Analyze</strong><span>Integrated loudness, peak, RMS, clipping, silence and DC offset.</span></li>
+          </ul>
+        </article>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Screenshots -->
+  <section class="section section--tint" id="screens" aria-labelledby="screens-title">
+    <div class="wrap">
+      <header class="section__head">
+        <p class="eyebrow">Screens</p>
+        <h2 id="screens-title">Calm, clear and built on Material 3 Expressive.</h2>
+      </header>
+      <div class="shots">
+        <figure>
+          <img src="images/screenshots/tool-equalizer.png" alt="Equalizer tool with a waveform, playback controls and preset options" width="540" height="1200" loading="lazy">
+          <figcaption>Equalizer, with waveform and playback</figcaption>
+        </figure>
+        <figure>
+          <img src="images/screenshots/transcript.png" alt="Transcript screen showing text transcribed from a recording" width="540" height="1200" loading="lazy">
+          <figcaption>Transcription, on the device</figcaption>
+        </figure>
+        <figure>
+          <img src="images/screenshots/activity.png" alt="Activity tab listing finished jobs" width="540" height="1200" loading="lazy">
+          <figcaption>Activity, with the job queue and history</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- Privacy -->
+  <section class="section" id="privacy" aria-labelledby="privacy-title">
+    <div class="wrap">
+      <header class="section__head section__head--center">
+        <p class="eyebrow">Privacy</p>
+        <h2 id="privacy-title">Your recordings stay with you.</h2>
+        <p>Audiops has no server to send your audio to. The network is used for one thing: downloading the AI models, once, from Hugging Face.</p>
+      </header>
+      <ul class="checks">
+        <li>Audio is processed on the phone, never uploaded.</li>
+        <li>No accounts, no analytics and no server.</li>
+        <li>Every model file is pinned to a fixed revision and checked with SHA-256 before use.</li>
+        <li>Models live in app-private storage that is excluded from backups.</li>
+        <li>Delete any model or processed file from Settings, at any time.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Build -->
+  <section class="section" id="build" aria-labelledby="build-title">
+    <div class="wrap">
+      <header class="section__head section__head--center">
+        <p class="eyebrow">Open source</p>
+        <h2 id="build-title">Read it, build it, change it.</h2>
+        <p>Audiops is Apache 2.0 licensed. The UI is Compose Multiplatform, the DSP is plain Kotlin, and the unit tests run on the JVM without a device.</p>
+      </header>
+      <nav class="cards" aria-label="Project links">
+        <a class="card-link" href="https://github.com/sayedshaun/audiops">
+          <strong>Source</strong>
+          <span>Browse the code and build it on GitHub</span>
+        </a>
+        <a class="card-link" href="https://github.com/sayedshaun/audiops/blob/main/CONTRIBUTING.md">
+          <strong>Contributing</strong>
+          <span>Setup, conventions and the release process</span>
+        </a>
+        <a class="card-link" href="https://github.com/sayedshaun/audiops/blob/main/CHANGELOG.md">
+          <strong>Changelog</strong>
+          <span>What changed in each release</span>
+        </a>
+        <a class="card-link" href="https://github.com/sayedshaun/audiops/issues">
+          <strong>Issues</strong>
+          <span>Report a bug or suggest an idea</span>
+        </a>
+      </nav>
+    </div>
+  </section>
+
+  <!-- Roadmap -->
+  <section class="section section--tint" aria-labelledby="road-title">
+    <div class="wrap narrow">
+      <header class="section__head section__head--center">
+        <p class="eyebrow">Roadmap</p>
+        <h2 id="road-title">What comes next</h2>
+      </header>
+      <ul class="roadmap">
+        <li>Spoken-language detection for Auto transcription, punctuation, speaker labels and subtitle export</li>
+        <li>Real-time sound event classification</li>
+        <li>Music source separation (vocals and instruments)</li>
+        <li>A lighter vocoder, so AI enhancement fits phones with 4 GB of RAM</li>
+        <li>Translations, Bangla first</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <div class="brand">
+      <img src="images/logo.svg" alt="" width="28" height="28">
+      <span>Audiops</span>
+    </div>
+    <p>Apache 2.0 licensed. Copyright 2026 Sayed Shaun. <a href="https://github.com/sayedshaun/audiops/blob/main/LICENSE">License</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
