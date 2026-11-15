@@ -12,6 +12,7 @@ enum class Tool(val category: ToolCategory) {
     ENHANCE(ToolCategory.AI),
     TRANSCRIBE(ToolCategory.AI),
     SPEAK(ToolCategory.AI),
+    PRESETS(ToolCategory.CLEAN_UP),
     DENOISE(ToolCategory.CLEAN_UP),
     SILENCE(ToolCategory.CLEAN_UP),
     TRIM(ToolCategory.EDIT),
@@ -64,6 +65,49 @@ enum class TranscriptionModel { AUTO, PARAKEET, OMNILINGUAL, WHISPER, BANGLA }
 
 /** Downloadable AI models, listed and deleted one by one in Settings → Downloaded models. */
 enum class AiModel { ENHANCE, NOISE, PARAKEET, OMNILINGUAL, WHISPER, BANGLA, POCKET_TTS, PIPER }
+
+/**
+ * One-tap chains of the existing tools for common kinds of recording. Each preset is a fixed list
+ * of [AudioOperation]s, so a preset job is an ordinary processing job in the history.
+ */
+enum class Preset(val operations: List<AudioOperation>) {
+    /** Light noise reduction, a clearer voice and podcast loudness. */
+    PODCAST(
+        listOf(
+            AudioOperation.Denoise(0.35f),
+            AudioOperation.Equalizer(EqPreset.VOICE_CLARITY),
+            AudioOperation.NormalizeLoudness(LoudnessTarget.PODCAST),
+        ),
+    ),
+
+    /** Noise and long pauses removed, loudness for sharing. */
+    VOICE_MESSAGE(
+        listOf(
+            AudioOperation.Denoise(0.6f),
+            AudioOperation.RemoveSilence(-40f, 800, 120),
+            AudioOperation.NormalizeLoudness(LoudnessTarget.STREAMING),
+        ),
+    ),
+
+    /** Rumble and noise removed, long silences skipped, quiet speakers brought up. */
+    LECTURE(
+        listOf(
+            AudioOperation.Equalizer(EqPreset.REMOVE_RUMBLE),
+            AudioOperation.Denoise(0.6f),
+            AudioOperation.RemoveSilence(-45f, 1500, 200),
+            AudioOperation.NormalizeLoudness(LoudnessTarget.PODCAST),
+        ),
+    ),
+
+    /** Strong noise reduction and a clearer voice at broadcast loudness. */
+    NOISY(
+        listOf(
+            AudioOperation.Denoise(0.85f),
+            AudioOperation.Equalizer(EqPreset.VOICE_CLARITY),
+            AudioOperation.NormalizeLoudness(LoudnessTarget.BROADCAST),
+        ),
+    ),
+}
 
 /** File formats a processed recording can be saved in. [WAV] is always available; the others depend on the device's encoders. */
 enum class SaveFormat(val extension: String, val mimeType: String) {
