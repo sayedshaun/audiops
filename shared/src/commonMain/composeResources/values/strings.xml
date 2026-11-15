@@ -61,6 +61,8 @@
     <string name="action_transcribe">Transcribe audio</string>
     <string name="action_speak">Create speech</string>
     <string name="action_save_format">Save %1$s</string>
+    <string name="message_input_ready">“%1$s” is ready. Choose a tool.</string>
+    <string name="error_import">Could not open the shared audio: %1$s</string>
     <string name="format_wav">WAV</string>
     <string name="format_m4a">M4A (AAC)</string>
     <string name="format_opus">Opus</string>

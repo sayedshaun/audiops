@@ -227,6 +227,17 @@ class AudiopsViewModelTest {
         assertEquals(listOf(Triple("/out/speech.wav", SaveFormat.M4A, "content://dest/hi.m4a")), engine.savedAudio.toList())
     }
 
+    @Test fun sharedAudioBecomesTheCurrentRecordingOnTheToolsTab() {
+        val vm = viewModel(FakeEngine())
+        vm.selectTab(Tab.SETTINGS)
+        vm.open(Tool.TRIM)
+        vm.inputShared("file:///cache/shared/1-note.ogg", "note.ogg")
+        val state = vm.state.value
+        assertEquals(AudioInput("file:///cache/shared/1-note.ogg", "note.ogg"), state.input)
+        assertEquals(Tab.TOOLS, state.tab)
+        assertNull(state.tool)
+    }
+
     @Test fun speechNeedsNoInputRecording() {
         val engine = FakeEngine()
         val vm = viewModel(engine)

@@ -37,6 +37,7 @@ import com.audiops.shared.resources.eq_telephone
 import com.audiops.shared.resources.eq_treble_boost
 import com.audiops.shared.resources.eq_voice_clarity
 import com.audiops.shared.resources.eq_warm
+import com.audiops.shared.resources.error_import
 import com.audiops.shared.resources.error_interrupted
 import com.audiops.shared.resources.error_no_speech
 import com.audiops.shared.resources.error_out_of_memory
@@ -74,6 +75,7 @@ import com.audiops.shared.resources.loudness_streaming
 import com.audiops.shared.resources.message_cancelled
 import com.audiops.shared.resources.message_copied
 import com.audiops.shared.resources.message_history_cleared
+import com.audiops.shared.resources.message_input_ready
 import com.audiops.shared.resources.message_job_failed
 import com.audiops.shared.resources.message_job_finished
 import com.audiops.shared.resources.message_models_deleted
@@ -458,6 +460,8 @@ suspend fun UiMessage.text(): String = when (this) {
     UiMessage.ModelsDeleted -> getString(Res.string.message_models_deleted)
     UiMessage.HistoryCleared -> getString(Res.string.message_history_cleared)
     UiMessage.Copied -> getString(Res.string.message_copied)
+    is UiMessage.InputReady -> getString(Res.string.message_input_ready, name)
+    is UiMessage.ImportFailed -> getString(Res.string.error_import, detail ?: getString(Res.string.error_unknown))
 }
 
 /** "Just now", "5 min ago", "3 h ago", "2 d ago". */

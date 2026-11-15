@@ -151,6 +151,18 @@ class AudiopsViewModel(
         loadWaveform()
     }
 
+    /** Audio shared into the app: it becomes the current recording and the Tools tab opens. */
+    fun inputShared(id: String, name: String) {
+        back()
+        selectTab(Tab.TOOLS)
+        chooseInput(id, name)
+        _messages.trySend(UiMessage.InputReady(name))
+    }
+
+    fun inputShareFailed(detail: String?) {
+        _messages.trySend(UiMessage.ImportFailed(detail))
+    }
+
     /** Opens the tool for a finished job's input again (Activity → "Open in tool"). */
     fun reopen(job: Job) {
         if (job.spec !is JobSpec.Speak && _state.value.input?.id != job.inputId) chooseInput(job.inputId, job.inputName)
