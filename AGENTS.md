@@ -75,7 +75,7 @@ The underlying Gradle tasks:
 ./gradlew :desktopApp:packageDistributionForCurrentOS   # DEB/RPM on Linux, MSI/EXE on Windows
 ```
 
-Run `make ci` (or `spotlessCheck` plus the first four) before you call work done. For releases, also install the R8 build on a device and launch it: R8 issues (for example Room/WorkManager reflection, see `app/proguard-rules.pro`) only show at runtime. CI (`.github/workflows/android.yml`) runs the same checks on every pull request to `main` and every push to `main`, as three jobs: **Format and style**, **Unit tests**, and **Android lint and build**.
+Run `make ci` (or `spotlessCheck` plus the first four) before you call work done. For releases, also install the R8 build on a device and launch it: R8 issues (for example Room/WorkManager reflection and MediaPipe's protobuf reflection, see `app/proguard-rules.pro`) only show at runtime: sign the release APK with the debug key (`apksigner`, `~/.android/debug.keystore`), install it over the debug build, and run text to speech, a transcription and an export on it. CI (`.github/workflows/android.yml`) runs the same checks on every pull request to `main` and every push to `main`, as three jobs: **Format and style**, **Unit tests**, and **Android lint and build**.
 
 ### Code style and structure
 
