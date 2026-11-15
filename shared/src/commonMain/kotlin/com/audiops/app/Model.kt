@@ -55,7 +55,7 @@ enum class SpeechLanguage(val code: String) {
 val transcriptionLanguages = listOf(SpeechLanguage.AUTO, SpeechLanguage.BANGLA, SpeechLanguage.URDU)
 
 /** Downloadable AI models, listed and deleted one by one in Settings → Storage. */
-enum class AiModel { ENHANCE, OMNILINGUAL, WHISPER, BANGLA }
+enum class AiModel { ENHANCE, NOISE, OMNILINGUAL, WHISPER, BANGLA }
 
 /** Equalizer presets, each a fixed chain of filters. */
 @Serializable

@@ -13,6 +13,9 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+### Changed
+- **AI noise reduction on Android.** Noise reduction now uses DPDFNet (Ceva, Apache 2.0), an AI speech enhancer that runs on the phone, instead of spectral subtraction. It downloads once (about 11 MB). Light, Medium and Strong set how much of the removed sound is kept (9 dB, 18 dB, no limit). Desktop still uses spectral subtraction.
+
 ## [0.1.2] - 2026-11-14
 
 ### Added

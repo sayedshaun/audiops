@@ -351,3 +351,16 @@ Entries are appended in order. Newest entries are at the bottom.
 - Published https://github.com/sayedshaun/audiops/releases/tag/v0.1.2 from `main` (`8a42ec9`, changelog PR #17). CI built and attached the Linux and Windows packages and wrote the notes from `CHANGELOG.md`. The Android APKs and AAB were built locally from the same commit with the release key (`versionCode` 1002), replaced the unsigned CI files, and `SHA256SUMS.txt` was regenerated (10 files).
 - Verified the downloaded arm64 APK: checksum OK, release certificate `c147c216…`, versionName 0.1.2, versionCode 1002.
 - Not yet tested on the Moto g96 (the phone was disconnected during this release).
+
+## 2026-11-15: AI noise reduction with DPDFNet (`feature/deepfilternet3-local`)
+
+### Decision
+- The request was DeepFilterNet3. Its ONNX export (SayedShaun/DeepFilterNet3-onnx) is verified, but running it on Android needs either ONNX Runtime (which conflicts with sherpa-onnx's bundled copy in the same app) or a LiteRT conversion. onnx2tf could convert the encoder but not the ERB decoder (grouped ConvTranspose and skip connections get the wrong layout; the direct backend cannot read the GRU shapes). sherpa-onnx, already in the app, has a speech denoiser for DPDFNet, an improved DeepFilterNet2 (Ceva; code and weights Apache 2.0) with 48 kHz models. We use `dpdfnet2_48khz_hr` (2.58M parameters).
+- Chunking measured on DeepFilterNet3 (ONNX, whole file versus chunks with warm-up): a 15 s body with 5 s warm-up stayed within 39.5 dB waveform SNR on a 32 s signal; longer chunks are closer. DPDFNet uses 20 s bodies with 4 s warm-up and 0.2 s lookahead.
+
+### Added
+- `AiDenoiser` (jvmShared): a platform hook; `DspPipeline.run(…, aiDenoiser)` uses it for Noise reduction instead of spectral subtraction. `JvmAudioEngine.aiDenoiser()` is null by default (desktop).
+- `ChunkedEnhancer`: runs a whole-buffer enhancer over a stream with bounded memory (history, body, lookahead). `ResampledProcessor`: 44.1 kHz <-> model rate around a processor.
+- `DpdfNetDenoiser` (app): downloads `dpdfnet2_48khz_hr.onnx` from the sherpa-onnx `speech-enhancement-models` release (SHA-256 `0b399f8a…`), runs `OfflineSpeechDenoiser` at 48 kHz with the attenuation limit from strength (Light 9 dB, Medium 18 dB, Strong 0 = none), and releases it when the stream ends.
+- `AiModel.NOISE` ("DPDFNet" in Settings → Storage), licence in `licenses/DPDFNET-APACHE-2.0.txt`, notices, NOTICE, Settings licence list, README.
+- `AiDenoiseTest`: exact identity through chunking for several block sizes, chunk windows, resampling round trip and length, and the pipeline hook.

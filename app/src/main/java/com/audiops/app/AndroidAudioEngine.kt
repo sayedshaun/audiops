@@ -2,6 +2,7 @@ package com.audiops.app
 
 import android.content.Context
 import androidx.core.net.toUri
+import com.audiops.app.dsp.AiDenoiser
 import java.io.File
 
 /**
@@ -15,6 +16,9 @@ class AndroidAudioEngine(context: Context) :
         modelRoot = context.applicationContext.noBackupFilesDir,
     ) {
     private val context = context.applicationContext
+
+    /** Noise reduction uses DPDFNet (AI) on Android instead of spectral subtraction. */
+    override fun aiDenoiser(): AiDenoiser = AiDenoiser { strength, listener -> DpdfNetDenoiser.processor(context, strength, listener) }
 
     override val supportsEnhance: Boolean = true
     override val supportsTranscribe: Boolean = true
