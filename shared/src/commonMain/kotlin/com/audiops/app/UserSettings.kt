@@ -25,6 +25,8 @@ data class UserSettings(
     val keepScreenOn: Boolean = true,
     /** Spoken language preselected for new transcriptions. */
     val defaultLanguage: SpeechLanguage = SpeechLanguage.AUTO,
+    /** Speech recognition model for new transcriptions. */
+    val transcriptionModel: TranscriptionModel = TranscriptionModel.AUTO,
 )
 
 /**
@@ -51,6 +53,9 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
                     ?.let { name -> SpeechLanguage.entries.firstOrNull { it.name == name } }
                     ?.takeIf { it in transcriptionLanguages }
                     ?: SpeechLanguage.AUTO,
+                transcriptionModel = prefs[TRANSCRIPTION_MODEL]
+                    ?.let { name -> TranscriptionModel.entries.firstOrNull { it.name == name } }
+                    ?: TranscriptionModel.AUTO,
             )
         }
 
@@ -74,11 +79,16 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         store.edit { it[DEFAULT_LANGUAGE] = language.name }
     }
 
+    suspend fun setTranscriptionModel(model: TranscriptionModel) {
+        store.edit { it[TRANSCRIPTION_MODEL] = model.name }
+    }
+
     private companion object {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val PURE_BLACK = booleanPreferencesKey("pure_black")
         val KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on")
         val DEFAULT_LANGUAGE = stringPreferencesKey("default_language")
+        val TRANSCRIPTION_MODEL = stringPreferencesKey("transcription_model")
     }
 }

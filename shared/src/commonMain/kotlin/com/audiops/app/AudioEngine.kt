@@ -18,8 +18,11 @@ interface AudioEngine {
     /** AI enhancement. Returns the path of a WAV file in app storage. */
     fun enhance(source: String, listener: ProcessingListener): String
 
-    /** Speech to text. Returns the path of a UTF-8 text file in app storage. */
-    fun transcribe(source: String, language: String, listener: ProcessingListener): String
+    /**
+     * Speech to text with [model]. [language] is a Whisper code (`bn`, `ur`) or empty for automatic
+     * detection. Returns the path of a UTF-8 text file in app storage.
+     */
+    fun transcribe(source: String, language: String, model: TranscriptionModel, listener: ProcessingListener): String
 
     /** Runs DSP [operations] in order. Returns the path of a WAV file in app storage. */
     fun process(source: String, operations: List<AudioOperation>, listener: ProcessingListener): String

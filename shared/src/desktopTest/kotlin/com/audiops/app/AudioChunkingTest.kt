@@ -49,6 +49,13 @@ class AudioChunkingTest {
         assertEquals(1, windows)
     }
 
+    @Test fun firstChunkIsCappedAtTheRequestedLength() {
+        pcm(45)
+        assertEquals(30 * 44_100, AudioChunks.firstChunk(file, 30).size)
+        pcm(4)
+        assertEquals(4 * 44_100, AudioChunks.firstChunk(file, 30).size)
+    }
+
     @Test fun transcriptionSectionsAreFixedLength() {
         pcm(22)
         val sizes = mutableListOf<Int>()

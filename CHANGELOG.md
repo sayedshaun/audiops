@@ -13,6 +13,10 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+### Added
+- **Much better transcription for English and European languages.** Automatic now detects the language and sends English and 24 other European languages to NVIDIA's Parakeet v3, which adds punctuation and capital letters. In our test it made 2.5 to 4 times fewer errors than before on English, French, Spanish and German, and was faster. It downloads about 640 MB the first time it is used. Bangla, Urdu and other languages keep their current models.
+- **Choose the transcription model** in Settings → Transcription: Automatic (recommended), Parakeet v3, Omnilingual ASR, Whisper Tiny or Bangla Zipformer.
+
 ### Changed
 - **AI noise reduction on Android.** Noise reduction now uses DPDFNet (Ceva, Apache 2.0), an AI speech enhancer that runs on the phone, instead of spectral subtraction. It downloads once (about 11 MB). Light, Medium and Strong set how much of the removed sound is kept (9 dB, 18 dB, no limit). Desktop still uses spectral subtraction.
 - **Settings → Storage has one Downloaded models row.** It shows how many models are downloaded and their total size; tap it to see each model with its size and delete it.

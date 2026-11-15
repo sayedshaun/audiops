@@ -39,6 +39,7 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.PrivacyTip
+import androidx.compose.material.icons.rounded.RecordVoiceOver
 import androidx.compose.material.icons.rounded.Smartphone
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material.icons.rounded.Translate
@@ -88,6 +89,7 @@ import androidx.compose.ui.unit.dp
 import com.audiops.app.AiModel
 import com.audiops.app.SpeechLanguage
 import com.audiops.app.ThemeMode
+import com.audiops.app.TranscriptionModel
 import com.audiops.app.UserSettings
 import com.audiops.shared.resources.Res
 import com.audiops.shared.resources.action_cancel
@@ -111,6 +113,8 @@ import com.audiops.shared.resources.license_notices
 import com.audiops.shared.resources.license_notices_summary
 import com.audiops.shared.resources.license_omnilingual
 import com.audiops.shared.resources.license_omnilingual_summary
+import com.audiops.shared.resources.license_parakeet
+import com.audiops.shared.resources.license_parakeet_summary
 import com.audiops.shared.resources.license_resemble
 import com.audiops.shared.resources.license_resemble_summary
 import com.audiops.shared.resources.license_sherpa
@@ -155,6 +159,7 @@ import com.audiops.shared.resources.settings_source_code
 import com.audiops.shared.resources.settings_source_code_summary
 import com.audiops.shared.resources.settings_theme
 import com.audiops.shared.resources.settings_title
+import com.audiops.shared.resources.settings_transcription_model
 import com.audiops.shared.resources.settings_version
 import com.audiops.shared.resources.theme_dark
 import com.audiops.shared.resources.theme_light
@@ -170,6 +175,7 @@ data class SettingsActions(
     val onPureBlack: (Boolean) -> Unit,
     val onKeepScreenOn: (Boolean) -> Unit,
     val onDefaultLanguage: (SpeechLanguage) -> Unit,
+    val onTranscriptionModel: (TranscriptionModel) -> Unit,
     val onDeleteModel: (AiModel) -> Unit,
     val onClearHistory: () -> Unit,
 )
@@ -185,6 +191,12 @@ private val licenses = listOf(
         androidOnly = true,
     ),
     LicenseEntry(Res.string.license_dpdfnet, Res.string.license_dpdfnet_summary, "https://github.com/ceva-ip/DPDFNet", androidOnly = true),
+    LicenseEntry(
+        Res.string.license_parakeet,
+        Res.string.license_parakeet_summary,
+        "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3",
+        androidOnly = true,
+    ),
     LicenseEntry(
         Res.string.license_omnilingual,
         Res.string.license_omnilingual_summary,
@@ -274,6 +286,7 @@ private fun SettingsMain(
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
+    var showModelDialog by rememberSaveable { mutableStateOf(false) }
     var showClearDialog by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
@@ -353,15 +366,26 @@ private fun SettingsMain(
             if (showTranscription) {
                 item { SectionHeader(stringResource(Res.string.settings_section_transcription)) }
                 item {
-                    SettingsGroup({ shape ->
-                        SettingsRow(
-                            icon = Icons.Rounded.Translate,
-                            title = stringResource(Res.string.settings_default_language),
-                            summary = stringResource(settings.defaultLanguage.label),
-                            shape = shape,
-                            onClick = { showLanguageDialog = true },
-                        )
-                    })
+                    SettingsGroup(
+                        { shape ->
+                            SettingsRow(
+                                icon = Icons.Rounded.RecordVoiceOver,
+                                title = stringResource(Res.string.settings_transcription_model),
+                                summary = stringResource(settings.transcriptionModel.label),
+                                shape = shape,
+                                onClick = { showModelDialog = true },
+                            )
+                        },
+                        { shape ->
+                            SettingsRow(
+                                icon = Icons.Rounded.Translate,
+                                title = stringResource(Res.string.settings_default_language),
+                                summary = stringResource(settings.defaultLanguage.label),
+                                shape = shape,
+                                onClick = { showLanguageDialog = true },
+                            )
+                        },
+                    )
                 }
             }
             if (!isDesktop) {
@@ -462,6 +486,17 @@ private fun SettingsMain(
                 showLanguageDialog = false
             },
             onDismiss = { showLanguageDialog = false },
+        )
+    }
+
+    if (showModelDialog) {
+        TranscriptionModelDialog(
+            selected = settings.transcriptionModel,
+            onSelect = {
+                actions.onTranscriptionModel(it)
+                showModelDialog = false
+            },
+            onDismiss = { showModelDialog = false },
         )
     }
 

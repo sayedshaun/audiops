@@ -300,7 +300,7 @@ class AudiopsViewModel(
                     JobSpec.Enhance -> job.copy(outputPath = engine.enhance(job.inputId, listener))
 
                     is JobSpec.Transcribe -> {
-                        val path = engine.transcribe(job.inputId, spec.language.code, listener)
+                        val path = engine.transcribe(job.inputId, spec.language.code, spec.model, listener)
                         val text = engine.readText(path)
                         if (text.isBlank()) {
                             engine.deleteFile(path)
@@ -390,6 +390,10 @@ class AudiopsViewModel(
     fun setDefaultLanguage(language: SpeechLanguage) {
         viewModelScope.launch { settingsRepository.setDefaultLanguage(language) }
         setLanguage(language)
+    }
+
+    fun setTranscriptionModel(model: TranscriptionModel) {
+        viewModelScope.launch { settingsRepository.setTranscriptionModel(model) }
     }
 
     fun refreshStorage() {

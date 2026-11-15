@@ -37,6 +37,7 @@ class ModelTest {
             JobSpec.Enhance,
             JobSpec.Analyze,
             JobSpec.Transcribe(SpeechLanguage.BANGLA),
+            JobSpec.Transcribe(SpeechLanguage.AUTO, TranscriptionModel.PARAKEET),
             JobSpec.Process(operations),
         )
         for (spec in specs) {
@@ -60,6 +61,18 @@ class ModelTest {
         assertTrue(codes.filter { it.isNotEmpty() }.all { it.length == 2 && it.all(Char::isLowerCase) })
         assertEquals("", SpeechLanguage.AUTO.code)
         assertEquals("bn", SpeechLanguage.BANGLA.code)
+    }
+
+    @Test fun everyTranscriptionModelSurvivesAJsonRoundTrip() {
+        TranscriptionModel.entries.forEach { model ->
+            val spec: JobSpec = JobSpec.Transcribe(SpeechLanguage.AUTO, model)
+            assertEquals(spec, json.decodeFromString<JobSpec>(json.encodeToString(spec)))
+        }
+    }
+
+    @Test fun transcriptionsSavedBeforeTheModelChoiceLoadAsAuto() {
+        val old = json.decodeFromString<JobSpec>("""{"type":"transcribe","language":"BANGLA"}""")
+        assertEquals(JobSpec.Transcribe(SpeechLanguage.BANGLA, TranscriptionModel.AUTO), old)
     }
 
     @Test fun storedTypeNamesStayStable() {

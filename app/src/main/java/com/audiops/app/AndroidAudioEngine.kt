@@ -32,8 +32,8 @@ class AndroidAudioEngine(context: Context) :
         output.absolutePath
     }
 
-    override fun transcribe(source: String, language: String, listener: ProcessingListener): String =
-        withDecoded(source) { pcm -> storeTranscript(AudioPipelines.transcribe(context, pcm, language, listener)) }
+    override fun transcribe(source: String, language: String, model: TranscriptionModel, listener: ProcessingListener): String =
+        withDecoded(source) { pcm -> storeTranscript(AudioPipelines.transcribe(context, pcm, language, model, listener)) }
 
     override fun copyFile(path: String, destination: String) {
         context.contentResolver.openOutputStream(destination.toUri())

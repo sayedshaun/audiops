@@ -55,6 +55,23 @@ object AudioChunks {
         }
     }
 
+    /** The first [seconds] of [file] (less if it is shorter), for example to detect its language. */
+    fun firstChunk(file: File, seconds: Int): FloatArray {
+        require(seconds > 0)
+        val capacity = (PIPELINE_RATE.toLong() * seconds * 2).coerceAtMost(file.length() / 2 * 2).toInt()
+        val bytes = ByteArray(capacity)
+        file.inputStream().buffered().use { input ->
+            var size = 0
+            while (size < capacity) {
+                val count = input.read(bytes, size, capacity - size)
+                if (count < 0) break
+                size += count
+            }
+            val buffer = ByteBuffer.wrap(bytes, 0, size - size % 2).order(ByteOrder.LITTLE_ENDIAN)
+            return FloatArray(size / 2) { buffer.short / 32768f }
+        }
+    }
+
     /** Number of overlapping windows [forEachEnhancementChunk] yields for [file]. */
     fun enhancementSectionCount(file: File): Int {
         val total = file.length() / 2

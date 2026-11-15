@@ -14,6 +14,7 @@ import com.audiops.app.SpeechLanguage
 import com.audiops.app.Stage
 import com.audiops.app.Tool
 import com.audiops.app.ToolCategory
+import com.audiops.app.TranscriptionModel
 import com.audiops.app.UiMessage
 import com.audiops.app.currentTimeMillis
 import com.audiops.shared.resources.Res
@@ -78,6 +79,8 @@ import com.audiops.shared.resources.model_enhance
 import com.audiops.shared.resources.model_enhance_purpose
 import com.audiops.shared.resources.model_omnilingual
 import com.audiops.shared.resources.model_omnilingual_purpose
+import com.audiops.shared.resources.model_parakeet
+import com.audiops.shared.resources.model_parakeet_purpose
 import com.audiops.shared.resources.model_whisper
 import com.audiops.shared.resources.model_whisper_purpose
 import com.audiops.shared.resources.stage_model_download_percent
@@ -124,6 +127,12 @@ import com.audiops.shared.resources.tool_trim_description
 import com.audiops.shared.resources.tool_trim_title
 import com.audiops.shared.resources.tool_volume_description
 import com.audiops.shared.resources.tool_volume_title
+import com.audiops.shared.resources.transcription_model_auto
+import com.audiops.shared.resources.transcription_model_auto_summary
+import com.audiops.shared.resources.transcription_model_bangla_summary
+import com.audiops.shared.resources.transcription_model_omnilingual_summary
+import com.audiops.shared.resources.transcription_model_parakeet_summary
+import com.audiops.shared.resources.transcription_model_whisper_summary
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -157,6 +166,7 @@ val AiModel.title: StringResource
     get() = when (this) {
         AiModel.ENHANCE -> Res.string.model_enhance
         AiModel.NOISE -> Res.string.model_dpdfnet
+        AiModel.PARAKEET -> Res.string.model_parakeet
         AiModel.OMNILINGUAL -> Res.string.model_omnilingual
         AiModel.WHISPER -> Res.string.model_whisper
         AiModel.BANGLA -> Res.string.model_bangla
@@ -167,10 +177,33 @@ val AiModel.purpose: StringResource
     get() = when (this) {
         AiModel.ENHANCE -> Res.string.model_enhance_purpose
         AiModel.NOISE -> Res.string.model_dpdfnet_purpose
+        AiModel.PARAKEET -> Res.string.model_parakeet_purpose
         AiModel.OMNILINGUAL -> Res.string.model_omnilingual_purpose
         AiModel.WHISPER -> Res.string.model_whisper_purpose
         AiModel.BANGLA -> Res.string.model_bangla_purpose
     }
+
+val TranscriptionModel.label: StringResource
+    get() = when (this) {
+        TranscriptionModel.AUTO -> Res.string.transcription_model_auto
+        TranscriptionModel.PARAKEET -> Res.string.model_parakeet
+        TranscriptionModel.OMNILINGUAL -> Res.string.model_omnilingual
+        TranscriptionModel.WHISPER -> Res.string.model_whisper
+        TranscriptionModel.BANGLA -> Res.string.model_bangla
+    }
+
+val TranscriptionModel.summary: StringResource
+    get() = when (this) {
+        TranscriptionModel.AUTO -> Res.string.transcription_model_auto_summary
+        TranscriptionModel.PARAKEET -> Res.string.transcription_model_parakeet_summary
+        TranscriptionModel.OMNILINGUAL -> Res.string.transcription_model_omnilingual_summary
+        TranscriptionModel.WHISPER -> Res.string.transcription_model_whisper_summary
+        TranscriptionModel.BANGLA -> Res.string.transcription_model_bangla_summary
+    }
+
+/** Whether the transcription screen asks for a language with this model. */
+val TranscriptionModel.usesLanguage: Boolean
+    get() = this == TranscriptionModel.AUTO || this == TranscriptionModel.WHISPER
 
 val Tool.title: StringResource
     get() = when (this) {

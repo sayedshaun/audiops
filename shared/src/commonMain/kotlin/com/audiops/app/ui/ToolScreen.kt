@@ -80,6 +80,7 @@ import com.audiops.app.LoudnessTarget
 import com.audiops.app.SpeechLanguage
 import com.audiops.app.SupportedSampleRates
 import com.audiops.app.Tool
+import com.audiops.app.TranscriptionModel
 import com.audiops.app.WaveformData
 import com.audiops.shared.resources.Res
 import com.audiops.shared.resources.action_cancel
@@ -122,10 +123,13 @@ import com.audiops.shared.resources.result_ready_title
 import com.audiops.shared.resources.sample_rate_khz
 import com.audiops.shared.resources.status_cancelled
 import com.audiops.shared.resources.step_language
+import com.audiops.shared.resources.step_model
 import com.audiops.shared.resources.step_options
 import com.audiops.shared.resources.step_recording
 import com.audiops.shared.resources.transcribe_hint
 import com.audiops.shared.resources.transcribe_language_hint
+import com.audiops.shared.resources.transcribe_model_used
+import com.audiops.shared.resources.transcribe_whisper_hint
 import com.audiops.shared.resources.transcript_title
 import com.audiops.shared.resources.unit_dbfs
 import com.audiops.shared.resources.unit_lufs
@@ -147,6 +151,7 @@ data class ToolScreenState(
     val waveformLoading: Boolean,
     val inputProblem: InputProblem?,
     val language: SpeechLanguage,
+    val transcriptionModel: TranscriptionModel = TranscriptionModel.AUTO,
     val latestJob: Job?,
 )
 
@@ -201,7 +206,12 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
 
         if (tool.hasOptions) {
             Spacer(Modifier.height(28.dp))
-            StepTitle(2, stringResource(if (tool == Tool.TRANSCRIBE) Res.string.step_language else Res.string.step_options))
+            val stepTitle = when {
+                tool != Tool.TRANSCRIBE -> Res.string.step_options
+                state.transcriptionModel.usesLanguage -> Res.string.step_language
+                else -> Res.string.step_model
+            }
+            StepTitle(2, stringResource(stepTitle))
             Spacer(Modifier.height(12.dp))
             OptionsCard {
                 ToolOptionsEditor(
@@ -209,6 +219,7 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
                     options = options,
                     durationMs = state.waveform?.durationMs,
                     language = state.language,
+                    transcriptionModel = state.transcriptionModel,
                     onLanguage = actions.onLanguage,
                     onChange = { options = it },
                 )
@@ -218,7 +229,7 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
         Spacer(Modifier.height(24.dp))
         val ready = state.input != null && state.inputProblem == null
         Button(
-            onClick = { actions.onStart(options.toSpec(tool, state.language, state.waveform?.durationMs)) },
+            onClick = { actions.onStart(options.toSpec(tool, state.language, state.transcriptionModel, state.waveform?.durationMs)) },
             enabled = ready,
             shapes = ButtonDefaults.shapes(),
             contentPadding = PrimaryButtonPadding,
@@ -368,10 +379,10 @@ data class ToolOptions(
     val eqPreset: EqPreset = EqPreset.VOICE_CLARITY,
     val sampleRate: Int = 16_000,
 ) {
-    fun toSpec(tool: Tool, language: SpeechLanguage, durationMs: Long?): JobSpec = when (tool) {
+    fun toSpec(tool: Tool, language: SpeechLanguage, model: TranscriptionModel, durationMs: Long?): JobSpec = when (tool) {
         Tool.ENHANCE -> JobSpec.Enhance
 
-        Tool.TRANSCRIBE -> JobSpec.Transcribe(language)
+        Tool.TRANSCRIBE -> JobSpec.Transcribe(if (model.usesLanguage) language else SpeechLanguage.AUTO, model)
 
         Tool.ANALYZE -> JobSpec.Analyze
 
@@ -432,13 +443,21 @@ private fun ToolOptionsEditor(
     options: ToolOptions,
     durationMs: Long?,
     language: SpeechLanguage,
+    transcriptionModel: TranscriptionModel,
     onLanguage: (SpeechLanguage) -> Unit,
     onChange: (ToolOptions) -> Unit,
 ) {
     when (tool) {
         Tool.TRANSCRIBE -> {
-            LanguageField(selected = language, onSelect = onLanguage)
-            Hint(stringResource(Res.string.transcribe_language_hint))
+            if (transcriptionModel.usesLanguage) {
+                LanguageField(selected = language, onSelect = onLanguage)
+            }
+            when (transcriptionModel) {
+                TranscriptionModel.AUTO -> Hint(stringResource(Res.string.transcribe_language_hint))
+                TranscriptionModel.WHISPER -> Hint(stringResource(Res.string.transcribe_whisper_hint))
+                else -> Hint(stringResource(transcriptionModel.summary))
+            }
+            Hint(stringResource(Res.string.transcribe_model_used, stringResource(transcriptionModel.label)))
         }
 
         Tool.DENOISE -> {
