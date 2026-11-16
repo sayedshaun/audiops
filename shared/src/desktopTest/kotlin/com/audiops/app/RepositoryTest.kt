@@ -68,6 +68,7 @@ class RepositoryTest {
         repository.setPureBlack(true)
         repository.setKeepScreenOn(false)
         repository.setDefaultLanguage(SpeechLanguage.BANGLA)
+        repository.setTranscriptionModel(TranscriptionModel.PARAKEET)
         val expected =
             UserSettings(
                 ThemeMode.DARK,
@@ -75,6 +76,7 @@ class RepositoryTest {
                 pureBlack = true,
                 keepScreenOn = false,
                 defaultLanguage = SpeechLanguage.BANGLA,
+                transcriptionModel = TranscriptionModel.PARAKEET,
             )
         assertEquals(expected, repository.settings.first())
     }
@@ -84,10 +86,12 @@ class RepositoryTest {
         store.edit {
             it[stringPreferencesKey("theme_mode")] = "SEPIA"
             it[stringPreferencesKey("default_language")] = "KLINGON"
+            it[stringPreferencesKey("transcription_model")] = "GPT"
         }
         val settings = SettingsRepository(store).settings.first()
         assertEquals(ThemeMode.SYSTEM, settings.themeMode)
         assertEquals(SpeechLanguage.AUTO, settings.defaultLanguage)
+        assertEquals(TranscriptionModel.AUTO, settings.transcriptionModel)
         assertTrue(dir.listFiles()!!.isNotEmpty())
     }
 }

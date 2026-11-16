@@ -3,6 +3,7 @@ package com.audiops.desktop
 import com.audiops.app.JvmAudioEngine
 import com.audiops.app.PIPELINE_RATE
 import com.audiops.app.ProcessingListener
+import com.audiops.app.TranscriptionModel
 import com.audiops.app.UnsupportedOnPlatformException
 import com.audiops.app.dsp.FilterChain
 import com.audiops.app.dsp.PcmFile
@@ -32,7 +33,8 @@ class DesktopAudioEngine(dataDir: File) :
 
     override fun enhance(source: String, listener: ProcessingListener): String = throw UnsupportedOnPlatformException()
 
-    override fun transcribe(source: String, language: String, listener: ProcessingListener): String = throw UnsupportedOnPlatformException()
+    override fun transcribe(source: String, language: String, model: TranscriptionModel, listener: ProcessingListener): String =
+        throw UnsupportedOnPlatformException()
 
     override fun decode(source: String): File {
         val stream = try {

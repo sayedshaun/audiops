@@ -68,5 +68,5 @@ val AiModel.icon: ImageVector
     get() = when (this) {
         AiModel.ENHANCE -> Tool.ENHANCE.icon
         AiModel.NOISE -> Tool.DENOISE.icon
-        AiModel.OMNILINGUAL, AiModel.WHISPER, AiModel.BANGLA -> Tool.TRANSCRIBE.icon
+        AiModel.PARAKEET, AiModel.OMNILINGUAL, AiModel.WHISPER, AiModel.BANGLA -> Tool.TRANSCRIBE.icon
     }

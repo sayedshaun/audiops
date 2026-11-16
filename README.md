@@ -27,7 +27,7 @@ Nothing you open is uploaded. AI models download once, then run offline.
 | | Tool | What it does |
 | :-: | --- | --- |
 | ✨ | **Enhance speech** | AI restoration of voice recordings ([Resemble Enhance](https://huggingface.co/SayedShaun/resemble-enhance-litert), LiteRT, mobile export). |
-| 🗣️ | **Transcribe** | Speech to text in Bangla, Urdu and many other languages ([Omnilingual ASR](https://huggingface.co/csukuangfj/sherpa-onnx-omnilingual-asr-1600-languages-300M-ctc-int8-2025-11-12), [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny) and [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx); sherpa-onnx). |
+| 🗣️ | **Transcribe** | Speech to text in Bangla, Urdu and many other languages, with punctuation for English and European languages ([Parakeet v3](https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8), [Omnilingual ASR](https://huggingface.co/csukuangfj/sherpa-onnx-omnilingual-asr-1600-languages-300M-ctc-int8-2025-11-12), [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny) and [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx); sherpa-onnx). |
 | 🌊 | **Noise reduction** | On Android, [DPDFNet](https://github.com/ceva-ip/DPDFNet) AI speech enhancement (48 kHz) removes background noise; on desktop, spectral subtraction learns the noise from quiet passages. |
 | ⏸️ | **Remove silence** | Shortens long pauses and keeps natural padding. |
 | ✂️ | **Trim** | Keep the part you need, chosen on the waveform. |
@@ -50,20 +50,21 @@ Only the two AI tools use machine-learning models. Every other tool is classic s
 | --- | --- | --- | --- | --: | --- |
 | **Enhance speech** | [Resemble Enhance](https://huggingface.co/SayedShaun/resemble-enhance-litert) `mobile` set: INT8 dynamic networks + a vocoder re-exported for XNNPACK (FP16) | [LiteRT](https://ai.google.dev/edge/litert), CPU | 5 networks + mel filter bank | ~570 MB | MIT |
 | **Noise reduction** (Android) | [DPDFNet](https://huggingface.co/Ceva-IP/DPDFNet) `dpdfnet2_48khz_hr`, ONNX (sherpa-onnx export) | sherpa-onnx, CPU | model | ~11 MB | Apache 2.0 (Ceva) |
-| **Transcribe** (Auto, most languages; Whisper Tiny fallback) | [Omnilingual ASR 300M](https://huggingface.co/csukuangfj/sherpa-onnx-omnilingual-asr-1600-languages-300M-ctc-int8-2025-11-12/tree/6abf1ece20cd2308bdb7d13cd78ec1c44fa4c094), CTC INT8 | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), CPU | model, tokens | ~366 MB | Apache 2.0 (Meta Platforms) |
-| **Transcribe** (Urdu) | [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny), INT8 ONNX | sherpa-onnx, CPU | encoder, decoder, tokens | ~103 MB | MIT (OpenAI) · Apache 2.0 (ONNX export) |
+| **Transcribe** (English and 24 European languages) | [Parakeet TDT 0.6B v3](https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8/tree/ed5d745623472f97cfc2e6c2916ee248798fc5a8) (NVIDIA), INT8 transducer | sherpa-onnx, CPU | encoder, decoder, joiner, tokens | ~640 MB | CC BY 4.0 (NVIDIA) |
+| **Transcribe** (other languages; Whisper Tiny fallback) | [Omnilingual ASR 300M](https://huggingface.co/csukuangfj/sherpa-onnx-omnilingual-asr-1600-languages-300M-ctc-int8-2025-11-12/tree/6abf1ece20cd2308bdb7d13cd78ec1c44fa4c094), CTC INT8 | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), CPU | model, tokens | ~366 MB | Apache 2.0 (Meta Platforms) |
+| **Transcribe** (Urdu, language detection) | [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny), INT8 ONNX | sherpa-onnx, CPU | encoder, decoder, tokens | ~103 MB | MIT (OpenAI) · Apache 2.0 (ONNX export) |
 | **Transcribe** (Bangla) | [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx/tree/5442ca3d447572aaa5ef6913684d8f24d6d916cc), INT8 transducer | sherpa-onnx, CPU | encoder, decoder, joiner, tokens | ~74 MB | CC BY-SA 4.0 |
 | All other tools | None | Kotlin DSP | – | – | – |
 
 ### Which model runs when
 
 - **Enhance speech** always uses Resemble Enhance. Audio is converted to 44.1 kHz mono and processed in one-second chunks with 50% overlap through five networks: a **denoiser**, an **encoder**, a **flow-matching step** (16 midpoint steps, 32 evaluations), a **decoder** and a **vocoder** that produces the waveform. Long recordings go through in 20-second windows joined with a crossfade.
-- **Transcribe** picks the model from the language you choose:
-  - **Auto** uses Omnilingual ASR 300M, which detects the language itself and covers over 1,600 languages. If Omnilingual finds no speech, Auto retries with Whisper Tiny and automatic language detection. Omnilingual reads 20-second sections.
-  - **Urdu** uses Whisper Tiny. Both models are weak on Urdu; Omnilingual often writes it in Devanagari, so Whisper Tiny scored better in our benchmark.
-  - **Bangla** uses the dedicated Bangla Zipformer, a model trained specifically for Bangla speech. It reads 20-second sections with beam search.
+- **Transcribe** uses the model chosen in **Settings → Transcription → Transcription model**. **Automatic** (the default) picks one:
+  - The language you choose decides first: **Bangla** uses the dedicated Bangla Zipformer (20-second sections, beam search) and **Urdu** uses Whisper Tiny, which scored better than Omnilingual on Urdu in our benchmark.
+  - With **Auto**, Whisper Tiny detects the language from the first 30 seconds. Bangla goes to Bangla Zipformer, Urdu to Whisper Tiny, and Parakeet's 25 European languages (including English) to **Parakeet v3**, which adds punctuation and capital letters. In our test (FLEURS, 25 clips per language, CPU) it made 2.5 to 4 times fewer errors than Omnilingual on English, French, Spanish and German (word error 2 to 8%) and ran about 1.7 times faster.
+  - Every other language goes to **Omnilingual ASR 300M** (over 1,600 languages, no punctuation). If it finds no speech, Whisper Tiny retries with automatic language detection.
 
-  Omnilingual's output has no punctuation or capital letters.
+  You can also pick **Parakeet v3**, **Omnilingual ASR**, **Whisper Tiny** or **Bangla Zipformer** to use one model for every recording. Each model downloads the first time it is used.
 
 ### Download, verification and storage
 
@@ -166,6 +167,7 @@ Bug reports, ideas and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBU
 
 - [Resemble Enhance](https://github.com/resemble-ai/resemble-enhance) by Resemble AI (MIT) · [license](licenses/RESEMBLE-ENHANCE-MIT.txt)
 - [DPDFNet](https://github.com/ceva-ip/DPDFNet) by Ceva (Apache 2.0) · [license](licenses/DPDFNET-APACHE-2.0.txt); ONNX export from [k2-fsa sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx/releases/tag/speech-enhancement-models)
+- [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) by NVIDIA (CC BY 4.0) · [license](licenses/PARAKEET-TDT-CC-BY-4.0.txt); INT8 ONNX export from [k2-fsa sherpa-onnx](https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8), used unmodified
 - [Omnilingual ASR](https://github.com/facebookresearch/omnilingual-asr) by Meta Platforms (Apache 2.0) · [license](licenses/OMNILINGUAL-ASR-APACHE-2.0.txt); INT8 ONNX export from [k2-fsa sherpa-onnx](https://huggingface.co/csukuangfj/sherpa-onnx-omnilingual-asr-1600-languages-300M-ctc-int8-2025-11-12)
 - [Whisper](https://github.com/openai/whisper) by OpenAI (MIT) · [license](licenses/WHISPER-MIT.txt); Tiny INT8 ONNX export from [ippocode/indic-asr-onnx](https://huggingface.co/ippocode/indic-asr-onnx) (Apache 2.0)
 - [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) by k2-fsa (Apache 2.0) · [license](licenses/SHERPA-ONNX-APACHE-2.0.txt), with [ONNX Runtime](https://github.com/microsoft/onnxruntime) by Microsoft (MIT) · [license](licenses/ONNXRUNTIME-MIT.txt)

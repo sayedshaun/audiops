@@ -74,8 +74,11 @@
     <string name="player_unavailable">Can\'t play</string>
 
     <string name="enhance_hint">The first run downloads about 570 MB of model files. Longer recordings take more time.</string>
-    <string name="transcribe_hint">The first run downloads models: about 470 MB for most languages, about 74 MB for Bangla, about 103 MB for Urdu.</string>
-    <string name="transcribe_language_hint">Auto uses Omnilingual ASR, which covers over 1,600 languages. Bangla uses a dedicated model, and Urdu uses Whisper Tiny, which is less weak on Urdu.</string>
+    <string name="transcribe_hint">Each model downloads once, the first time it is needed. Automatic uses Whisper Tiny (about 100 MB) to detect the language, then about 640 MB for English and European languages, 370 MB for other languages or 75 MB for Bangla.</string>
+    <string name="transcribe_language_hint">Auto detects the language: English and other European languages use Parakeet v3 (with punctuation), Bangla a dedicated model, and other languages Omnilingual ASR. Urdu uses Whisper Tiny, which is less weak on Urdu.</string>
+    <string name="transcribe_whisper_hint">Whisper Tiny is small and fast but less accurate. Pick the language, or Auto to let it detect the language.</string>
+    <string name="transcribe_model_used">Model: %1$s. Change it in Settings → Transcription.</string>
+    <string name="step_model">Model</string>
     <string name="language_field">Language</string>
     <string name="language_auto">Auto</string>
     <string name="language_bangla">Bangla</string>
@@ -216,6 +219,13 @@
     <string name="settings_pure_black_summary">Black backgrounds in the dark theme. Saves power on OLED screens.</string>
     <string name="settings_section_transcription">Transcription</string>
     <string name="settings_default_language">Default spoken language</string>
+    <string name="settings_transcription_model">Transcription model</string>
+    <string name="transcription_model_auto">Automatic</string>
+    <string name="transcription_model_auto_summary">Recommended. Detects the language and picks the best model for it.</string>
+    <string name="transcription_model_parakeet_summary">English and 24 other European languages, with punctuation. Most accurate for them. About 640 MB.</string>
+    <string name="transcription_model_omnilingual_summary">Over 1,600 languages, without punctuation. About 370 MB.</string>
+    <string name="transcription_model_whisper_summary">About 100 languages. Smallest and fastest, least accurate. About 100 MB.</string>
+    <string name="transcription_model_bangla_summary">Bangla only. About 75 MB.</string>
     <string name="settings_section_processing">Processing</string>
     <string name="settings_keep_screen_on">Keep screen on while processing</string>
     <string name="settings_keep_screen_on_summary">Stops the screen from turning off during long jobs</string>
@@ -226,10 +236,12 @@
     <string name="model_enhance_purpose">Enhance speech</string>
     <string name="model_dpdfnet">DPDFNet</string>
     <string name="model_dpdfnet_purpose">Noise reduction</string>
+    <string name="model_parakeet">Parakeet v3</string>
+    <string name="model_parakeet_purpose">Transcribe English and European languages</string>
     <string name="model_omnilingual">Omnilingual ASR</string>
     <string name="model_omnilingual_purpose">Transcribe, most languages</string>
     <string name="model_whisper">Whisper Tiny</string>
-    <string name="model_whisper_purpose">Transcribe Urdu, and as a fallback when Omnilingual finds no speech</string>
+    <string name="model_whisper_purpose">Transcribe Urdu, detect the language, and a fallback when Omnilingual finds no speech</string>
     <string name="model_bangla">Bangla Zipformer</string>
     <string name="model_bangla_purpose">Transcribe in Bangla</string>
     <string name="settings_models_none">No models downloaded</string>
@@ -262,6 +274,8 @@
     <string name="license_resemble_summary">MIT License · Resemble AI</string>
     <string name="license_dpdfnet">DPDFNet</string>
     <string name="license_dpdfnet_summary">Apache License 2.0 · Ceva (ONNX export: k2-fsa sherpa-onnx)</string>
+    <string name="license_parakeet">Parakeet TDT 0.6B v3</string>
+    <string name="license_parakeet_summary">Creative Commons Attribution 4.0 · NVIDIA (ONNX export: k2-fsa sherpa-onnx)</string>
     <string name="license_omnilingual">Omnilingual ASR</string>
     <string name="license_omnilingual_summary">Apache License 2.0 · Meta Platforms (ONNX export: k2-fsa sherpa-onnx)</string>
     <string name="license_whisper">Whisper Tiny</string>

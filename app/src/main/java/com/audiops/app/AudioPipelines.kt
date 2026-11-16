@@ -73,18 +73,36 @@ internal object AudioPipelines {
     }
 
     /**
-     * Transcribes decoded [audio]. [language] is a Whisper code (`bn` for Bangla, `ur` for Urdu) or
-     * empty for Auto. Bangla uses its dedicated model and Urdu Whisper Tiny (it is the less weak
-     * of the two on Urdu in our benchmark). Auto uses Omnilingual, and falls back to Whisper Tiny
-     * with automatic language detection when Omnilingual returns no text.
+     * Transcribes decoded [audio] with [model]. [language] is a Whisper code (`bn` for Bangla,
+     * `ur` for Urdu) or empty for automatic detection; only Auto and Whisper use it.
      */
-    fun transcribe(context: Context, audio: File, language: String, listener: ProcessingListener): String = when (language) {
-        "bn" -> BanglaTranscriber.transcribe(context, audio, listener)
+    fun transcribe(context: Context, audio: File, language: String, model: TranscriptionModel, listener: ProcessingListener): String =
+        when (model) {
+            TranscriptionModel.PARAKEET -> ParakeetTranscriber.transcribe(context, audio, listener)
+            TranscriptionModel.OMNILINGUAL -> OmnilingualTranscriber.transcribe(context, audio, listener)
+            TranscriptionModel.WHISPER -> WhisperTranscriber.transcribe(context, audio, language, listener)
+            TranscriptionModel.BANGLA -> BanglaTranscriber.transcribe(context, audio, listener)
+            TranscriptionModel.AUTO -> automatic(context, audio, language, listener)
+        }
 
-        "ur" -> WhisperTranscriber.transcribe(context, audio, language, listener)
+    /**
+     * Auto: Bangla uses its dedicated model and Urdu Whisper Tiny (the less weak model on Urdu in
+     * our benchmark). Otherwise the language is detected from the first 30 seconds: Bangla goes to
+     * the Bangla model, Parakeet's 25 European languages to Parakeet, and everything else to
+     * Omnilingual, which falls back to Whisper Tiny when it returns no text.
+     */
+    private fun automatic(context: Context, audio: File, language: String, listener: ProcessingListener): String {
+        val detected = language.ifEmpty { LanguageDetector.detect(context, audio, listener) }
+        return when {
+            detected == "bn" -> BanglaTranscriber.transcribe(context, audio, listener)
 
-        else -> OmnilingualTranscriber.transcribe(context, audio, listener).ifBlank {
-            WhisperTranscriber.transcribe(context, audio, "", listener)
+            detected == "ur" -> WhisperTranscriber.transcribe(context, audio, detected, listener)
+
+            detected in ParakeetTranscriber.languages -> ParakeetTranscriber.transcribe(context, audio, listener)
+
+            else -> OmnilingualTranscriber.transcribe(context, audio, listener).ifBlank {
+                WhisperTranscriber.transcribe(context, audio, "", listener)
+            }
         }
     }
 

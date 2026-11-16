@@ -376,3 +376,28 @@ Entries are appended in order. Newest entries are at the bottom.
 ## 2026-11-16: README without the desktop screenshot (`docs/project-website`)
 
 - Removed the desktop screenshot (and its file) from the README; Audiops is Android-only. The rest of the desktop text goes with the desktop removal.
+
+## 2026-11-15: Parakeet v3 and a transcription model setting (`feature/parakeet-asr`)
+
+### Benchmark (FLEURS test, 25 clips per language, PC CPU, 4 threads)
+| Language | Parakeet v3 (sherpa-onnx INT8) | Omnilingual 300M | Whisper Tiny |
+| --- | --- | --- | --- |
+| English | 6.8% WER, RTF 0.097 | 16.8%, 0.168 | 18.5%, 0.113 |
+| French | 8.4% | 21.0% | 48.6% |
+| Spanish | 2.2% | 8.3% | 20.3% |
+| German | 6.4% | 17.0% | – |
+| Hindi (not a Parakeet language) | 99.7% | 29.4% | 147% |
+
+Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuated and capitalised.
+
+### Runtime decision
+- MediaPipe `tasks-audio` 1.2.3 (2026-11-12) has `AudioTranscriber` with the same Parakeet v3 model (`.litertlm`, INT8, 615 MB) and a self-contained ~16 MB JNI library. Its `Delegate.NPU` needs SoC-specific builds (litert-community publishes f32 builds of ~1.25 GB for SM8450+ Qualcomm, some MediaTek and Tensor G5/G6); none for the Moto g96's SM7435. The user's rule was "MediaPipe if it supports the NPU, else sherpa-onnx", so the app uses sherpa-onnx (already bundled, measured). The MediaPipe Python benchmark was abandoned (PyPI timeouts); an on-device comparison is still possible.
+
+### Changed
+- `TranscriptionModel` (AUTO, PARAKEET, OMNILINGUAL, WHISPER, BANGLA), persisted in `UserSettings.transcriptionModel` (`transcription_model`) and stored in `JobSpec.Transcribe.model` (defaults to AUTO, so older history still loads).
+- `AudioEngine.transcribe(source, language, model, listener)`. Android: `ParakeetTranscriber` (csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8 @ `ed5d7456`, SHA-256 pinned, `nemo_transducer`, greedy, 20 s sections, 4 threads), `LanguageDetector` (sherpa `SpokenLanguageIdentification` with the Whisper Tiny files, first 30 s via `AudioChunks.firstChunk`, released after use).
+- Automatic routing in `AudioPipelines`: bn → Bangla; ur → Whisper; empty → detect; detected bn → Bangla, ur → Whisper, Parakeet languages → Parakeet, else Omnilingual with the Whisper fallback.
+- UI: Settings → Transcription → Transcription model (dialog with what each model covers and its size). The Transcribe screen shows the language field only for Automatic and Whisper, and names the model in use. `AiModel.PARAKEET` appears on the Downloaded models page.
+- Licence: `licenses/PARAKEET-TDT-CC-BY-4.0.txt`, notices, NOTICE, Settings → Open-source licenses, README.
+- Tests: model round trip and old-history decoding, settings persistence and unknown values, ViewModel passes language and model to the engine, `firstChunk` length.
+- Emulator: Automatic on the JFK clip → "And so, my fellow Americans, ask not what your country can do for you. Ask what you can do for your country." (Omnilingual returned nothing for this clip); Bangla clip → Bangla output; light and dark checked.

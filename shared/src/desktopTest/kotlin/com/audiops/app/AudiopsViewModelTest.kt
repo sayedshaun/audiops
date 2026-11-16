@@ -31,6 +31,7 @@ import kotlinx.coroutines.Job as CoroutineJob
 private class FakeEngine(override val supportsEnhance: Boolean = true, override val supportsTranscribe: Boolean = true) : AudioEngine {
     val deleted: MutableList<String> = Collections.synchronizedList(mutableListOf())
     val processed: MutableList<List<AudioOperation>> = Collections.synchronizedList(mutableListOf())
+    val transcribeCalls: MutableList<Pair<String, TranscriptionModel>> = Collections.synchronizedList(mutableListOf())
     private val running = AtomicInteger()
     val maxConcurrent = AtomicInteger()
 
@@ -41,7 +42,10 @@ private class FakeEngine(override val supportsEnhance: Boolean = true, override 
 
     override fun enhance(source: String, listener: ProcessingListener) = "/out/enhanced.wav"
 
-    override fun transcribe(source: String, language: String, listener: ProcessingListener) = "/out/transcript.txt"
+    override fun transcribe(source: String, language: String, model: TranscriptionModel, listener: ProcessingListener): String {
+        transcribeCalls += language to model
+        return "/out/transcript.txt"
+    }
 
     override fun process(source: String, operations: List<AudioOperation>, listener: ProcessingListener): String {
         maxConcurrent.accumulateAndGet(running.incrementAndGet(), ::maxOf)
@@ -170,6 +174,14 @@ class AudiopsViewModelTest {
         val vm = viewModel(FakeEngine())
         vm.start(Tool.TRANSCRIBE, JobSpec.Transcribe(SpeechLanguage.ENGLISH))
         assertEquals("hello world", vm.awaitJobs(1, JobStatus.DONE).single().preview)
+    }
+
+    @Test fun transcriptionPassesItsLanguageAndModelToTheEngine() {
+        val engine = FakeEngine()
+        val vm = viewModel(engine)
+        vm.start(Tool.TRANSCRIBE, JobSpec.Transcribe(SpeechLanguage.URDU, TranscriptionModel.WHISPER))
+        vm.awaitJobs(1, JobStatus.DONE)
+        assertEquals(listOf("ur" to TranscriptionModel.WHISPER), engine.transcribeCalls.toList())
     }
 
     @Test fun unsupportedToolsFailWithoutRunning() {

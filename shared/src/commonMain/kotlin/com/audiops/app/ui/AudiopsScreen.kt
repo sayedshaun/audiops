@@ -68,6 +68,7 @@ import com.audiops.app.Job
 import com.audiops.app.Tab
 import com.audiops.app.Tool
 import com.audiops.app.ToolCategory
+import com.audiops.app.TranscriptionModel
 import com.audiops.app.UserSettings
 import com.audiops.shared.resources.Res
 import com.audiops.shared.resources.app_name
@@ -126,6 +127,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                     waveformLoading = state.waveformLoading,
                     inputProblem = state.inputProblem,
                     language = state.language,
+                    transcriptionModel = settings?.transcriptionModel ?: TranscriptionModel.AUTO,
                     latestJob = state.latestJob(tool),
                 ),
                 snackbar = snackbar,
@@ -181,6 +183,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                             onPureBlack = viewModel::setPureBlack,
                             onKeepScreenOn = viewModel::setKeepScreenOn,
                             onDefaultLanguage = viewModel::setDefaultLanguage,
+                            onTranscriptionModel = viewModel::setTranscriptionModel,
                             onDeleteModel = viewModel::deleteModel,
                             onClearHistory = viewModel::clearHistory,
                         ),

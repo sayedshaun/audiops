@@ -19,9 +19,13 @@ internal object WhisperTranscriber {
         "tokens.txt" to "b34b360dbb493e781e479794586d661700670d65564001f23024971d1f2fa126",
     )
 
+    /** Downloads (once) and verifies the model; returns its folder. [LanguageDetector] uses the same files. */
+    fun files(context: Context, listener: ProcessingListener): File =
+        ModelFiles.ensure(context.noBackupFilesDir, "whisper-tiny/$REVISION", BASE_URL, digests, listener)
+
     /** [language] is a Whisper language code, or empty for automatic detection. */
     fun transcribe(context: Context, audio: File, language: String, listener: ProcessingListener): String {
-        val directory = ModelFiles.ensure(context.noBackupFilesDir, "whisper-tiny/$REVISION", BASE_URL, digests, listener)
+        val directory = files(context, listener)
         fun path(name: String) = File(directory, name).absolutePath
         val recognizer = OfflineRecognizer(
             config = OfflineRecognizerConfig(

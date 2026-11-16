@@ -54,8 +54,15 @@ enum class SpeechLanguage(val code: String) {
 /** The languages offered in the app. Omnilingual covers the rest through Auto. */
 val transcriptionLanguages = listOf(SpeechLanguage.AUTO, SpeechLanguage.BANGLA, SpeechLanguage.URDU)
 
-/** Downloadable AI models, listed and deleted one by one in Settings → Storage. */
-enum class AiModel { ENHANCE, NOISE, OMNILINGUAL, WHISPER, BANGLA }
+/**
+ * The speech recognition model a transcription uses, chosen in Settings. [AUTO] detects the
+ * language and picks a model for it (see `AudioPipelines.transcribe` on Android).
+ */
+@Serializable
+enum class TranscriptionModel { AUTO, PARAKEET, OMNILINGUAL, WHISPER, BANGLA }
+
+/** Downloadable AI models, listed and deleted one by one in Settings → Downloaded models. */
+enum class AiModel { ENHANCE, NOISE, PARAKEET, OMNILINGUAL, WHISPER, BANGLA }
 
 /** Equalizer presets, each a fixed chain of filters. */
 @Serializable
@@ -128,7 +135,7 @@ sealed interface JobSpec {
 
     @Serializable
     @SerialName("transcribe")
-    data class Transcribe(val language: SpeechLanguage) : JobSpec
+    data class Transcribe(val language: SpeechLanguage, val model: TranscriptionModel = TranscriptionModel.AUTO) : JobSpec
 
     @Serializable
     @SerialName("process")
