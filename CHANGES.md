@@ -471,3 +471,8 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - Renamed Unreleased to 0.2.0 in `CHANGELOG.md` and fixed its compare links (0.1.2 was missing). The app version comes from the release tag (`-PaudiopsVersion`), so no source file holds it.
 - Website: Text to speech, Presets, subtitles and the new transcription coverage are listed; the roadmap drops what shipped.
 - Not done on purpose: the tag and release. They wait for the signing secrets, the keystore password rotation, the licence decision (eSpeak NG, GPL-3.0) and a test on a phone.
+
+## 2026-11-16: Website copy fixes (`docs/website-fixes`)
+
+- Tool count (eleven → thirteen), save formats (WAV, M4A, Opus), record and share mentioned, "speak" added to the hero and meta text, and the model download source now says Hugging Face or GitHub (DPDFNet comes from a GitHub release). Checked the layout in headless Chrome at 1280 and 390 px wide.
+- Not changed: the screenshots still show the 0.1.2 UI (old banner, "On device" badge).
