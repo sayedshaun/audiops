@@ -28,6 +28,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Save
+import androidx.compose.material.icons.rounded.Subtitles
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
@@ -78,6 +79,7 @@ import com.audiops.app.JobSpec
 import com.audiops.app.JobStatus
 import com.audiops.app.LoudnessTarget
 import com.audiops.app.SpeechLanguage
+import com.audiops.app.SubtitleFormat
 import com.audiops.app.SupportedSampleRates
 import com.audiops.app.Tool
 import com.audiops.app.TranscriptionModel
@@ -88,7 +90,9 @@ import com.audiops.shared.resources.action_change
 import com.audiops.shared.resources.action_choose
 import com.audiops.shared.resources.action_copy
 import com.audiops.shared.resources.action_reset
+import com.audiops.shared.resources.action_save_srt
 import com.audiops.shared.resources.action_save_text
+import com.audiops.shared.resources.action_save_vtt
 import com.audiops.shared.resources.action_save_wav
 import com.audiops.shared.resources.convert_hint
 import com.audiops.shared.resources.denoise_hint
@@ -163,6 +167,7 @@ data class ToolActions(
     val onStart: (JobSpec) -> Unit,
     val onCancel: (jobId: String) -> Unit,
     val onSave: (Job, destination: String?) -> Unit,
+    val onSaveSubtitles: (Job, SubtitleFormat, destination: String?) -> Unit,
     val onCopied: () -> Unit,
     val readText: suspend (path: String) -> String?,
 )
@@ -252,7 +257,16 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
             if (job != null) {
                 Column(Modifier.bringIntoViewRequester(jobCardRequester)) {
                     Spacer(Modifier.height(24.dp))
-                    JobCard(job = job, actions = JobCardActions(actions.onCancel, actions.onSave, actions.onCopied, actions.readText))
+                    JobCard(
+                        job = job,
+                        actions = JobCardActions(
+                            actions.onCancel,
+                            actions.onSave,
+                            actions.onSaveSubtitles,
+                            actions.onCopied,
+                            actions.readText,
+                        ),
+                    )
                 }
             }
         }
@@ -665,6 +679,7 @@ fun <T> ConnectedChoice(options: List<T>, selected: T, label: @Composable (T) ->
 data class JobCardActions(
     val onCancel: (jobId: String) -> Unit,
     val onSave: (Job, destination: String?) -> Unit,
+    val onSaveSubtitles: (Job, SubtitleFormat, destination: String?) -> Unit,
     val onCopied: () -> Unit,
     val readText: suspend (path: String) -> String?,
 )
@@ -751,6 +766,8 @@ private fun TranscriptCard(job: Job, actions: JobCardActions) {
     val haptics = LocalHapticFeedback.current
     val text by produceState<String?>(initialValue = job.preview, path) { value = actions.readText(path) ?: job.preview }
     val saveAs = rememberFileSaver("text/plain") { actions.onSave(job, it) }
+    val saveSrt = rememberFileSaver("application/x-subrip") { actions.onSaveSubtitles(job, SubtitleFormat.SRT, it) }
+    val saveVtt = rememberFileSaver("text/vtt") { actions.onSaveSubtitles(job, SubtitleFormat.VTT, it) }
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLargeIncreased,
@@ -783,6 +800,29 @@ private fun TranscriptCard(job: Job, actions: JobCardActions) {
                     Icon(Icons.Rounded.Save, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(Res.string.action_save_text))
+                }
+            }
+            if (job.subtitlesPath != null) {
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+                    FilledTonalButton(
+                        onClick = { saveSrt(derivedFileName(job.inputName, "subtitles", "srt")) },
+                        shapes = ConnectedLeading,
+                        modifier = Modifier.weight(1f).heightIn(min = PrimaryButtonHeight),
+                    ) {
+                        Icon(Icons.Rounded.Subtitles, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(Res.string.action_save_srt))
+                    }
+                    FilledTonalButton(
+                        onClick = { saveVtt(derivedFileName(job.inputName, "subtitles", "vtt")) },
+                        shapes = ConnectedTrailing,
+                        modifier = Modifier.weight(1f).heightIn(min = PrimaryButtonHeight),
+                    ) {
+                        Icon(Icons.Rounded.Subtitles, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(Res.string.action_save_vtt))
+                    }
                 }
             }
         }

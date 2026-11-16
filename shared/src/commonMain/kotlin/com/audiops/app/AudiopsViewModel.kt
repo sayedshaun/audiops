@@ -269,6 +269,21 @@ class AudiopsViewModel(
         }
     }
 
+    /** Saves the subtitles of a transcription job to [destination] as [format]. */
+    fun saveSubtitles(job: Job, format: SubtitleFormat, destination: String?) {
+        val path = job.subtitlesPath ?: return
+        destination ?: return
+        viewModelScope.launch {
+            val result = runCatching {
+                runOnWorker {
+                    val srt = engine.readText(path)
+                    engine.writeText(if (format == SubtitleFormat.VTT) Subtitles.toVtt(srt) else srt, destination)
+                }
+            }
+            _messages.trySend(result.exceptionOrNull()?.let { UiMessage.SaveFailed(it.message) } ?: UiMessage.Saved)
+        }
+    }
+
     /** Reads a transcript or other text output. */
     suspend fun readText(path: String): String? = runCatching { runOnWorker { engine.readText(path) } }.getOrNull()
 
@@ -313,7 +328,7 @@ class AudiopsViewModel(
                             engine.deleteFile(path)
                             job.copy(status = JobStatus.FAILED, failure = FailureKind.NO_SPEECH)
                         } else {
-                            job.copy(outputPath = path, preview = text.take(PREVIEW_LENGTH))
+                            job.copy(outputPath = path, preview = text.take(PREVIEW_LENGTH), subtitlesPath = engine.subtitlesFor(path))
                         }
                     }
 

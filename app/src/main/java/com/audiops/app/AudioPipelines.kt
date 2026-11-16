@@ -76,7 +76,7 @@ internal object AudioPipelines {
      * Transcribes decoded [audio] with [model]. [language] is a Whisper code (`bn` for Bangla,
      * `ur` for Urdu) or empty for automatic detection; only Auto and Whisper use it.
      */
-    fun transcribe(context: Context, audio: File, language: String, model: TranscriptionModel, listener: ProcessingListener): String =
+    fun transcribe(context: Context, audio: File, language: String, model: TranscriptionModel, listener: ProcessingListener): Transcript =
         when (model) {
             TranscriptionModel.PARAKEET -> ParakeetTranscriber.transcribe(context, audio, listener)
             TranscriptionModel.OMNILINGUAL -> OmnilingualTranscriber.transcribe(context, audio, listener)
@@ -91,7 +91,7 @@ internal object AudioPipelines {
      * the Bangla model, Parakeet's 25 European languages to Parakeet, and everything else to
      * Omnilingual, which falls back to Whisper Tiny when it returns no text.
      */
-    private fun automatic(context: Context, audio: File, language: String, listener: ProcessingListener): String {
+    private fun automatic(context: Context, audio: File, language: String, listener: ProcessingListener): Transcript {
         val detected = language.ifEmpty { LanguageDetector.detect(context, audio, listener) }
         return when {
             detected == "bn" -> BanglaTranscriber.transcribe(context, audio, listener)
@@ -100,9 +100,8 @@ internal object AudioPipelines {
 
             detected in ParakeetTranscriber.languages -> ParakeetTranscriber.transcribe(context, audio, listener)
 
-            else -> OmnilingualTranscriber.transcribe(context, audio, listener).ifBlank {
-                WhisperTranscriber.transcribe(context, audio, "", listener)
-            }
+            else -> OmnilingualTranscriber.transcribe(context, audio, listener).takeUnless { it.isBlank }
+                ?: WhisperTranscriber.transcribe(context, audio, "", listener)
         }
     }
 

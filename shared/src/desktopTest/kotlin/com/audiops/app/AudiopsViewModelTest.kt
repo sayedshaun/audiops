@@ -46,6 +46,10 @@ private class FakeEngine(
 
     override fun enhance(source: String, listener: ProcessingListener) = "/out/enhanced.wav"
 
+    @Volatile var subtitles: String? = null
+
+    override fun subtitlesFor(transcriptPath: String): String? = subtitles
+
     val spoken: MutableList<Triple<String, String, Float>> = Collections.synchronizedList(mutableListOf())
 
     override fun speak(text: String, voiceId: String, speed: Float, listener: ProcessingListener): String {
@@ -179,6 +183,13 @@ class AudiopsViewModelTest {
         val failed = vm.awaitJobs(1, JobStatus.FAILED).single()
         assertEquals(FailureKind.NO_SPEECH, failed.failure)
         assertEquals(listOf("/out/transcript.txt"), engine.deleted.toList())
+    }
+
+    @Test fun subtitlesPathIsKeptWhenTheEngineHasSubtitles() {
+        val engine = FakeEngine().apply { subtitles = "/out/transcript.srt" }
+        val vm = viewModel(engine)
+        vm.start(Tool.TRANSCRIBE, JobSpec.Transcribe(SpeechLanguage.ENGLISH))
+        assertEquals("/out/transcript.srt", vm.awaitJobs(1, JobStatus.DONE).single().subtitlesPath)
     }
 
     @Test fun transcriptPreviewIsKept() {

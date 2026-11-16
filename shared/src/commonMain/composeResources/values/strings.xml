@@ -60,6 +60,8 @@
     <string name="action_enhance">Enhance audio</string>
     <string name="action_transcribe">Transcribe audio</string>
     <string name="action_speak">Create speech</string>
+    <string name="action_save_srt">Subtitles (SRT)</string>
+    <string name="action_save_vtt">Subtitles (VTT)</string>
     <string name="step_text">Text</string>
     <string name="step_voice">Voice</string>
     <string name="speak_text_label">Text to read aloud</string>

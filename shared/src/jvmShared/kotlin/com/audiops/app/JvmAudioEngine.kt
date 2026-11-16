@@ -74,8 +74,16 @@ abstract class JvmAudioEngine(protected val workDir: File, protected val outputD
     /** A new, empty file in [outputDir] for a result. */
     protected fun newOutput(extension: String): File = File.createTempFile("audiops-", ".$extension", outputDir)
 
-    /** Stores a transcript as a text output and returns its path. */
-    protected fun storeTranscript(text: String): String = newOutput("txt").apply { writeText(text, Charsets.UTF_8) }.absolutePath
+    /** Stores a transcript as a text output (with an SRT file next to it when it has cues) and returns the text path. */
+    protected fun storeTranscript(transcript: Transcript): String {
+        val file = newOutput("txt").apply { writeText(transcript.text, Charsets.UTF_8) }
+        if (transcript.cues.isNotEmpty()) subtitleFile(file.absolutePath).writeText(Subtitles.srt(transcript.cues), Charsets.UTF_8)
+        return file.absolutePath
+    }
+
+    private fun subtitleFile(transcriptPath: String) = File(transcriptPath.removeSuffix(".txt") + ".srt")
+
+    override fun subtitlesFor(transcriptPath: String): String? = subtitleFile(transcriptPath).takeIf { it.isFile }?.absolutePath
 
     /** The platform's AI noise reducer, or null for spectral subtraction (the default). */
     protected open fun aiDenoiser(): AiDenoiser? = null
@@ -97,6 +105,7 @@ abstract class JvmAudioEngine(protected val workDir: File, protected val outputD
 
     override fun deleteFile(path: String) {
         File(path).delete()
+        if (path.endsWith(".txt")) subtitleFile(path).delete()
     }
 
     override fun modelStorage(): Map<AiModel, Long> = ModelFiles.storage(modelRoot)

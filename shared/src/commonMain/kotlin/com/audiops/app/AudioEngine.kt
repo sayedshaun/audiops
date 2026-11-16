@@ -27,6 +27,9 @@ interface AudioEngine {
      */
     fun transcribe(source: String, language: String, model: TranscriptionModel, listener: ProcessingListener): String
 
+    /** The SRT subtitle file stored next to the transcript at [transcriptPath], or null if there is none. */
+    fun subtitlesFor(transcriptPath: String): String? = null
+
     /** Text to speech with the voice [voiceId] ([TtsVoice.id]). Returns the path of a WAV file in app storage. */
     fun speak(text: String, voiceId: String, speed: Float, listener: ProcessingListener): String
 

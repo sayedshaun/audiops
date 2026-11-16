@@ -207,7 +207,16 @@ fun SpeakScreen(latestJob: Job?, snackbar: SnackbarHostState, actions: ToolActio
             if (latestJob != null) {
                 Column(Modifier.bringIntoViewRequester(jobCardRequester)) {
                     Spacer(Modifier.height(24.dp))
-                    JobCard(job = latestJob, actions = JobCardActions(actions.onCancel, actions.onSave, actions.onCopied, actions.readText))
+                    JobCard(
+                        job = latestJob,
+                        actions = JobCardActions(
+                            actions.onCancel,
+                            actions.onSave,
+                            actions.onSaveSubtitles,
+                            actions.onCopied,
+                            actions.readText,
+                        ),
+                    )
                 }
             }
         }
