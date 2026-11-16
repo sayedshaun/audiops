@@ -13,6 +13,8 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-16
+
 ### Added
 - **Presets.** A new Presets tool cleans a recording in one tap: Podcast (light noise reduction, clearer voice, −16 LUFS), Voice message (noise and long pauses removed, −14 LUFS), Lecture or meeting (rumble, noise and long silences removed, −16 LUFS) and Noisy recording (strong noise reduction, −23 LUFS). Each preset is the existing tools chained together, and the result shows in Activity like any other job.
 - **Record in the app.** Every tool now has a Record button next to Choose file. Record from the microphone (with a timer and level meter), stop, and the recording is ready for Enhance, Transcribe or any other tool. The microphone permission is asked only when you first tap Record, and recording stops if you leave the app. Recordings are kept for a week.
@@ -64,6 +66,8 @@ First public release.
 - Smaller downloads: an Android APK for each processor type (about 40 MB for most phones) besides the universal APK.
 - Input formats: anything Android can decode (MP3, AAC/M4A, OGG, Opus, FLAC, WAV…); WAV, AIFF and AU on desktop. Output is 16-bit WAV.
 
-[Unreleased]: https://github.com/sayedshaun/audiops/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/sayedshaun/audiops/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/sayedshaun/audiops/compare/v0.1.2...v0.2.0
+[0.1.2]: https://github.com/sayedshaun/audiops/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/sayedshaun/audiops/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/sayedshaun/audiops/releases/tag/v0.1.0
