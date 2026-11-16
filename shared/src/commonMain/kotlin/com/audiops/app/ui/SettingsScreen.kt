@@ -134,8 +134,10 @@ import com.audiops.shared.resources.settings_licenses_summary
 import com.audiops.shared.resources.settings_model_summary
 import com.audiops.shared.resources.settings_models
 import com.audiops.shared.resources.settings_models_busy
+import com.audiops.shared.resources.settings_models_count
 import com.audiops.shared.resources.settings_models_delete_body
 import com.audiops.shared.resources.settings_models_delete_title
+import com.audiops.shared.resources.settings_models_empty_summary
 import com.audiops.shared.resources.settings_models_measuring
 import com.audiops.shared.resources.settings_models_none
 import com.audiops.shared.resources.settings_outputs
@@ -158,6 +160,7 @@ import com.audiops.shared.resources.theme_dark
 import com.audiops.shared.resources.theme_light
 import com.audiops.shared.resources.theme_system
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 /** Events from [SettingsScreen]; the screen holds only transient dialog state. */
@@ -212,8 +215,8 @@ private const val NOTICES_FILE = "files/third_party_notices.txt"
 private const val SOURCE_URL = "https://github.com/sayedshaun/audiops"
 private const val LICENSE_URL = "https://github.com/sayedshaun/audiops/blob/main/LICENSE"
 
-/** Settings has a main page and two sub-pages, opened from the About section. */
-private enum class SettingsPage { MAIN, ABOUT, LICENSES }
+/** Settings has a main page and sub-pages: downloaded models (Storage), About and Licenses. */
+private enum class SettingsPage { MAIN, MODELS, ABOUT, LICENSES }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -243,6 +246,13 @@ fun SettingsScreen(
             onOpen = { page = it },
         )
 
+        SettingsPage.MODELS -> ModelsPage(
+            modelStorage = modelStorage,
+            busy = busy,
+            onDeleteModel = actions.onDeleteModel,
+            onBack = { page = SettingsPage.MAIN },
+        )
+
         SettingsPage.ABOUT -> AboutPage(appVersion, onBack = { page = SettingsPage.MAIN })
 
         SettingsPage.LICENSES -> LicensesPage(showTranscription, onBack = { page = SettingsPage.MAIN })
@@ -264,7 +274,6 @@ private fun SettingsMain(
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
-    var deleteTarget by rememberSaveable { mutableStateOf<AiModel?>(null) }
     var showClearDialog by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
@@ -374,38 +383,27 @@ private fun SettingsMain(
             item { SectionHeader(stringResource(Res.string.settings_section_storage)) }
             item {
                 val outputText = outputStorage?.let { formatFileSize(it) }
-                // One row per downloaded model, each with its own Delete button.
-                val modelRows: List<@Composable (Shape) -> Unit> = when {
-                    modelStorage.isNullOrEmpty() -> listOf { shape ->
-                        SettingsRow(
-                            icon = Icons.Rounded.Storage,
-                            title = stringResource(Res.string.settings_models),
-                            summary = stringResource(
-                                if (modelStorage == null) Res.string.settings_models_measuring else Res.string.settings_models_none,
-                            ),
-                            shape = shape,
-                        )
-                    }
+                // One row for all downloaded models; each model is listed (and deleted) on the Models page.
+                val models: @Composable (Shape) -> Unit = { shape ->
+                    SettingsRow(
+                        icon = Icons.Rounded.Storage,
+                        title = stringResource(Res.string.settings_models),
+                        summary = when {
+                            modelStorage == null -> stringResource(Res.string.settings_models_measuring)
 
-                    else -> modelStorage.map { (model, bytes) ->
-                        @Composable { shape: Shape ->
-                            SettingsRow(
-                                icon = model.icon,
-                                title = stringResource(model.title),
-                                summary = if (busy) {
-                                    stringResource(Res.string.settings_models_busy)
-                                } else {
-                                    stringResource(Res.string.settings_model_summary, stringResource(model.purpose), formatFileSize(bytes))
-                                },
-                                shape = shape,
-                                trailing = {
-                                    TextButton(onClick = { deleteTarget = model }, enabled = !busy) {
-                                        Text(stringResource(Res.string.action_delete))
-                                    }
-                                },
+                            modelStorage.isEmpty() -> stringResource(Res.string.settings_models_none)
+
+                            else -> pluralStringResource(
+                                Res.plurals.settings_models_count,
+                                modelStorage.size,
+                                modelStorage.size,
+                                formatFileSize(modelStorage.values.sum()),
                             )
-                        }
-                    }
+                        },
+                        shape = shape,
+                        onClick = { onOpen(SettingsPage.MODELS) },
+                        trailing = { Chevron() },
+                    )
                 }
                 val outputs: @Composable (Shape) -> Unit = { shape ->
                     SettingsRow(
@@ -424,7 +422,7 @@ private fun SettingsMain(
                         },
                     )
                 }
-                SettingsGroup(*(modelRows + outputs).toTypedArray())
+                SettingsGroup(models, outputs)
             }
 
             item { SectionHeader(stringResource(Res.string.settings_section_about)) }
@@ -484,6 +482,50 @@ private fun SettingsMain(
             },
         )
     }
+}
+
+/** Every downloaded AI model with its size, each with Delete (unavailable while a job runs). */
+@Composable
+private fun ModelsPage(modelStorage: Map<AiModel, Long>?, busy: Boolean, onDeleteModel: (AiModel) -> Unit, onBack: () -> Unit) {
+    var deleteTarget by rememberSaveable { mutableStateOf<AiModel?>(null) }
+    SettingsSubPage(stringResource(Res.string.settings_models), onBack) {
+        item {
+            if (modelStorage.isNullOrEmpty()) {
+                SettingsGroup({ shape ->
+                    SettingsRow(
+                        icon = Icons.Rounded.Storage,
+                        title = stringResource(
+                            if (modelStorage == null) Res.string.settings_models_measuring else Res.string.settings_models_none,
+                        ),
+                        summary = stringResource(Res.string.settings_models_empty_summary),
+                        shape = shape,
+                    )
+                })
+            } else {
+                SettingsGroup(
+                    *modelStorage.map { (model, bytes) ->
+                        @Composable { shape: Shape ->
+                            SettingsRow(
+                                icon = model.icon,
+                                title = stringResource(model.title),
+                                summary = if (busy) {
+                                    stringResource(Res.string.settings_models_busy)
+                                } else {
+                                    stringResource(Res.string.settings_model_summary, stringResource(model.purpose), formatFileSize(bytes))
+                                },
+                                shape = shape,
+                                trailing = {
+                                    TextButton(onClick = { deleteTarget = model }, enabled = !busy) {
+                                        Text(stringResource(Res.string.action_delete))
+                                    }
+                                },
+                            )
+                        }
+                    }.toTypedArray(),
+                )
+            }
+        }
+    }
 
     deleteTarget?.let { model ->
         val size = modelStorage?.get(model)?.let { formatFileSize(it) }.orEmpty()
@@ -495,7 +537,7 @@ private fun SettingsMain(
             confirmButton = {
                 TextButton(onClick = {
                     deleteTarget = null
-                    actions.onDeleteModel(model)
+                    onDeleteModel(model)
                 }) { Text(stringResource(Res.string.action_delete)) }
             },
             dismissButton = {
