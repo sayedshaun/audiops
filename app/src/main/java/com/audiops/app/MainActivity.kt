@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -12,14 +13,17 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.audiops.app.ui.AudiopsApp
 import com.audiops.app.ui.isDarkTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Android host for the shared [AudiopsApp]. */
 class MainActivity : ComponentActivity() {
@@ -53,11 +57,35 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
-    /** A tap on a job notification opens the Activity tab. */
+    /** A tap on a job notification opens the Activity tab; shared or opened audio becomes the current recording. */
     private fun handleIntent(intent: Intent?) {
-        if (intent?.getBooleanExtra(JobNotifications.EXTRA_SHOW_ACTIVITY, false) != true) return
-        viewModel.back()
-        viewModel.selectTab(Tab.ACTIVITY)
+        intent ?: return
+        if (intent.getBooleanExtra(JobNotifications.EXTRA_SHOW_ACTIVITY, false)) {
+            viewModel.back()
+            viewModel.selectTab(Tab.ACTIVITY)
+            return
+        }
+        val shared: Uri? = when (intent.action) {
+            Intent.ACTION_VIEW -> intent.data
+
+            Intent.ACTION_SEND -> if (Build.VERSION.SDK_INT >= 33) {
+                intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra(Intent.EXTRA_STREAM)
+            }
+
+            else -> null
+        }
+        if (shared != null) importShared(shared)
+    }
+
+    private fun importShared(uri: Uri) {
+        lifecycleScope.launch {
+            runCatching { withContext(Dispatchers.IO) { SharedAudio.import(this@MainActivity, uri) } }
+                .onSuccess { (file, name) -> viewModel.inputShared(file.toUri().toString(), name) }
+                .onFailure { viewModel.inputShareFailed(it.message) }
+        }
     }
 
     /**

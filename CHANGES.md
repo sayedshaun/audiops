@@ -439,3 +439,12 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - UI: a WAV / M4A / Opus choice on the audio result card (shown only when there is more than one format); the button reads "Save WAV", "Save M4A (AAC)" or "Save Opus".
 - Tests: `PcmSourceTest` (header parsing, bytes, up- and downsampling lengths, 8 kHz to 48 kHz, invalid files) and the ViewModel passes the chosen format to the engine.
 - Emulator: both formats saved through the system dialog; ffprobe: AAC 22.05 kHz mono 96 kbit/s, 2.415 s; Opus 48 kHz mono Ogg. Test exports were removed from Downloads.
+
+## 2026-11-16: Share target (`feature/share-target`, on top of `feature/audio-export`)
+
+### Changed
+- Manifest: `MainActivity` is `singleTask` (so a share reaches the running instance through `onNewIntent`) with intent filters for `SEND` (`audio/*`, `application/ogg`) and `VIEW` (`content:` and `file:` schemes, same types). Video types were not added: they would put Audiops in every video's share sheet.
+- `SharedAudio.import` copies the shared stream to `cacheDir/shared/<millis>-<safe name>` on the IO dispatcher and prunes copies older than two days; `safeFileName` (jvmShared) sanitizes the name (letters, digits, `._-`, 60-character base, short extension kept, `audio` if nothing is left).
+- `AudiopsViewModel.inputShared` closes any open tool, selects the Tools tab, sets the input and shows "“name” is ready. Choose a tool."; `inputShareFailed` shows an error message. New `UiMessage.InputReady` and `ImportFailed`.
+- Tests: `safeFileName` (ordinary, unsafe, non-Latin, long and empty names) and the ViewModel makes shared audio the current recording on the Tools tab.
+- Emulator: `am start` with VIEW and with SEND (content URI plus grant) imported the file; Transcribe showed it as the recording with its 0:11.0 length; `pm query-activities` lists Audiops for `audio/ogg`. The cache copies were removed afterwards.
