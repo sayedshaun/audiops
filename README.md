@@ -17,7 +17,7 @@ Nothing you open is uploaded. AI models download once, then run offline.
 
 ## Why Audiops
 
-- **Private by design.** Audio never leaves your device. The app has no accounts, no analytics and no server.
+- **Private by design.** Audio never leaves your device. The app has no accounts, no analytics and no server. It asks for the microphone only when you tap Record, and for notifications only to show job progress.
 - **One toolkit, not ten apps.** Eleven tools behind one consistent interface, with a queue so several jobs can run while you keep working.
 - **Built for long recordings.** Every tool streams audio in blocks, so a two-hour lecture uses the same memory as a voice note.
 - **Open source, one codebase.** Kotlin Multiplatform and Compose Multiplatform power Android, Linux and Windows.

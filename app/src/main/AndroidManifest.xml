@@ -9,6 +9,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Asked only when you tap Record in a tool. Recordings stay on the device. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Recording is optional: phones and tablets without a microphone can still install the app. -->
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
     <application
         android:name=".AudiopsApplication"

@@ -125,6 +125,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                 actions = ToolActions(
                     onBack = { viewModel.back() },
                     onChoose = viewModel::chooseInput,
+                    onRecordFailed = viewModel::recordFailed,
                     onLanguage = viewModel::setLanguage,
                     onStart = { spec -> viewModel.start(tool, spec) },
                     onCancel = viewModel::cancel,
@@ -152,6 +153,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                 actions = ToolActions(
                     onBack = { viewModel.back() },
                     onChoose = viewModel::chooseInput,
+                    onRecordFailed = viewModel::recordFailed,
                     onLanguage = viewModel::setLanguage,
                     onStart = { spec -> viewModel.start(tool, spec) },
                     onCancel = viewModel::cancel,

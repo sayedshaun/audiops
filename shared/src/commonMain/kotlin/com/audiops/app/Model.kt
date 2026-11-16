@@ -243,4 +243,5 @@ sealed interface UiMessage {
     data object Copied : UiMessage
     data class InputReady(val name: String) : UiMessage
     data class ImportFailed(val detail: String?) : UiMessage
+    data class RecordFailed(val detail: String?) : UiMessage
 }

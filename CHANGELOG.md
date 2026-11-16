@@ -14,6 +14,7 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 ## [Unreleased]
 
 ### Added
+- **Record in the app.** Every tool now has a Record button next to Choose file. Record from the microphone (with a timer and level meter), stop, and the recording is ready for Enhance, Transcribe or any other tool. The microphone permission is asked only when you first tap Record, and recording stops if you leave the app. Recordings are kept for a week.
 - **Share audio to Audiops.** Audiops now appears in the Share menu of voice-note apps, recorders and file managers, and in "Open with" for audio files. The audio becomes the current recording and the Tools tab opens, so you can pick a tool right away.
 - **Save audio as M4A or Opus.** Processed and generated audio can now be saved as a smaller M4A (AAC) or Opus file as well as WAV. M4A works on every phone; Opus needs Android 10 or newer. There is no MP3 option because Android has no MP3 encoder.
 - **Subtitles from transcripts.** After a transcription you can save the result as an SRT or VTT subtitle file, with times for each sentence, ready to use in a video editor or player. Times come from the speech model; Whisper Tiny does not report them, so its subtitles are spread evenly over each 20-second section.

@@ -63,6 +63,11 @@
     <string name="action_save_format">Save %1$s</string>
     <string name="message_input_ready">“%1$s” is ready. Choose a tool.</string>
     <string name="error_import">Could not open the shared audio: %1$s</string>
+    <string name="action_record">Record</string>
+    <string name="action_stop_recording">Stop recording</string>
+    <string name="recording_active">Recording…</string>
+    <string name="record_permission_needed">Allow microphone access to record.</string>
+    <string name="error_record">Could not record: %1$s</string>
     <string name="format_wav">WAV</string>
     <string name="format_m4a">M4A (AAC)</string>
     <string name="format_opus">Opus</string>

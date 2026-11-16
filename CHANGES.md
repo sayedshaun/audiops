@@ -448,3 +448,12 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - `AudiopsViewModel.inputShared` closes any open tool, selects the Tools tab, sets the input and shows "“name” is ready. Choose a tool."; `inputShareFailed` shows an error message. New `UiMessage.InputReady` and `ImportFailed`.
 - Tests: `safeFileName` (ordinary, unsafe, non-Latin, long and empty names) and the ViewModel makes shared audio the current recording on the Tools tab.
 - Emulator: `am start` with VIEW and with SEND (content URI plus grant) imported the file; Transcribe showed it as the recording with its 0:11.0 length; `pm query-activities` lists Audiops for `audio/ogg`. The cache copies were removed afterwards.
+
+## 2026-11-16: Record in the app (`feature/record`, on top of `feature/share-target`)
+
+### Changed
+- `Recorder` / `RecorderState` / `rememberRecorder` (commonMain `ui/Recorder.kt`): the platform boundary, like the file picker. Android (`Recorder.android.kt`): `AudioRecord` (source `MIC`, mono PCM16 at `PIPELINE_RATE`, so no later conversion) streamed into a `WavWriter`; progress (elapsed, level) is published as Compose state; recordings under half a second are discarded; `RECORD_AUDIO` is requested on first use; `ON_STOP` and leaving composition stop the recording and still deliver the file. Desktop: `NoRecorder` (`available = false`).
+- The recording card shows Choose file and Record side by side; while recording it shows "Recording…", the time, a level meter and a Stop button, and the screen stays on (`KeepScreenOn`).
+- Manifest: `RECORD_AUDIO` and `<uses-feature android:name="android.hardware.microphone" android:required="false"/>`, so devices without a microphone can still install the app.
+- `UiMessage.RecordFailed` / `AudiopsViewModel.recordFailed`; `ToolActions.onRecordFailed`.
+- Not covered by unit tests (Android audio hardware); verified on the emulator only: permission dialog, timer, Stop, a valid 44.1 kHz mono WAV of 18.1 s that became the current recording. The emulator microphone is silent, so the level meter and speech capture need a phone test.

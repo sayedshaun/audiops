@@ -26,8 +26,10 @@ import androidx.compose.material.icons.rounded.AudioFile
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Save
+import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.Subtitles
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -38,6 +40,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -62,7 +65,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
@@ -90,12 +96,14 @@ import com.audiops.shared.resources.action_cancel
 import com.audiops.shared.resources.action_change
 import com.audiops.shared.resources.action_choose
 import com.audiops.shared.resources.action_copy
+import com.audiops.shared.resources.action_record
 import com.audiops.shared.resources.action_reset
 import com.audiops.shared.resources.action_save_format
 import com.audiops.shared.resources.action_save_srt
 import com.audiops.shared.resources.action_save_text
 import com.audiops.shared.resources.action_save_vtt
 import com.audiops.shared.resources.action_save_wav
+import com.audiops.shared.resources.action_stop_recording
 import com.audiops.shared.resources.convert_hint
 import com.audiops.shared.resources.denoise_hint
 import com.audiops.shared.resources.enhance_hint
@@ -111,6 +119,7 @@ import com.audiops.shared.resources.option_silence_threshold
 import com.audiops.shared.resources.option_speed
 import com.audiops.shared.resources.option_strength
 import com.audiops.shared.resources.option_trim_range
+import com.audiops.shared.resources.recording_active
 import com.audiops.shared.resources.recording_none
 import com.audiops.shared.resources.recording_pick_hint
 import com.audiops.shared.resources.recording_reading
@@ -165,6 +174,7 @@ data class ToolScreenState(
 data class ToolActions(
     val onBack: () -> Unit,
     val onChoose: (id: String, name: String) -> Unit,
+    val onRecordFailed: (detail: String?) -> Unit,
     val onLanguage: (SpeechLanguage) -> Unit,
     val onStart: (JobSpec) -> Unit,
     val onCancel: (jobId: String) -> Unit,
@@ -181,6 +191,8 @@ data class ToolActions(
 fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: ToolActions) {
     val tool = state.tool
     val pickRecording = rememberAudioPicker(actions.onChoose)
+    val recorder = rememberRecorder(actions.onChoose, actions.onRecordFailed)
+    KeepScreenOn(recorder.state.recording)
     // Option values survive rotation; each tool keeps its own.
     var options by rememberSaveable(tool, stateSaver = ToolOptionsSaver) { mutableStateOf(ToolOptions()) }
     val job = state.latestJob
@@ -211,6 +223,7 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
             problem = state.inputProblem,
             selection = if (tool == Tool.TRIM) options.trimStart..options.trimEnd else 0f..1f,
             onChoose = pickRecording,
+            recorder = recorder,
         )
 
         if (tool.hasOptions) {
@@ -292,7 +305,44 @@ internal fun OptionsCard(content: @Composable () -> Unit) {
     }
 }
 
-/** Recording picker with the waveform preview and a play button. */
+/** Shown while recording: a status line with the time, a level meter and Stop. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun RecordingPanel(state: RecorderState, onStop: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Column(Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(Res.string.recording_active),
+                style = MaterialTheme.typography.titleMedium,
+                color = colors.error,
+                modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite },
+            )
+            Text(formatDuration(state.elapsedMs), style = MaterialTheme.typography.titleMedium)
+        }
+        Spacer(Modifier.height(12.dp))
+        LinearProgressIndicator(
+            progress = { state.level },
+            modifier = Modifier.fillMaxWidth().height(8.dp).clearAndSetSemantics { },
+            color = colors.error,
+            trackColor = colors.errorContainer,
+        )
+        Spacer(Modifier.height(16.dp))
+        Button(
+            onClick = onStop,
+            shapes = ButtonDefaults.shapes(),
+            colors = ButtonDefaults.buttonColors(containerColor = colors.error, contentColor = colors.onError),
+            contentPadding = PrimaryButtonPadding,
+            modifier = Modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
+        ) {
+            Icon(Icons.Rounded.Stop, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(Res.string.action_stop_recording), style = MaterialTheme.typography.titleMedium)
+        }
+    }
+}
+
+/** Recording picker with the waveform preview, a play button, and recording from the microphone. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun InputCard(
@@ -302,6 +352,7 @@ private fun InputCard(
     problem: InputProblem?,
     selection: ClosedFloatingPointRange<Float>,
     onChoose: () -> Unit,
+    recorder: Recorder,
 ) {
     val colors = MaterialTheme.colorScheme
     val player = LocalAudioPlayer.current
@@ -371,12 +422,30 @@ private fun InputCard(
                 }
             }
             Spacer(Modifier.height(16.dp))
-            FilledTonalButton(
-                onClick = onChoose,
-                shapes = ButtonDefaults.shapes(),
-                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-            ) {
-                Text(stringResource(if (input != null) Res.string.action_change else Res.string.action_choose))
+            val recording = recorder.state
+            if (recording.recording) {
+                RecordingPanel(recording, onStop = recorder::toggle)
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilledTonalButton(
+                        onClick = onChoose,
+                        shapes = ButtonDefaults.shapes(),
+                        modifier = Modifier.weight(1f).heightIn(min = 52.dp),
+                    ) {
+                        Text(stringResource(if (input != null) Res.string.action_change else Res.string.action_choose))
+                    }
+                    if (recorder.available) {
+                        FilledTonalButton(
+                            onClick = recorder::toggle,
+                            shapes = ButtonDefaults.shapes(),
+                            modifier = Modifier.weight(1f).heightIn(min = 52.dp),
+                        ) {
+                            Icon(Icons.Rounded.Mic, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(Res.string.action_record))
+                        }
+                    }
+                }
             }
         }
     }
