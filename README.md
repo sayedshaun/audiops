@@ -84,12 +84,6 @@ Only the two AI tools use machine-learning models. Every other tool is classic s
 
 <sub>Tools · Equalizer with waveform and playback · Transcription · Activity history</sub>
 
-<br><br>
-
-<img src="docs/images/screenshots/desktop.png" alt="Audiops on desktop with navigation rail" width="72%">
-
-<sub>The same app on desktop, with a navigation rail for wide windows</sub>
-
 </div>
 
 ## Download
