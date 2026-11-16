@@ -372,3 +372,7 @@ Entries are appended in order. Newest entries are at the bottom.
 - `ModelsPage` lists every downloaded model (icon, title, purpose · size, Delete; Delete disabled while a job runs) and owns the delete confirmation dialog. With no models it shows an empty-state row.
 - New strings: `settings_models_count` (plurals, the first plural in the app) and `settings_models_empty_summary`.
 - Checked on the emulator in light and dark; Back returns to the main page.
+
+## 2026-11-16: README without the desktop screenshot (`docs/project-website`)
+
+- Removed the desktop screenshot (and its file) from the README; Audiops is Android-only. The rest of the desktop text goes with the desktop removal.
