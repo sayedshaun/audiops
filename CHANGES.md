@@ -465,3 +465,9 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - `Tool.PRESETS` (Clean up, listed first): preset buttons and a one-line description of the selected preset; `ToolOptions.preset` (saved across rotation).
 - Tests (`PresetTest`): every preset has 2 to 4 operations and survives JSON; each preset run through `DspPipeline` on 8 s of speech-like bursts over noise gives finite, unclipped audio within 2 LU of its loudness target; the Voice message preset shortens the recording.
 - Emulator: Voice message on the 11 s English clip gave 9.39 s at −13.8 LUFS (ffmpeg ebur128; target −14).
+
+## 2026-11-16: Prepare release 0.2.0 (`docs/release-0.2.0`)
+
+- Renamed Unreleased to 0.2.0 in `CHANGELOG.md` and fixed its compare links (0.1.2 was missing). The app version comes from the release tag (`-PaudiopsVersion`), so no source file holds it.
+- Website: Text to speech, Presets, subtitles and the new transcription coverage are listed; the roadmap drops what shipped.
+- Not done on purpose: the tag and release. They wait for the signing secrets, the keystore password rotation, the licence decision (eSpeak NG, GPL-3.0) and a test on a phone.

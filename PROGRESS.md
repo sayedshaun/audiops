@@ -1,6 +1,6 @@
 # Progress
 
-Snapshot as of 2026-11-14, after the v0.1.2 release. Updated in place; the history is in `CHANGES.md`.
+Snapshot as of 2026-11-16, after the v0.1.2 release; v0.2.0 is prepared but not tagged (see Open questions). Updated in place; the history is in `CHANGES.md`.
 
 ## Status
 
@@ -41,6 +41,7 @@ Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine o
 2. **Target SDK 37** (lint flags 36): needs a device test pass.
 3. **LiteRT 2.3.2** is available (using 2.3.0).
 4. **Lighter vocoder export** (fp16/int8 activations) so enhancement fits 4 GB phones.
+5. **Before tagging v0.2.0:** rotate the release keystore password (it was printed to a local session log); decide whether Apache-2.0 still fits the app given the eSpeak NG (GPL-3.0) code inside sherpa-onnx; test recording, M4A/Opus export, text to speech and Parakeet on a phone.
 
 ## Next steps
 
