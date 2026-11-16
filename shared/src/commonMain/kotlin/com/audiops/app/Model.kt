@@ -65,6 +65,13 @@ enum class TranscriptionModel { AUTO, PARAKEET, OMNILINGUAL, WHISPER, BANGLA }
 /** Downloadable AI models, listed and deleted one by one in Settings → Downloaded models. */
 enum class AiModel { ENHANCE, NOISE, PARAKEET, OMNILINGUAL, WHISPER, BANGLA, POCKET_TTS, PIPER }
 
+/** File formats a processed recording can be saved in. [WAV] is always available; the others depend on the device's encoders. */
+enum class SaveFormat(val extension: String, val mimeType: String) {
+    WAV("wav", "audio/wav"),
+    M4A("m4a", "audio/mp4"),
+    OPUS("opus", "audio/ogg"),
+}
+
 /** Equalizer presets, each a fixed chain of filters. */
 @Serializable
 enum class EqPreset { VOICE_CLARITY, BASS_BOOST, TREBLE_BOOST, WARM, REMOVE_RUMBLE, TELEPHONE }

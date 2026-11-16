@@ -10,6 +10,7 @@ import com.audiops.app.Job
 import com.audiops.app.JobSpec
 import com.audiops.app.JobStatus
 import com.audiops.app.LoudnessTarget
+import com.audiops.app.SaveFormat
 import com.audiops.app.SpeechLanguage
 import com.audiops.app.Stage
 import com.audiops.app.Tool
@@ -45,6 +46,9 @@ import com.audiops.shared.resources.error_unknown
 import com.audiops.shared.resources.error_unreadable
 import com.audiops.shared.resources.error_unsupported_format
 import com.audiops.shared.resources.error_unsupported_platform
+import com.audiops.shared.resources.format_m4a
+import com.audiops.shared.resources.format_opus
+import com.audiops.shared.resources.format_wav
 import com.audiops.shared.resources.language_arabic
 import com.audiops.shared.resources.language_auto
 import com.audiops.shared.resources.language_bangla
@@ -279,6 +283,13 @@ fun ttsLanguageLabel(tag: String): StringResource = when (tag) {
     "vi" -> Res.string.tts_language_vi
     else -> Res.string.tts_language_other
 }
+
+val SaveFormat.label: StringResource
+    get() = when (this) {
+        SaveFormat.WAV -> Res.string.format_wav
+        SaveFormat.M4A -> Res.string.format_m4a
+        SaveFormat.OPUS -> Res.string.format_opus
+    }
 
 val Tool.title: StringResource
     get() = when (this) {

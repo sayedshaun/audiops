@@ -424,3 +424,18 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - `JvmAudioEngine.storeTranscript` writes `<name>.txt` and `<name>.srt`; `AudioEngine.subtitlesFor(path)` finds the SRT, `deleteFile` removes it with the transcript. `Job.subtitlesPath` (optional, so older history still loads). `AudiopsViewModel.saveSubtitles(job, SRT|VTT, destination)` converts SRT to VTT when saving.
 - UI: Subtitles (SRT) and Subtitles (VTT) buttons on the transcript card when subtitles exist; `onSaveSubtitles` threaded through `ToolActions`, `ActivityActions` and `JobCardActions`.
 - Tests: SRT/VTT format, token-time placement, fallback timing, ordering, wrapping, blank text, ViewModel keeps `subtitlesPath`.
+
+## 2026-11-16: Save audio as M4A or Opus (`feature/audio-export`, on top of `feature/subtitles`)
+
+### Decisions
+- No MP3: Android has no MP3 encoder, and the usual library (LAME) is LGPL. M4A (AAC-LC) and Opus use the device's own `MediaCodec` encoders and `MediaMuxer`, so there is no new dependency or licence.
+- Opus needs Android 10+ (`MUXER_OUTPUT_OGG`) and an Opus encoder, so the choice is only shown when `AudioEncoder.formats` contains it. Opus takes 8, 12, 16, 24 or 48 kHz; other rates (for example Piper's 22.05 kHz) are converted to 48 kHz.
+- A first Opus export looked 0.08 s shorter than the source. I added 120 ms of end padding, measured again, and found the audible end was identical (2.189 s both times): only trailing silence had been dropped. The padding was removed again.
+
+### Changed
+- `SaveFormat` (WAV, M4A, OPUS); `AudioEngine.saveFormats` and `saveAudio` (default: WAV copy, otherwise unsupported); `AudiopsViewModel.saveAudio`.
+- `PcmSource` (jvmShared): reads Audiops' mono PCM16 WAV files as little-endian PCM16 blocks, optionally converted to another rate with the existing anti-alias filter and resampler.
+- `AudioEncoder` (app): streams `PcmSource` into the encoder and the muxer; the muxer writes straight to the destination file descriptor.
+- UI: a WAV / M4A / Opus choice on the audio result card (shown only when there is more than one format); the button reads "Save WAV", "Save M4A (AAC)" or "Save Opus".
+- Tests: `PcmSourceTest` (header parsing, bytes, up- and downsampling lengths, 8 kHz to 48 kHz, invalid files) and the ViewModel passes the chosen format to the engine.
+- Emulator: both formats saved through the system dialog; ffprobe: AAC 22.05 kHz mono 96 kbit/s, 2.415 s; Opus 48 kHz mono Ogg. Test exports were removed from Downloads.

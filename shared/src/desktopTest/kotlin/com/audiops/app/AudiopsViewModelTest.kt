@@ -82,6 +82,14 @@ private class FakeEngine(
 
     override fun copyFile(path: String, destination: String) = Unit
 
+    val savedAudio: MutableList<Triple<String, SaveFormat, String>> = Collections.synchronizedList(mutableListOf())
+
+    override val saveFormats: List<SaveFormat> = listOf(SaveFormat.WAV, SaveFormat.M4A)
+
+    override fun saveAudio(path: String, format: SaveFormat, destination: String) {
+        savedAudio += Triple(path, format, destination)
+    }
+
     override fun writeText(text: String, destination: String) = Unit
 
     override fun deleteFile(path: String) {
@@ -204,6 +212,19 @@ class AudiopsViewModelTest {
         vm.start(Tool.TRANSCRIBE, JobSpec.Transcribe(SpeechLanguage.URDU, TranscriptionModel.WHISPER))
         vm.awaitJobs(1, JobStatus.DONE)
         assertEquals(listOf("ur" to TranscriptionModel.WHISPER), engine.transcribeCalls.toList())
+    }
+
+    @Test fun audioIsSavedInTheChosenFormat() {
+        val engine = FakeEngine()
+        val vm = viewModel(engine)
+        assertEquals(listOf(SaveFormat.WAV, SaveFormat.M4A), vm.saveFormats)
+        vm.start(Tool.SPEAK, JobSpec.Speak("Hi.", "pocket-alba"))
+        val job = vm.awaitJobs(1, JobStatus.DONE).single()
+        vm.saveAudio(job, SaveFormat.M4A, "content://dest/hi.m4a")
+        vm.saveAudio(job, SaveFormat.OPUS, null)
+        val deadline = System.currentTimeMillis() + 5_000
+        while (engine.savedAudio.isEmpty() && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        assertEquals(listOf(Triple("/out/speech.wav", SaveFormat.M4A, "content://dest/hi.m4a")), engine.savedAudio.toList())
     }
 
     @Test fun speechNeedsNoInputRecording() {

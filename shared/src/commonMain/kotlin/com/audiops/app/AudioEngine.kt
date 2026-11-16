@@ -27,6 +27,14 @@ interface AudioEngine {
      */
     fun transcribe(source: String, language: String, model: TranscriptionModel, listener: ProcessingListener): String
 
+    /** Formats [saveAudio] can write on this platform (WAV is always first). */
+    val saveFormats: List<SaveFormat> get() = listOf(SaveFormat.WAV)
+
+    /** Saves the WAV file at [path] to [destination] as [format]. Encoding is done as it is written. */
+    fun saveAudio(path: String, format: SaveFormat, destination: String) {
+        if (format == SaveFormat.WAV) copyFile(path, destination) else throw UnsupportedOnPlatformException()
+    }
+
     /** The SRT subtitle file stored next to the transcript at [transcriptPath], or null if there is none. */
     fun subtitlesFor(transcriptPath: String): String? = null
 

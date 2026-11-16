@@ -78,6 +78,7 @@ import com.audiops.app.Job
 import com.audiops.app.JobSpec
 import com.audiops.app.JobStatus
 import com.audiops.app.LoudnessTarget
+import com.audiops.app.SaveFormat
 import com.audiops.app.SpeechLanguage
 import com.audiops.app.SubtitleFormat
 import com.audiops.app.SupportedSampleRates
@@ -90,6 +91,7 @@ import com.audiops.shared.resources.action_change
 import com.audiops.shared.resources.action_choose
 import com.audiops.shared.resources.action_copy
 import com.audiops.shared.resources.action_reset
+import com.audiops.shared.resources.action_save_format
 import com.audiops.shared.resources.action_save_srt
 import com.audiops.shared.resources.action_save_text
 import com.audiops.shared.resources.action_save_vtt
@@ -167,6 +169,8 @@ data class ToolActions(
     val onStart: (JobSpec) -> Unit,
     val onCancel: (jobId: String) -> Unit,
     val onSave: (Job, destination: String?) -> Unit,
+    val saveFormats: List<SaveFormat>,
+    val onSaveAudio: (Job, SaveFormat, destination: String?) -> Unit,
     val onSaveSubtitles: (Job, SubtitleFormat, destination: String?) -> Unit,
     val onCopied: () -> Unit,
     val readText: suspend (path: String) -> String?,
@@ -262,6 +266,8 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
                         actions = JobCardActions(
                             actions.onCancel,
                             actions.onSave,
+                            actions.saveFormats,
+                            actions.onSaveAudio,
                             actions.onSaveSubtitles,
                             actions.onCopied,
                             actions.readText,
@@ -679,6 +685,8 @@ fun <T> ConnectedChoice(options: List<T>, selected: T, label: @Composable (T) ->
 data class JobCardActions(
     val onCancel: (jobId: String) -> Unit,
     val onSave: (Job, destination: String?) -> Unit,
+    val saveFormats: List<SaveFormat>,
+    val onSaveAudio: (Job, SaveFormat, destination: String?) -> Unit,
     val onSaveSubtitles: (Job, SubtitleFormat, destination: String?) -> Unit,
     val onCopied: () -> Unit,
     val readText: suspend (path: String) -> String?,
@@ -738,22 +746,42 @@ fun JobCard(job: Job, actions: JobCardActions, modifier: Modifier = Modifier) {
 @Composable
 private fun AudioResultCard(job: Job, actions: JobCardActions) {
     val path = job.outputPath ?: return
-    val saveAs = rememberFileSaver("audio/wav") { actions.onSave(job, it) }
+    var format by rememberSaveable { mutableStateOf(SaveFormat.WAV) }
+    val selected = format.takeIf { it in actions.saveFormats } ?: SaveFormat.WAV
+    val saveWav = rememberFileSaver(SaveFormat.WAV.mimeType) { actions.onSave(job, it) }
+    val saveM4a = rememberFileSaver(SaveFormat.M4A.mimeType) { actions.onSaveAudio(job, SaveFormat.M4A, it) }
+    val saveOpus = rememberFileSaver(SaveFormat.OPUS.mimeType) { actions.onSaveAudio(job, SaveFormat.OPUS, it) }
     ResultCard(
         title = stringResource(Res.string.result_ready_title),
         body = job.spec.summary() ?: stringResource(Res.string.result_ready_body),
     ) {
         PlayerBar(path)
         Spacer(Modifier.height(12.dp))
+        if (actions.saveFormats.size > 1) {
+            ConnectedChoice(
+                options = actions.saveFormats,
+                selected = selected,
+                label = { stringResource(it.label) },
+                onSelect = { format = it },
+            )
+            Spacer(Modifier.height(12.dp))
+        }
         Button(
-            onClick = { saveAs(derivedFileName(job.inputName, job.tool.name.lowercase(), "wav")) },
+            onClick = {
+                val name = derivedFileName(job.inputName, job.tool.name.lowercase(), selected.extension)
+                when (selected) {
+                    SaveFormat.WAV -> saveWav(name)
+                    SaveFormat.M4A -> saveM4a(name)
+                    SaveFormat.OPUS -> saveOpus(name)
+                }
+            },
             shapes = ButtonDefaults.shapes(),
             contentPadding = PrimaryButtonPadding,
             modifier = Modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
         ) {
             Icon(Icons.Rounded.Save, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text(stringResource(Res.string.action_save_wav))
+            Text(stringResource(Res.string.action_save_format, stringResource(selected.label)))
         }
     }
 }
