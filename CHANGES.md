@@ -476,3 +476,7 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 - Tool count (eleven → thirteen), save formats (WAV, M4A, Opus), record and share mentioned, "speak" added to the hero and meta text, and the model download source now says Hugging Face or GitHub (DPDFNet comes from a GitHub release). Checked the layout in headless Chrome at 1280 and 390 px wide.
 - Not changed: the screenshots still show the 0.1.2 UI (old banner, "On device" badge).
+
+## 2026-11-16: Website roadmap (`docs/website-roadmap`)
+
+- Roadmap renamed "Ideas we're exploring" (no dates) with four items and an Issues link. Dropped real-time sound classification (the plan is a file tool), music source separation and translations.
