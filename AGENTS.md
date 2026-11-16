@@ -19,7 +19,7 @@ Audiops is an open-source, on-device audio toolkit. Audio never leaves the devic
 | Category | Tools | Engine |
 | --- | --- | --- |
 | AI | Enhance speech, Transcribe | Resemble Enhance (LiteRT "mobile" set: INT8 dynamic + re-exported FP16 vocoder, ~570 MB); Omnilingual ASR 300M (Auto, with a Whisper Tiny fallback), Whisper Tiny (Urdu), Bangla Zipformer (Bangla) (sherpa-onnx) |
-| Clean up | Noise reduction, Remove silence | Spectral subtraction; frame-based silence gate |
+| Clean up | Noise reduction, Remove silence | DPDFNet AI (Android, sherpa-onnx; `AiDenoiser`), spectral subtraction elsewhere; frame-based silence gate |
 | Edit | Trim, Fade, Volume (peak, loudness BS.1770, gain) | Streaming DSP |
 | Effects | Speed and pitch, Equalizer | WSOLA time-stretch + cubic resampler; RBJ biquads |
 | Utilities | Convert (sample rate), Analyze | Anti-aliased resampler; loudness/peak/clipping meter |
@@ -94,6 +94,7 @@ Unit tests live in `shared/src/desktopTest` (run on the JVM, cover common and `j
 | `RepositoryTest` | History and settings DataStore persistence, limits, corrupt and unknown values |
 | `AudiopsViewModelTest` | Job queue with a fake engine: success, failure, no speech, unsupported tools, ordering, cancel, delete, navigation |
 | `AudioChunkingTest`, `ResembleMathTest`, `WavWriterTest` | AI pre/post-processing and WAV output |
+| `AiDenoiseTest` | Chunked AI enhancement (history, lookahead, exact identity), resampling round trip, the pipeline's AI denoiser hook |
 | `BalancedRowsTest` | How the Tools tab splits each category into rows |
 | `DesktopAudioEngineTest`, `DesktopRenderTest` | Desktop decoding; off-screen renders of the main screens |
 

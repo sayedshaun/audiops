@@ -101,7 +101,7 @@
     <string name="level_light">Light</string>
     <string name="level_medium">Medium</string>
     <string name="level_strong">Strong</string>
-    <string name="denoise_hint">Learns the noise from the quietest parts of the recording. Use Light for music, Strong for very noisy speech.</string>
+    <string name="denoise_hint">On Android this uses DPDFNet, an AI speech enhancer that runs on this device (the first run downloads about 11 MB). Light keeps more of the original sound; Strong removes the most noise. On desktop it learns the noise from the quietest parts of the recording.</string>
     <string name="option_silence_threshold">Silence below %1$s dB</string>
     <string name="option_min_pause">Shorten pauses longer than %1$s s</string>
     <string name="option_trim_range">%1$s – %2$s (%3$s)</string>
@@ -224,6 +224,8 @@
     <string name="settings_model_summary">%1$s · %2$s</string>
     <string name="model_enhance">Resemble Enhance</string>
     <string name="model_enhance_purpose">Enhance speech</string>
+    <string name="model_dpdfnet">DPDFNet</string>
+    <string name="model_dpdfnet_purpose">Noise reduction</string>
     <string name="model_omnilingual">Omnilingual ASR</string>
     <string name="model_omnilingual_purpose">Transcribe, most languages</string>
     <string name="model_whisper">Whisper Tiny</string>
@@ -253,6 +255,8 @@
     <string name="license_notices_summary">Full license text for every component</string>
     <string name="license_resemble">Resemble Enhance</string>
     <string name="license_resemble_summary">MIT License · Resemble AI</string>
+    <string name="license_dpdfnet">DPDFNet</string>
+    <string name="license_dpdfnet_summary">Apache License 2.0 · Ceva (ONNX export: k2-fsa sherpa-onnx)</string>
     <string name="license_omnilingual">Omnilingual ASR</string>
     <string name="license_omnilingual_summary">Apache License 2.0 · Meta Platforms (ONNX export: k2-fsa sherpa-onnx)</string>
     <string name="license_whisper">Whisper Tiny</string>

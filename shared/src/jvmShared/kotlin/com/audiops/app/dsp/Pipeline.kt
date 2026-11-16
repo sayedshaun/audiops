@@ -103,7 +103,15 @@ private fun progressStep(done: Long, total: Long): Int = if (total <= 0) 100 els
  * intermediate files, which are deleted before returning.
  */
 object DspPipeline {
-    fun run(input: File, operations: List<AudioOperation>, output: File, workDir: File, listener: ProcessingListener) {
+    /** [aiDenoiser], when the platform has one, replaces spectral subtraction for Noise reduction. */
+    fun run(
+        input: File,
+        operations: List<AudioOperation>,
+        output: File,
+        workDir: File,
+        listener: ProcessingListener,
+        aiDenoiser: AiDenoiser? = null,
+    ) {
         val stages = splitStages(operations)
         val outputRate = operations.filterIsInstance<AudioOperation.Resample>().lastOrNull()?.sampleRate ?: PIPELINE_RATE
         var current = input
@@ -113,10 +121,12 @@ object DspPipeline {
                 val last = index == stages.lastIndex
                 val progress = StageProgress(listener, index, stages.size)
                 if (last) {
-                    WavWriter(output, outputRate).use { writer -> runStage(current, stage, progress) { writer.append(it) } }
+                    WavWriter(output, outputRate).use { writer ->
+                        runStage(current, stage, progress, aiDenoiser, listener) { writer.append(it) }
+                    }
                 } else {
                     val next = File.createTempFile("stage-", ".pcm", workDir).also(temporaries::add)
-                    PcmFile.Writer(next).use { writer -> runStage(current, stage, progress) { writer.write(it) } }
+                    PcmFile.Writer(next).use { writer -> runStage(current, stage, progress, aiDenoiser, listener) { writer.write(it) } }
                     current = next
                 }
             }
@@ -141,13 +151,20 @@ object DspPipeline {
         return stages
     }
 
-    private fun runStage(input: File, stage: List<AudioOperation>, progress: StageProgress, sink: (FloatArray) -> Unit) {
+    private fun runStage(
+        input: File,
+        stage: List<AudioOperation>,
+        progress: StageProgress,
+        aiDenoiser: AiDenoiser?,
+        listener: ProcessingListener,
+        sink: (FloatArray) -> Unit,
+    ) {
         val total = PcmFile.sampleCount(input)
         // Trim selects the range read; it is only meaningful as the first operation of a stage.
         val trim = stage.firstOrNull() as? AudioOperation.Trim
         val from = trim?.let { (it.startMs * PIPELINE_RATE / 1000).coerceIn(0, total) } ?: 0L
         val to = trim?.let { (it.endMs * PIPELINE_RATE / 1000).coerceIn(from, total) } ?: total
-        val processors = stage.mapNotNull { op -> processorFor(op, input, from, to, progress) }
+        val processors = stage.mapNotNull { op -> processorFor(op, input, from, to, progress, aiDenoiser, listener) }
         val chain = ProcessorChain(processors)
         var done = 0L
         PcmFile.forEachBlock(input, from, to) { block ->
@@ -158,7 +175,15 @@ object DspPipeline {
         sink(chain.flush())
     }
 
-    private fun processorFor(op: AudioOperation, input: File, from: Long, to: Long, progress: StageProgress): AudioProcessor? = when (op) {
+    private fun processorFor(
+        op: AudioOperation,
+        input: File,
+        from: Long,
+        to: Long,
+        progress: StageProgress,
+        aiDenoiser: AiDenoiser?,
+        listener: ProcessingListener,
+    ): AudioProcessor? = when (op) {
         is AudioOperation.Trim -> null
 
         // Boosts go through the limiter so the result cannot hard-clip.
@@ -213,8 +238,12 @@ object DspPipeline {
 
         is AudioOperation.Denoise -> {
             progress.measuring()
-            val profile = NoiseProfile.estimate { consume -> PcmFile.forEachBlock(input, from, to, consume) }
-            noiseReducer(profile, op.strength)
+            if (aiDenoiser != null) {
+                aiDenoiser.processor(op.strength, listener)
+            } else {
+                val profile = NoiseProfile.estimate { consume -> PcmFile.forEachBlock(input, from, to, consume) }
+                noiseReducer(profile, op.strength)
+            }
         }
     }
 

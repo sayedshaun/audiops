@@ -101,6 +101,8 @@ import com.audiops.shared.resources.license_androidx
 import com.audiops.shared.resources.license_androidx_summary
 import com.audiops.shared.resources.license_bangla
 import com.audiops.shared.resources.license_bangla_summary
+import com.audiops.shared.resources.license_dpdfnet
+import com.audiops.shared.resources.license_dpdfnet_summary
 import com.audiops.shared.resources.license_dsp
 import com.audiops.shared.resources.license_dsp_summary
 import com.audiops.shared.resources.license_litert
@@ -179,6 +181,7 @@ private val licenses = listOf(
         "https://huggingface.co/SayedShaun/resemble-enhance-litert",
         androidOnly = true,
     ),
+    LicenseEntry(Res.string.license_dpdfnet, Res.string.license_dpdfnet_summary, "https://github.com/ceva-ip/DPDFNet", androidOnly = true),
     LicenseEntry(
         Res.string.license_omnilingual,
         Res.string.license_omnilingual_summary,

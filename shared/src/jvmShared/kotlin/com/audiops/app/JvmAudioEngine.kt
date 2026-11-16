@@ -1,5 +1,6 @@
 package com.audiops.app
 
+import com.audiops.app.dsp.AiDenoiser
 import com.audiops.app.dsp.DspPipeline
 import com.audiops.app.dsp.PcmFile
 import com.audiops.app.dsp.waveformPeaks
@@ -76,10 +77,13 @@ abstract class JvmAudioEngine(protected val workDir: File, protected val outputD
     /** Stores a transcript as a text output and returns its path. */
     protected fun storeTranscript(text: String): String = newOutput("txt").apply { writeText(text, Charsets.UTF_8) }.absolutePath
 
+    /** The platform's AI noise reducer, or null for spectral subtraction (the default). */
+    protected open fun aiDenoiser(): AiDenoiser? = null
+
     override fun process(source: String, operations: List<AudioOperation>, listener: ProcessingListener): String =
         withDecoded(source) { pcm ->
             val output = newOutput("wav")
-            DspPipeline.run(pcm, operations, output, workDir, listener)
+            DspPipeline.run(pcm, operations, output, workDir, listener, aiDenoiser())
             output.absolutePath
         }
 

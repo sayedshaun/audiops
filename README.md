@@ -28,7 +28,7 @@ Nothing you open is uploaded. AI models download once, then run offline.
 | :-: | --- | --- |
 | ✨ | **Enhance speech** | AI restoration of voice recordings ([Resemble Enhance](https://huggingface.co/SayedShaun/resemble-enhance-litert), LiteRT, mobile export). |
 | 🗣️ | **Transcribe** | Speech to text in Bangla, Urdu and many other languages ([Omnilingual ASR](https://huggingface.co/csukuangfj/sherpa-onnx-omnilingual-asr-1600-languages-300M-ctc-int8-2025-11-12), [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny) and [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx); sherpa-onnx). |
-| 🌊 | **Noise reduction** | Learns the noise from quiet passages and removes hiss, hum and steady background sound. |
+| 🌊 | **Noise reduction** | On Android, [DPDFNet](https://github.com/ceva-ip/DPDFNet) AI speech enhancement (48 kHz) removes background noise; on desktop, spectral subtraction learns the noise from quiet passages. |
 | ⏸️ | **Remove silence** | Shortens long pauses and keeps natural padding. |
 | ✂️ | **Trim** | Keep the part you need, chosen on the waveform. |
 | 🌗 | **Fade** | Smooth fade in and fade out. |
@@ -49,6 +49,7 @@ Only the two AI tools use machine-learning models. Every other tool is classic s
 | Tool (option) | Model | Runtime | Files | Download | License |
 | --- | --- | --- | --- | --: | --- |
 | **Enhance speech** | [Resemble Enhance](https://huggingface.co/SayedShaun/resemble-enhance-litert) `mobile` set: INT8 dynamic networks + a vocoder re-exported for XNNPACK (FP16) | [LiteRT](https://ai.google.dev/edge/litert), CPU | 5 networks + mel filter bank | ~570 MB | MIT |
+| **Noise reduction** (Android) | [DPDFNet](https://huggingface.co/Ceva-IP/DPDFNet) `dpdfnet2_48khz_hr`, ONNX (sherpa-onnx export) | sherpa-onnx, CPU | model | ~11 MB | Apache 2.0 (Ceva) |
 | **Transcribe** (Auto, most languages; Whisper Tiny fallback) | [Omnilingual ASR 300M](https://huggingface.co/csukuangfj/sherpa-onnx-omnilingual-asr-1600-languages-300M-ctc-int8-2025-11-12/tree/6abf1ece20cd2308bdb7d13cd78ec1c44fa4c094), CTC INT8 | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), CPU | model, tokens | ~366 MB | Apache 2.0 (Meta Platforms) |
 | **Transcribe** (Urdu) | [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny), INT8 ONNX | sherpa-onnx, CPU | encoder, decoder, tokens | ~103 MB | MIT (OpenAI) · Apache 2.0 (ONNX export) |
 | **Transcribe** (Bangla) | [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx/tree/5442ca3d447572aaa5ef6913684d8f24d6d916cc), INT8 transducer | sherpa-onnx, CPU | encoder, decoder, joiner, tokens | ~74 MB | CC BY-SA 4.0 |
@@ -170,6 +171,7 @@ Bug reports, ideas and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBU
 ## Acknowledgements
 
 - [Resemble Enhance](https://github.com/resemble-ai/resemble-enhance) by Resemble AI (MIT) · [license](licenses/RESEMBLE-ENHANCE-MIT.txt)
+- [DPDFNet](https://github.com/ceva-ip/DPDFNet) by Ceva (Apache 2.0) · [license](licenses/DPDFNET-APACHE-2.0.txt); ONNX export from [k2-fsa sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx/releases/tag/speech-enhancement-models)
 - [Omnilingual ASR](https://github.com/facebookresearch/omnilingual-asr) by Meta Platforms (Apache 2.0) · [license](licenses/OMNILINGUAL-ASR-APACHE-2.0.txt); INT8 ONNX export from [k2-fsa sherpa-onnx](https://huggingface.co/csukuangfj/sherpa-onnx-omnilingual-asr-1600-languages-300M-ctc-int8-2025-11-12)
 - [Whisper](https://github.com/openai/whisper) by OpenAI (MIT) · [license](licenses/WHISPER-MIT.txt); Tiny INT8 ONNX export from [ippocode/indic-asr-onnx](https://huggingface.co/ippocode/indic-asr-onnx) (Apache 2.0)
 - [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) by k2-fsa (Apache 2.0) · [license](licenses/SHERPA-ONNX-APACHE-2.0.txt), with [ONNX Runtime](https://github.com/microsoft/onnxruntime) by Microsoft (MIT) · [license](licenses/ONNXRUNTIME-MIT.txt)
