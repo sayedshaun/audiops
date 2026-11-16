@@ -43,9 +43,9 @@ data class AudiopsState(
 ) {
     val activeJobs: List<Job> get() = jobs.filter { it.status.active }
 
-    /** The most recent job of [tool] on the current input, if any. */
+    /** The most recent job of [tool] on the current input (any input for text to speech), if any. */
     fun latestJob(tool: Tool): Job? = jobs
-        .filter { it.tool == tool && it.inputId == input?.id }
+        .filter { it.tool == tool && (tool == Tool.SPEAK || it.inputId == input?.id) }
         .maxByOrNull { it.createdAt }
 }
 
@@ -88,6 +88,7 @@ class AudiopsViewModel(
     val unsupportedTools: Set<Tool> = buildSet {
         if (!engine.supportsEnhance) add(Tool.ENHANCE)
         if (!engine.supportsTranscribe) add(Tool.TRANSCRIBE)
+        if (!engine.supportsSpeak) add(Tool.SPEAK)
     }
 
     /** Bytes per downloaded model; null while measuring. */
@@ -152,7 +153,7 @@ class AudiopsViewModel(
 
     /** Opens the tool for a finished job's input again (Activity → "Open in tool"). */
     fun reopen(job: Job) {
-        if (_state.value.input?.id != job.inputId) chooseInput(job.inputId, job.inputName)
+        if (job.spec !is JobSpec.Speak && _state.value.input?.id != job.inputId) chooseInput(job.inputId, job.inputName)
         open(job.tool)
     }
 
@@ -183,9 +184,15 @@ class AudiopsViewModel(
 
     /** Queues [spec] for [tool] on the current input. */
     fun start(tool: Tool, spec: JobSpec) {
-        val input = _state.value.input ?: return
+        // Text to speech has no input recording: the job is named after the start of its text.
+        val input = if (spec is JobSpec.Speak) {
+            AudioInput(id = "", name = spec.text.trim().replace(Regex("\\s+"), " ").take(SPEAK_NAME_LENGTH))
+        } else {
+            _state.value.input ?: return
+        }
         val unsupported = (spec is JobSpec.Enhance && !engine.supportsEnhance) ||
-            (spec is JobSpec.Transcribe && !engine.supportsTranscribe)
+            (spec is JobSpec.Transcribe && !engine.supportsTranscribe) ||
+            (spec is JobSpec.Speak && !engine.supportsSpeak)
         val job = Job(
             id = "${currentTimeMillis()}-${Random.nextInt(1_000_000)}",
             tool = tool,
@@ -310,6 +317,8 @@ class AudiopsViewModel(
                         }
                     }
 
+                    is JobSpec.Speak -> job.copy(outputPath = engine.speak(spec.text, spec.voice, spec.speed, listener))
+
                     is JobSpec.Process -> job.copy(outputPath = engine.process(job.inputId, spec.operations, listener))
 
                     JobSpec.Analyze -> job.copy(report = engine.analyze(job.inputId, listener))
@@ -426,6 +435,7 @@ class AudiopsViewModel(
         const val KEY_ID = "input_id"
         const val KEY_NAME = "input_name"
         const val KEY_LANGUAGE = "language"
+        const val SPEAK_NAME_LENGTH = 60
         const val WAVEFORM_BARS = 160
         const val PREVIEW_LENGTH = 160
     }

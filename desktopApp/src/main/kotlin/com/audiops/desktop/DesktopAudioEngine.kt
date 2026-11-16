@@ -30,6 +30,10 @@ class DesktopAudioEngine(dataDir: File) :
     ) {
     override val supportsEnhance: Boolean = false
     override val supportsTranscribe: Boolean = false
+    override val supportsSpeak: Boolean = false
+
+    override fun speak(text: String, voiceId: String, speed: Float, listener: ProcessingListener): String =
+        throw UnsupportedOnPlatformException()
 
     override fun enhance(source: String, listener: ProcessingListener): String = throw UnsupportedOnPlatformException()
 

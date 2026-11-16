@@ -22,6 +22,7 @@ class AndroidAudioEngine(context: Context) :
 
     override val supportsEnhance: Boolean = true
     override val supportsTranscribe: Boolean = true
+    override val supportsSpeak: Boolean = true
 
     override fun decode(source: String): File = AudioDecoder.decode(context, source.toUri(), workDir)
 
@@ -34,6 +35,18 @@ class AndroidAudioEngine(context: Context) :
 
     override fun transcribe(source: String, language: String, model: TranscriptionModel, listener: ProcessingListener): String =
         withDecoded(source) { pcm -> storeTranscript(AudioPipelines.transcribe(context, pcm, language, model, listener)) }
+
+    override fun speak(text: String, voiceId: String, speed: Float, listener: ProcessingListener): String {
+        val voice = requireNotNull(ttsVoice(voiceId)) { "Unknown voice: $voiceId" }
+        val output = newOutput("wav")
+        try {
+            SpeechSynthesizer.speak(context, text, voice, speed, output, listener)
+        } catch (e: Throwable) {
+            output.delete()
+            throw e
+        }
+        return output.absolutePath
+    }
 
     override fun copyFile(path: String, destination: String) {
         context.contentResolver.openOutputStream(destination.toUri())

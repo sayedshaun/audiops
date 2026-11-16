@@ -17,10 +17,13 @@ import com.audiops.app.ToolCategory
 import com.audiops.app.TranscriptionModel
 import com.audiops.app.UiMessage
 import com.audiops.app.currentTimeMillis
+import com.audiops.app.ttsLanguages
+import com.audiops.app.ttsVoice
 import com.audiops.shared.resources.Res
 import com.audiops.shared.resources.action_analyze
 import com.audiops.shared.resources.action_enhance
 import com.audiops.shared.resources.action_process
+import com.audiops.shared.resources.action_speak
 import com.audiops.shared.resources.action_transcribe
 import com.audiops.shared.resources.category_ai
 import com.audiops.shared.resources.category_clean_up
@@ -81,6 +84,10 @@ import com.audiops.shared.resources.model_omnilingual
 import com.audiops.shared.resources.model_omnilingual_purpose
 import com.audiops.shared.resources.model_parakeet
 import com.audiops.shared.resources.model_parakeet_purpose
+import com.audiops.shared.resources.model_piper
+import com.audiops.shared.resources.model_piper_purpose
+import com.audiops.shared.resources.model_pocket_tts
+import com.audiops.shared.resources.model_pocket_tts_purpose
 import com.audiops.shared.resources.model_whisper
 import com.audiops.shared.resources.model_whisper_purpose
 import com.audiops.shared.resources.stage_model_download_percent
@@ -119,6 +126,8 @@ import com.audiops.shared.resources.tool_fade_description
 import com.audiops.shared.resources.tool_fade_title
 import com.audiops.shared.resources.tool_silence_description
 import com.audiops.shared.resources.tool_silence_title
+import com.audiops.shared.resources.tool_speak_description
+import com.audiops.shared.resources.tool_speak_title
 import com.audiops.shared.resources.tool_speed_description
 import com.audiops.shared.resources.tool_speed_title
 import com.audiops.shared.resources.tool_transcribe_description
@@ -133,6 +142,35 @@ import com.audiops.shared.resources.transcription_model_bangla_summary
 import com.audiops.shared.resources.transcription_model_omnilingual_summary
 import com.audiops.shared.resources.transcription_model_parakeet_summary
 import com.audiops.shared.resources.transcription_model_whisper_summary
+import com.audiops.shared.resources.tts_language_cs
+import com.audiops.shared.resources.tts_language_da
+import com.audiops.shared.resources.tts_language_de_de
+import com.audiops.shared.resources.tts_language_el
+import com.audiops.shared.resources.tts_language_en_gb
+import com.audiops.shared.resources.tts_language_en_us
+import com.audiops.shared.resources.tts_language_es_es
+import com.audiops.shared.resources.tts_language_fa
+import com.audiops.shared.resources.tts_language_fi
+import com.audiops.shared.resources.tts_language_fr_fr
+import com.audiops.shared.resources.tts_language_hu
+import com.audiops.shared.resources.tts_language_it_it
+import com.audiops.shared.resources.tts_language_kk
+import com.audiops.shared.resources.tts_language_lv
+import com.audiops.shared.resources.tts_language_ne
+import com.audiops.shared.resources.tts_language_nl_nl
+import com.audiops.shared.resources.tts_language_no
+import com.audiops.shared.resources.tts_language_other
+import com.audiops.shared.resources.tts_language_pl
+import com.audiops.shared.resources.tts_language_pt_br
+import com.audiops.shared.resources.tts_language_pt_pt
+import com.audiops.shared.resources.tts_language_ro
+import com.audiops.shared.resources.tts_language_ru
+import com.audiops.shared.resources.tts_language_sk
+import com.audiops.shared.resources.tts_language_sl
+import com.audiops.shared.resources.tts_language_sv
+import com.audiops.shared.resources.tts_language_tr
+import com.audiops.shared.resources.tts_language_uk
+import com.audiops.shared.resources.tts_language_vi
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -170,6 +208,8 @@ val AiModel.title: StringResource
         AiModel.OMNILINGUAL -> Res.string.model_omnilingual
         AiModel.WHISPER -> Res.string.model_whisper
         AiModel.BANGLA -> Res.string.model_bangla
+        AiModel.POCKET_TTS -> Res.string.model_pocket_tts
+        AiModel.PIPER -> Res.string.model_piper
     }
 
 /** What the model is used for. */
@@ -181,6 +221,8 @@ val AiModel.purpose: StringResource
         AiModel.OMNILINGUAL -> Res.string.model_omnilingual_purpose
         AiModel.WHISPER -> Res.string.model_whisper_purpose
         AiModel.BANGLA -> Res.string.model_bangla_purpose
+        AiModel.POCKET_TTS -> Res.string.model_pocket_tts_purpose
+        AiModel.PIPER -> Res.string.model_piper_purpose
     }
 
 val TranscriptionModel.label: StringResource
@@ -205,10 +247,44 @@ val TranscriptionModel.summary: StringResource
 val TranscriptionModel.usesLanguage: Boolean
     get() = this == TranscriptionModel.AUTO || this == TranscriptionModel.WHISPER
 
+/** Display name of a text-to-speech language (a BCP 47 tag from [ttsLanguages]). */
+fun ttsLanguageLabel(tag: String): StringResource = when (tag) {
+    "en-US" -> Res.string.tts_language_en_us
+    "fr-FR" -> Res.string.tts_language_fr_fr
+    "de-DE" -> Res.string.tts_language_de_de
+    "es-ES" -> Res.string.tts_language_es_es
+    "it-IT" -> Res.string.tts_language_it_it
+    "pt-BR" -> Res.string.tts_language_pt_br
+    "nl-NL" -> Res.string.tts_language_nl_nl
+    "en-GB" -> Res.string.tts_language_en_gb
+    "pt-PT" -> Res.string.tts_language_pt_pt
+    "cs" -> Res.string.tts_language_cs
+    "da" -> Res.string.tts_language_da
+    "el" -> Res.string.tts_language_el
+    "fa" -> Res.string.tts_language_fa
+    "fi" -> Res.string.tts_language_fi
+    "hu" -> Res.string.tts_language_hu
+    "kk" -> Res.string.tts_language_kk
+    "lv" -> Res.string.tts_language_lv
+    "ne" -> Res.string.tts_language_ne
+    "no" -> Res.string.tts_language_no
+    "pl" -> Res.string.tts_language_pl
+    "ro" -> Res.string.tts_language_ro
+    "ru" -> Res.string.tts_language_ru
+    "sk" -> Res.string.tts_language_sk
+    "sl" -> Res.string.tts_language_sl
+    "sv" -> Res.string.tts_language_sv
+    "tr" -> Res.string.tts_language_tr
+    "uk" -> Res.string.tts_language_uk
+    "vi" -> Res.string.tts_language_vi
+    else -> Res.string.tts_language_other
+}
+
 val Tool.title: StringResource
     get() = when (this) {
         Tool.ENHANCE -> Res.string.tool_enhance_title
         Tool.TRANSCRIBE -> Res.string.tool_transcribe_title
+        Tool.SPEAK -> Res.string.tool_speak_title
         Tool.DENOISE -> Res.string.tool_denoise_title
         Tool.SILENCE -> Res.string.tool_silence_title
         Tool.TRIM -> Res.string.tool_trim_title
@@ -224,6 +300,7 @@ val Tool.description: StringResource
     get() = when (this) {
         Tool.ENHANCE -> Res.string.tool_enhance_description
         Tool.TRANSCRIBE -> Res.string.tool_transcribe_description
+        Tool.SPEAK -> Res.string.tool_speak_description
         Tool.DENOISE -> Res.string.tool_denoise_description
         Tool.SILENCE -> Res.string.tool_silence_description
         Tool.TRIM -> Res.string.tool_trim_description
@@ -240,6 +317,7 @@ val Tool.action: StringResource
     get() = when (this) {
         Tool.ENHANCE -> Res.string.action_enhance
         Tool.TRANSCRIBE -> Res.string.action_transcribe
+        Tool.SPEAK -> Res.string.action_speak
         Tool.ANALYZE -> Res.string.action_analyze
         else -> Res.string.action_process
     }
@@ -336,7 +414,13 @@ fun InputProblem.text(): String = when (this) {
 @Composable
 fun JobSpec.summary(): String? = when (this) {
     JobSpec.Enhance, JobSpec.Analyze -> null
+
     is JobSpec.Transcribe -> stringResource(language.label)
+
+    is JobSpec.Speak -> listOfNotNull(ttsVoice(voice)?.name, ttsVoice(voice)?.let { stringResource(ttsLanguageLabel(it.language)) })
+        .joinToString(" · ")
+        .ifEmpty { null }
+
     is JobSpec.Process -> operations.mapNotNull { it.summary() }.joinToString(" · ").ifEmpty { null }
 }
 

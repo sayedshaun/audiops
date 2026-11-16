@@ -15,6 +15,9 @@ interface AudioEngine {
     /** Whether this platform can run transcription. */
     val supportsTranscribe: Boolean
 
+    /** Whether this platform can run text to speech. */
+    val supportsSpeak: Boolean
+
     /** AI enhancement. Returns the path of a WAV file in app storage. */
     fun enhance(source: String, listener: ProcessingListener): String
 
@@ -23,6 +26,9 @@ interface AudioEngine {
      * detection. Returns the path of a UTF-8 text file in app storage.
      */
     fun transcribe(source: String, language: String, model: TranscriptionModel, listener: ProcessingListener): String
+
+    /** Text to speech with the voice [voiceId] ([TtsVoice.id]). Returns the path of a WAV file in app storage. */
+    fun speak(text: String, voiceId: String, speed: Float, listener: ProcessingListener): String
 
     /** Runs DSP [operations] in order. Returns the path of a WAV file in app storage. */
     fun process(source: String, operations: List<AudioOperation>, listener: ProcessingListener): String

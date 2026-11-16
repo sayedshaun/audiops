@@ -18,7 +18,7 @@ Audiops is an open-source, on-device audio toolkit. Audio never leaves the devic
 
 | Category | Tools | Engine |
 | --- | --- | --- |
-| AI | Enhance speech, Transcribe | Resemble Enhance (LiteRT "mobile" set: INT8 dynamic + re-exported FP16 vocoder, ~570 MB); Parakeet TDT 0.6B v3 (English and European languages), Omnilingual ASR 300M (other languages, with a Whisper Tiny fallback), Whisper Tiny (Urdu, language detection), Bangla Zipformer (Bangla) (sherpa-onnx); Automatic routing or a model picked in Settings |
+| AI | Enhance speech, Transcribe, Text to speech | Resemble Enhance (LiteRT "mobile" set: INT8 dynamic + re-exported FP16 vocoder, ~570 MB); Parakeet TDT 0.6B v3 (English and European languages), Omnilingual ASR 300M (other languages, with a Whisper Tiny fallback), Whisper Tiny (Urdu, language detection), Bangla Zipformer (Bangla) (sherpa-onnx); Automatic routing or a model picked in Settings; text to speech: PocketTTS (Kyutai, via MediaPipe `TextToSpeech`, 7 languages) and Piper voices (sherpa-onnx VITS + espeak-ng, 21 more languages), 28 languages in all |
 | Clean up | Noise reduction, Remove silence | DPDFNet AI (Android, sherpa-onnx; `AiDenoiser`), spectral subtraction elsewhere; frame-based silence gate |
 | Edit | Trim, Fade, Volume (peak, loudness BS.1770, gain) | Streaming DSP |
 | Effects | Speed and pitch, Equalizer | WSOLA time-stretch + cubic resampler; RBJ biquads |
@@ -46,7 +46,7 @@ app/           Android application: MainActivity, AudiopsApplication, AndroidAud
 desktopApp/    Desktop application: Main.kt, DesktopAudioEngine (+ tests); packages DEB/RPM/MSI/EXE
 ```
 
-The Android engine lives in `app/` because a library module cannot depend on the local sherpa-onnx `.aar`.
+The Android engine lives in `app/` because a library module cannot depend on the local sherpa-onnx `.aar`. `app/` also holds the MediaPipe Tasks Audio dependency (`com.google.mediapipe:tasks-audio`, PocketTTS) and `assets/espeak-ng-data.zip` (espeak-ng pronunciation data, unpacked on first use).
 
 ## Build and test
 
@@ -112,7 +112,8 @@ Unidirectional data flow: **ViewModel → immutable `AudiopsState` → stateless
 - **DSP:** `AudioProcessor` blocks in `dsp/`; `DspPipeline` chains them over decoded 44.1 kHz mono PCM16, splitting into stages where an operation must measure its input first (normalize, denoise). New operations: add an `AudioOperation` subtype (serializable), map it in `DspPipeline.processorFor`, add UI in `ToolScreen.kt`, and add tests in `DspTest` and `ModelTest`.
 - **Errors:** pipelines throw with a clear message; the ViewModel records a `FailureKind` and detail; the UI localizes it. One-shot messages go to the snackbar as `UiMessage`.
 - **Strings:** all user-visible text is in `shared/src/commonMain/composeResources/values/strings.xml` (Compose resources: write `%` once, not `%%`). Only the launcher label lives in `app/src/main/res`.
-- **Models:** every model (Resemble Enhance, Parakeet, Omnilingual, Whisper, Bangla) is pinned to a Hugging Face commit and verified by SHA-256 (`ModelFiles.ensure`); never change a revision or digest without re-verifying. Hugging Face lists LFS digests at `https://huggingface.co/api/models/<repo>/revision/<commit>?blobs=true`.
+- **Transcription and text to speech:** the user picks the transcription model in Settings (`TranscriptionModel`; Automatic detects the language with Whisper Tiny and routes). Voices are listed in `TtsVoices.kt` (`ttsVoices`: id, language, licence, repo, pinned revision, SHA-256 of every file). Add a voice only with a clear licence (CC0, public domain, CC BY, CC BY-SA, MIT, Apache; a non-commercial voice must set `nonCommercial = true` so the picker labels it). Text is synthesized in sentence groups (`TextChunks`) so progress and Cancel work; engines are released after every job.
+- **Models:** every model (Resemble Enhance, Parakeet, Omnilingual, Whisper, Bangla, PocketTTS, Piper voices) is pinned to a Hugging Face commit and verified by SHA-256 (`ModelFiles.ensure`); never change a revision or digest without re-verifying. Hugging Face lists LFS digests at `https://huggingface.co/api/models/<repo>/revision/<commit>?blobs=true`.
 
 ## Design system: Material 3 Expressive
 
@@ -137,4 +138,4 @@ Compose Multiplatform 1.12.2 with CMP Material 3 `1.12.0-alpha03` (Jetpack `1.5.
 
 ## Licences
 
-Third-party licences are in `licenses/` and listed in Settings → Open-source licenses. Audiops' own code is licensed under Apache 2.0 (`LICENSE`, copyright notice in `NOTICE`). Do not change the licence without the user's decision. A new third-party dependency or model needs: its licence text in `licenses/`, the same text appended to `shared/src/commonMain/composeResources/files/third_party_notices.txt` under a `[licenses/<file>]` heading (`ThirdPartyNoticesTest` enforces this), an entry in Settings → Open-source licenses and in `NOTICE`, and a check that it is compatible with Apache 2.0.
+Third-party licences are in `licenses/` and listed in Settings → Open-source licenses. Audiops' own code is licensed under Apache 2.0 (`LICENSE`, copyright notice in `NOTICE`). Do not change the licence without the user's decision. A new third-party dependency or model needs: its licence text in `licenses/`, the same text appended to `shared/src/commonMain/composeResources/files/third_party_notices.txt` under a `[licenses/<file>]` heading (`ThirdPartyNoticesTest` enforces this), an entry in Settings → Open-source licenses and in `NOTICE`, and a check that it is compatible with Apache 2.0. Note: the sherpa-onnx library already contains **eSpeak NG (GPL-3.0)**; its licence text is in `licenses/ESPEAK-NG-GPL-3.0.txt` and the source link is in the notices. Any change to the app's licence because of this is the user's decision.

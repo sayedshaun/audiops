@@ -262,7 +262,7 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
 private val Tool.hasOptions: Boolean get() = this != Tool.ENHANCE && this != Tool.ANALYZE
 
 @Composable
-private fun OptionsCard(content: @Composable () -> Unit) {
+internal fun OptionsCard(content: @Composable () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
@@ -381,6 +381,9 @@ data class ToolOptions(
 ) {
     fun toSpec(tool: Tool, language: SpeechLanguage, model: TranscriptionModel, durationMs: Long?): JobSpec = when (tool) {
         Tool.ENHANCE -> JobSpec.Enhance
+
+        // Text to speech has its own screen (SpeakScreen) and never builds a spec here.
+        Tool.SPEAK -> error("Text to speech uses SpeakScreen")
 
         Tool.TRANSCRIBE -> JobSpec.Transcribe(if (model.usesLanguage) language else SpeechLanguage.AUTO, model)
 
@@ -601,17 +604,17 @@ private fun ToolOptionsEditor(
             Hint(stringResource(Res.string.convert_hint))
         }
 
-        Tool.ENHANCE, Tool.ANALYZE -> Unit
+        Tool.ENHANCE, Tool.ANALYZE, Tool.SPEAK -> Unit
     }
 }
 
 @Composable
-private fun OptionLabel(text: String) {
+internal fun OptionLabel(text: String) {
     Text(text, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
 }
 
 @Composable
-private fun Hint(text: String) {
+internal fun Hint(text: String) {
     Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
@@ -620,7 +623,7 @@ private fun Hint(text: String) {
  * with many steps draw a dense row of tick marks in Material 3 Expressive.)
  */
 @Composable
-private fun LabeledSlider(label: String, value: Float, range: ClosedFloatingPointRange<Float>, step: Float, onChange: (Float) -> Unit) {
+internal fun LabeledSlider(label: String, value: Float, range: ClosedFloatingPointRange<Float>, step: Float, onChange: (Float) -> Unit) {
     Column {
         OptionLabel(label)
         Slider(
@@ -818,7 +821,7 @@ private fun ReportCard(report: AudioReport) {
 
 /** A confirm buzz when a job finishes, a reject buzz when it fails. */
 @Composable
-private fun ResultHaptics(job: Job?) {
+internal fun ResultHaptics(job: Job?) {
     val haptics = LocalHapticFeedback.current
     val status = job?.status
     var last by rememberSaveable(job?.id) { mutableStateOf(status) }

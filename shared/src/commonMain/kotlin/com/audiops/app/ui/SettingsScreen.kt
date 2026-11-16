@@ -107,14 +107,22 @@ import com.audiops.shared.resources.license_dpdfnet
 import com.audiops.shared.resources.license_dpdfnet_summary
 import com.audiops.shared.resources.license_dsp
 import com.audiops.shared.resources.license_dsp_summary
+import com.audiops.shared.resources.license_espeak
+import com.audiops.shared.resources.license_espeak_summary
 import com.audiops.shared.resources.license_litert
 import com.audiops.shared.resources.license_litert_summary
+import com.audiops.shared.resources.license_mediapipe
+import com.audiops.shared.resources.license_mediapipe_summary
 import com.audiops.shared.resources.license_notices
 import com.audiops.shared.resources.license_notices_summary
 import com.audiops.shared.resources.license_omnilingual
 import com.audiops.shared.resources.license_omnilingual_summary
 import com.audiops.shared.resources.license_parakeet
 import com.audiops.shared.resources.license_parakeet_summary
+import com.audiops.shared.resources.license_piper
+import com.audiops.shared.resources.license_piper_summary
+import com.audiops.shared.resources.license_pocket
+import com.audiops.shared.resources.license_pocket_summary
 import com.audiops.shared.resources.license_resemble
 import com.audiops.shared.resources.license_resemble_summary
 import com.audiops.shared.resources.license_sherpa
@@ -191,6 +199,30 @@ private val licenses = listOf(
         androidOnly = true,
     ),
     LicenseEntry(Res.string.license_dpdfnet, Res.string.license_dpdfnet_summary, "https://github.com/ceva-ip/DPDFNet", androidOnly = true),
+    LicenseEntry(
+        Res.string.license_pocket,
+        Res.string.license_pocket_summary,
+        "https://huggingface.co/litert-community/pocket-tts",
+        androidOnly = true,
+    ),
+    LicenseEntry(
+        Res.string.license_piper,
+        Res.string.license_piper_summary,
+        "https://github.com/rhasspy/piper",
+        androidOnly = true,
+    ),
+    LicenseEntry(
+        Res.string.license_espeak,
+        Res.string.license_espeak_summary,
+        "https://github.com/espeak-ng/espeak-ng",
+        androidOnly = true,
+    ),
+    LicenseEntry(
+        Res.string.license_mediapipe,
+        Res.string.license_mediapipe_summary,
+        "https://ai.google.dev/edge/mediapipe",
+        androidOnly = true,
+    ),
     LicenseEntry(
         Res.string.license_parakeet,
         Res.string.license_parakeet_summary,

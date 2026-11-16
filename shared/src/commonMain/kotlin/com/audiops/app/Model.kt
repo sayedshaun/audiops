@@ -11,6 +11,7 @@ enum class ToolCategory { AI, CLEAN_UP, EDIT, EFFECTS, UTILITIES }
 enum class Tool(val category: ToolCategory) {
     ENHANCE(ToolCategory.AI),
     TRANSCRIBE(ToolCategory.AI),
+    SPEAK(ToolCategory.AI),
     DENOISE(ToolCategory.CLEAN_UP),
     SILENCE(ToolCategory.CLEAN_UP),
     TRIM(ToolCategory.EDIT),
@@ -62,7 +63,7 @@ val transcriptionLanguages = listOf(SpeechLanguage.AUTO, SpeechLanguage.BANGLA, 
 enum class TranscriptionModel { AUTO, PARAKEET, OMNILINGUAL, WHISPER, BANGLA }
 
 /** Downloadable AI models, listed and deleted one by one in Settings → Downloaded models. */
-enum class AiModel { ENHANCE, NOISE, PARAKEET, OMNILINGUAL, WHISPER, BANGLA }
+enum class AiModel { ENHANCE, NOISE, PARAKEET, OMNILINGUAL, WHISPER, BANGLA, POCKET_TTS, PIPER }
 
 /** Equalizer presets, each a fixed chain of filters. */
 @Serializable
@@ -136,6 +137,11 @@ sealed interface JobSpec {
     @Serializable
     @SerialName("transcribe")
     data class Transcribe(val language: SpeechLanguage, val model: TranscriptionModel = TranscriptionModel.AUTO) : JobSpec
+
+    /** Text to speech: [voice] is a [TtsVoice.id]; [speed] 1 = normal. */
+    @Serializable
+    @SerialName("speak")
+    data class Speak(val text: String, val voice: String, val speed: Float = 1f) : JobSpec
 
     @Serializable
     @SerialName("process")
