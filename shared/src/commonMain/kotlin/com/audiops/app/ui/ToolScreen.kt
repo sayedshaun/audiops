@@ -84,6 +84,7 @@ import com.audiops.app.Job
 import com.audiops.app.JobSpec
 import com.audiops.app.JobStatus
 import com.audiops.app.LoudnessTarget
+import com.audiops.app.Preset
 import com.audiops.app.SaveFormat
 import com.audiops.app.SpeechLanguage
 import com.audiops.app.SubtitleFormat
@@ -467,6 +468,7 @@ data class ToolOptions(
     val semitones: Float = 0f,
     val eqPreset: EqPreset = EqPreset.VOICE_CLARITY,
     val sampleRate: Int = 16_000,
+    val preset: Preset = Preset.PODCAST,
 ) {
     fun toSpec(tool: Tool, language: SpeechLanguage, model: TranscriptionModel, durationMs: Long?): JobSpec = when (tool) {
         Tool.ENHANCE -> JobSpec.Enhance
@@ -502,6 +504,8 @@ data class ToolOptions(
         Tool.EQUALIZER -> process(AudioOperation.Equalizer(eqPreset))
 
         Tool.CONVERT -> process(AudioOperation.Resample(sampleRate))
+
+        Tool.PRESETS -> JobSpec.Process(preset.operations)
     }
 
     private fun process(op: AudioOperation) = JobSpec.Process(listOf(op))
@@ -513,7 +517,7 @@ private val ToolOptionsSaver = androidx.compose.runtime.saveable.Saver<ToolOptio
         listOf(
             it.denoiseLevel, it.silenceThresholdDb, it.silenceMinSeconds, it.trimStart, it.trimEnd,
             it.fadeInSeconds, it.fadeOutSeconds, it.volumeMode, it.loudnessTarget.name, it.gainDb,
-            it.speed, it.semitones, it.eqPreset.name, it.sampleRate,
+            it.speed, it.semitones, it.eqPreset.name, it.sampleRate, it.preset.name,
         )
     },
     restore = {
@@ -523,7 +527,7 @@ private val ToolOptionsSaver = androidx.compose.runtime.saveable.Saver<ToolOptio
             fadeOutSeconds = it[6] as Float, volumeMode = it[7] as Int,
             loudnessTarget = LoudnessTarget.valueOf(it[8] as String), gainDb = it[9] as Float,
             speed = it[10] as Float, semitones = it[11] as Float, eqPreset = EqPreset.valueOf(it[12] as String),
-            sampleRate = it[13] as Int,
+            sampleRate = it[13] as Int, preset = Preset.valueOf(it[14] as String),
         )
     },
 )
@@ -668,6 +672,19 @@ private fun ToolOptionsEditor(
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(Res.string.action_reset))
             }
+        }
+
+        Tool.PRESETS -> {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Preset.entries.forEach { preset ->
+                    ToggleButton(
+                        checked = options.preset == preset,
+                        onCheckedChange = { onChange(options.copy(preset = preset)) },
+                        modifier = Modifier.heightIn(min = 48.dp).semantics { role = Role.RadioButton },
+                    ) { Text(stringResource(preset.title)) }
+                }
+            }
+            Hint(stringResource(options.preset.description))
         }
 
         Tool.EQUALIZER -> FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

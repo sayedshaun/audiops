@@ -14,6 +14,7 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 ## [Unreleased]
 
 ### Added
+- **Presets.** A new Presets tool cleans a recording in one tap: Podcast (light noise reduction, clearer voice, −16 LUFS), Voice message (noise and long pauses removed, −14 LUFS), Lecture or meeting (rumble, noise and long silences removed, −16 LUFS) and Noisy recording (strong noise reduction, −23 LUFS). Each preset is the existing tools chained together, and the result shows in Activity like any other job.
 - **Record in the app.** Every tool now has a Record button next to Choose file. Record from the microphone (with a timer and level meter), stop, and the recording is ready for Enhance, Transcribe or any other tool. The microphone permission is asked only when you first tap Record, and recording stops if you leave the app. Recordings are kept for a week.
 - **Share audio to Audiops.** Audiops now appears in the Share menu of voice-note apps, recorders and file managers, and in "Open with" for audio files. The audio becomes the current recording and the Tools tab opens, so you can pick a tool right away.
 - **Save audio as M4A or Opus.** Processed and generated audio can now be saved as a smaller M4A (AAC) or Opus file as well as WAV. M4A works on every phone; Opus needs Android 10 or newer. There is no MP3 option because Android has no MP3 encoder.

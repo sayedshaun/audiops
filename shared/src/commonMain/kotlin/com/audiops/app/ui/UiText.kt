@@ -10,6 +10,7 @@ import com.audiops.app.Job
 import com.audiops.app.JobSpec
 import com.audiops.app.JobStatus
 import com.audiops.app.LoudnessTarget
+import com.audiops.app.Preset
 import com.audiops.app.SaveFormat
 import com.audiops.app.SpeechLanguage
 import com.audiops.app.Stage
@@ -97,6 +98,14 @@ import com.audiops.shared.resources.model_pocket_tts
 import com.audiops.shared.resources.model_pocket_tts_purpose
 import com.audiops.shared.resources.model_whisper
 import com.audiops.shared.resources.model_whisper_purpose
+import com.audiops.shared.resources.preset_lecture
+import com.audiops.shared.resources.preset_lecture_description
+import com.audiops.shared.resources.preset_noisy
+import com.audiops.shared.resources.preset_noisy_description
+import com.audiops.shared.resources.preset_podcast
+import com.audiops.shared.resources.preset_podcast_description
+import com.audiops.shared.resources.preset_voice_message
+import com.audiops.shared.resources.preset_voice_message_description
 import com.audiops.shared.resources.record_permission_needed
 import com.audiops.shared.resources.stage_model_download_percent
 import com.audiops.shared.resources.stage_percent
@@ -132,6 +141,8 @@ import com.audiops.shared.resources.tool_equalizer_description
 import com.audiops.shared.resources.tool_equalizer_title
 import com.audiops.shared.resources.tool_fade_description
 import com.audiops.shared.resources.tool_fade_title
+import com.audiops.shared.resources.tool_presets_description
+import com.audiops.shared.resources.tool_presets_title
 import com.audiops.shared.resources.tool_silence_description
 import com.audiops.shared.resources.tool_silence_title
 import com.audiops.shared.resources.tool_speak_description
@@ -295,11 +306,28 @@ val SaveFormat.label: StringResource
         SaveFormat.OPUS -> Res.string.format_opus
     }
 
+val Preset.title: StringResource
+    get() = when (this) {
+        Preset.PODCAST -> Res.string.preset_podcast
+        Preset.VOICE_MESSAGE -> Res.string.preset_voice_message
+        Preset.LECTURE -> Res.string.preset_lecture
+        Preset.NOISY -> Res.string.preset_noisy
+    }
+
+val Preset.description: StringResource
+    get() = when (this) {
+        Preset.PODCAST -> Res.string.preset_podcast_description
+        Preset.VOICE_MESSAGE -> Res.string.preset_voice_message_description
+        Preset.LECTURE -> Res.string.preset_lecture_description
+        Preset.NOISY -> Res.string.preset_noisy_description
+    }
+
 val Tool.title: StringResource
     get() = when (this) {
         Tool.ENHANCE -> Res.string.tool_enhance_title
         Tool.TRANSCRIBE -> Res.string.tool_transcribe_title
         Tool.SPEAK -> Res.string.tool_speak_title
+        Tool.PRESETS -> Res.string.tool_presets_title
         Tool.DENOISE -> Res.string.tool_denoise_title
         Tool.SILENCE -> Res.string.tool_silence_title
         Tool.TRIM -> Res.string.tool_trim_title
@@ -316,6 +344,7 @@ val Tool.description: StringResource
         Tool.ENHANCE -> Res.string.tool_enhance_description
         Tool.TRANSCRIBE -> Res.string.tool_transcribe_description
         Tool.SPEAK -> Res.string.tool_speak_description
+        Tool.PRESETS -> Res.string.tool_presets_description
         Tool.DENOISE -> Res.string.tool_denoise_description
         Tool.SILENCE -> Res.string.tool_silence_description
         Tool.TRIM -> Res.string.tool_trim_description

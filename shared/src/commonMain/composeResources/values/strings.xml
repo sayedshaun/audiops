@@ -26,6 +26,16 @@
     <string name="tool_enhance_description">AI clarity boost for voice recordings.</string>
     <string name="tool_transcribe_title">Transcribe</string>
     <string name="tool_transcribe_description">Speech to text in Bangla and many other languages.</string>
+    <string name="tool_presets_title">Presets</string>
+    <string name="tool_presets_description">One-tap clean-up for common recordings.</string>
+    <string name="preset_podcast">Podcast</string>
+    <string name="preset_podcast_description">Light noise reduction, a clearer voice and podcast loudness (−16 LUFS).</string>
+    <string name="preset_voice_message">Voice message</string>
+    <string name="preset_voice_message_description">Removes noise and long pauses, then evens out the loudness for sharing (−14 LUFS).</string>
+    <string name="preset_lecture">Lecture or meeting</string>
+    <string name="preset_lecture_description">Removes rumble and noise, skips long silences and brings quiet speakers up (−16 LUFS).</string>
+    <string name="preset_noisy">Noisy recording</string>
+    <string name="preset_noisy_description">Strong noise reduction and a clearer voice, at broadcast loudness (−23 LUFS).</string>
     <string name="tool_speak_title">Text to speech</string>
     <string name="tool_speak_description">Turn text into natural speech in 28 languages.</string>
     <string name="tool_denoise_title">Noise reduction</string>

@@ -2,6 +2,7 @@ package com.audiops.app.ui
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.AutoFixHigh
 import androidx.compose.material.icons.rounded.Campaign
 import androidx.compose.material.icons.rounded.Compress
@@ -28,6 +29,7 @@ val Tool.icon: ImageVector
         Tool.ENHANCE -> Icons.Rounded.AutoFixHigh
         Tool.TRANSCRIBE -> Icons.Rounded.RecordVoiceOver
         Tool.SPEAK -> Icons.Rounded.Campaign
+        Tool.PRESETS -> Icons.Rounded.AutoAwesome
         Tool.DENOISE -> Icons.Rounded.Waves
         Tool.SILENCE -> Icons.Rounded.Compress
         Tool.TRIM -> Icons.Rounded.ContentCut
@@ -46,6 +48,7 @@ val Tool.shape: RoundedPolygon
         Tool.ENHANCE -> MaterialShapes.Cookie9Sided
         Tool.TRANSCRIBE -> MaterialShapes.Sunny
         Tool.SPEAK -> MaterialShapes.Puffy
+        Tool.PRESETS -> MaterialShapes.Sunny
         Tool.DENOISE -> MaterialShapes.SoftBurst
         Tool.SILENCE -> MaterialShapes.Pill
         Tool.TRIM -> MaterialShapes.Cookie4Sided

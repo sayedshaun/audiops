@@ -457,3 +457,11 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - Manifest: `RECORD_AUDIO` and `<uses-feature android:name="android.hardware.microphone" android:required="false"/>`, so devices without a microphone can still install the app.
 - `UiMessage.RecordFailed` / `AudiopsViewModel.recordFailed`; `ToolActions.onRecordFailed`.
 - Not covered by unit tests (Android audio hardware); verified on the emulator only: permission dialog, timer, Stop, a valid 44.1 kHz mono WAV of 18.1 s that became the current recording. The emulator microphone is silent, so the level meter and speech capture need a phone test.
+
+## 2026-11-16: Presets (`feature/presets`, on top of `feature/record`)
+
+### Changed
+- `Preset` (PODCAST, VOICE_MESSAGE, LECTURE, NOISY) holds a fixed `List<AudioOperation>` made only of existing operations (denoise, equalizer, silence removal, loudness normalization), so a preset needs no new DSP, no new job type and no history migration: it is stored as an ordinary `JobSpec.Process`.
+- `Tool.PRESETS` (Clean up, listed first): preset buttons and a one-line description of the selected preset; `ToolOptions.preset` (saved across rotation).
+- Tests (`PresetTest`): every preset has 2 to 4 operations and survives JSON; each preset run through `DspPipeline` on 8 s of speech-like bursts over noise gives finite, unclipped audio within 2 LU of its loudness target; the Voice message preset shortens the recording.
+- Emulator: Voice message on the 11 s English clip gave 9.39 s at −13.8 LUFS (ffmpeg ebur128; target −14).
