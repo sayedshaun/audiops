@@ -97,7 +97,6 @@ import com.audiops.shared.resources.action_cancel
 import com.audiops.shared.resources.action_change
 import com.audiops.shared.resources.action_choose
 import com.audiops.shared.resources.action_copy
-import com.audiops.shared.resources.action_go_to_tools
 import com.audiops.shared.resources.action_record
 import com.audiops.shared.resources.action_reset
 import com.audiops.shared.resources.action_save_format
@@ -176,6 +175,7 @@ data class ToolScreenState(
 /** Events from [ToolScreen]. */
 data class ToolActions(
     val onBack: () -> Unit,
+    val onChoose: (id: String, name: String) -> Unit,
     val onLanguage: (SpeechLanguage) -> Unit,
     val onStart: (JobSpec) -> Unit,
     val onCancel: (jobId: String) -> Unit,
@@ -191,6 +191,7 @@ data class ToolActions(
 @Composable
 fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: ToolActions) {
     val tool = state.tool
+    val pickRecording = rememberAudioPicker(actions.onChoose)
     // Option values survive rotation; each tool keeps its own.
     var options by rememberSaveable(tool, stateSaver = ToolOptionsSaver) { mutableStateOf(ToolOptions()) }
     val job = state.latestJob
@@ -222,7 +223,7 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
             selection = if (tool == Tool.TRIM) options.trimStart..options.trimEnd else 0f..1f,
             onChoose = null,
             recorder = null,
-            onOpenTools = actions.onBack,
+            onChooseWhenEmpty = pickRecording,
         )
 
         if (tool.hasOptions) {
@@ -344,7 +345,8 @@ private fun RecordingPanel(state: RecorderState, onStop: () -> Unit) {
 /**
  * The current recording with its waveform preview and a play button. With [onChoose] and [recorder]
  * it is the global recording card on the Tools tab (choose a file or record); without them it is the
- * read-only summary a tool screen shows, with [onOpenTools] to go back and pick one.
+ * read-only summary a tool screen shows, with [onChooseWhenEmpty] as the only button, shown while no
+ * recording is chosen yet.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -356,7 +358,7 @@ internal fun InputCard(
     selection: ClosedFloatingPointRange<Float>,
     onChoose: (() -> Unit)?,
     recorder: Recorder?,
-    onOpenTools: (() -> Unit)? = null,
+    onChooseWhenEmpty: (() -> Unit)? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     val player = LocalAudioPlayer.current
@@ -427,14 +429,14 @@ internal fun InputCard(
                 }
             }
             if (onChoose == null || recorder == null) {
-                if (input == null && onOpenTools != null) {
+                if (input == null && onChooseWhenEmpty != null) {
                     Spacer(Modifier.height(16.dp))
                     FilledTonalButton(
-                        onClick = onOpenTools,
+                        onClick = onChooseWhenEmpty,
                         shapes = ButtonDefaults.shapes(),
                         modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
                     ) {
-                        Text(stringResource(Res.string.action_go_to_tools))
+                        Text(stringResource(Res.string.action_choose))
                     }
                 }
                 return@Column
