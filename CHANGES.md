@@ -492,3 +492,7 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - The recording input (Choose file, Record, waveform, player) is now one `InputCard` at the top of the Tools tab (`ToolsTab` owns `rememberAudioPicker` and `rememberRecorder`). Tool screens render the same card read-only (`onChoose`/`recorder` null) with a Go to Tools button when nothing is chosen. `ToolActions` lost `onChoose` and `onRecordFailed`.
 - Recording now starts and stops on the Tools tab; opening a tool while recording leaves the tab and stops the recording (the recorder is released with the screen).
 - Checked on the emulator in light and dark: Tools tab empty and with a file, a tool page with a file, a tool page with none.
+
+## 2026-11-17: Changelog for 0.2.0 (`docs/changelog-0.2.0`)
+
+- Moved the global recording card entry from Unreleased into 0.2.0 (it merged before the release), updated the Record entry to say the button is on the Tools tab, and set the 0.2.0 date to 2026-11-17.

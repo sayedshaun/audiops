@@ -13,14 +13,11 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
-### Changed
-- **Choose a file or record once, on the Tools tab.** The Choose file and Record buttons moved from every tool to a "recording" card at the top of the Tools tab. Pick or record a recording there, then open any tool: each tool page shows the current recording (waveform and player; Trim still shows its selection) and its options. If nothing is chosen yet, a tool page says so and offers Go to Tools.
-
-## [0.2.0] - 2026-11-16
+## [0.2.0] - 2026-11-17
 
 ### Added
 - **Presets.** A new Presets tool cleans a recording in one tap: Podcast (light noise reduction, clearer voice, −16 LUFS), Voice message (noise and long pauses removed, −14 LUFS), Lecture or meeting (rumble, noise and long silences removed, −16 LUFS) and Noisy recording (strong noise reduction, −23 LUFS). Each preset is the existing tools chained together, and the result shows in Activity like any other job.
-- **Record in the app.** Every tool now has a Record button next to Choose file. Record from the microphone (with a timer and level meter), stop, and the recording is ready for Enhance, Transcribe or any other tool. The microphone permission is asked only when you first tap Record, and recording stops if you leave the app. Recordings are kept for a week.
+- **Record in the app.** The Tools tab has a Record button next to Choose file. Record from the microphone (with a timer and level meter), stop, and the recording is ready for Enhance, Transcribe or any other tool. The microphone permission is asked only when you first tap Record, and recording stops if you leave the app. Recordings are kept for a week.
 - **Share audio to Audiops.** Audiops now appears in the Share menu of voice-note apps, recorders and file managers, and in "Open with" for audio files. The audio becomes the current recording and the Tools tab opens, so you can pick a tool right away.
 - **Save audio as M4A or Opus.** Processed and generated audio can now be saved as a smaller M4A (AAC) or Opus file as well as WAV. M4A works on every phone; Opus needs Android 10 or newer. There is no MP3 option because Android has no MP3 encoder.
 - **Subtitles from transcripts.** After a transcription you can save the result as an SRT or VTT subtitle file, with times for each sentence, ready to use in a video editor or player. Times come from the speech model; Whisper Tiny does not report them, so its subtitles are spread evenly over each 20-second section.
@@ -29,6 +26,7 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 - **Choose the transcription model** in Settings → Transcription: Automatic (recommended), Parakeet v3, Omnilingual ASR, Whisper Tiny or Bangla Zipformer.
 
 ### Changed
+- **Choose a file or record once, on the Tools tab.** The Choose file and Record buttons moved from every tool to a "recording" card at the top of the Tools tab. Pick or record a recording there, then open any tool: each tool page shows the current recording (waveform and player; Trim still shows its selection) and its options. If nothing is chosen yet, a tool page says so and offers Go to Tools.
 - **AI noise reduction on Android.** Noise reduction now uses DPDFNet (Ceva, Apache 2.0), an AI speech enhancer that runs on the phone, instead of spectral subtraction. It downloads once (about 11 MB). Light, Medium and Strong set how much of the removed sound is kept (9 dB, 18 dB, no limit). Desktop still uses spectral subtraction.
 - **Settings → Storage has one Downloaded models row.** It shows how many models are downloaded and their total size; tap it to see each model with its size and delete it.
 
