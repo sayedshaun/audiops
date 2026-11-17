@@ -89,6 +89,7 @@ class AudiopsViewModel(
         if (!engine.supportsEnhance) add(Tool.ENHANCE)
         if (!engine.supportsTranscribe) add(Tool.TRANSCRIBE)
         if (!engine.supportsSpeak) add(Tool.SPEAK)
+        if (!engine.supportsSeparate) add(Tool.SEPARATE)
     }
 
     /** Bytes per downloaded model; null while measuring. */
@@ -208,7 +209,8 @@ class AudiopsViewModel(
         }
         val unsupported = (spec is JobSpec.Enhance && !engine.supportsEnhance) ||
             (spec is JobSpec.Transcribe && !engine.supportsTranscribe) ||
-            (spec is JobSpec.Speak && !engine.supportsSpeak)
+            (spec is JobSpec.Speak && !engine.supportsSpeak) ||
+            (spec is JobSpec.Separate && !engine.supportsSeparate)
         val job = Job(
             id = "${currentTimeMillis()}-${Random.nextInt(1_000_000)}",
             tool = tool,
@@ -259,7 +261,7 @@ class AudiopsViewModel(
         val job = _state.value.jobs.firstOrNull { it.id == jobId } ?: return
         if (job.status.active) return
         _state.update { s -> s.copy(jobs = s.jobs.filter { it.id != jobId }) }
-        job.outputPath?.let { path -> viewModelScope.launch { runCatching { runOnWorker { engine.deleteFile(path) } } } }
+        viewModelScope.launch { runCatching { runOnWorker { job.files.forEach(engine::deleteFile) } } }
         persist()
         refreshStorage()
     }
@@ -269,7 +271,7 @@ class AudiopsViewModel(
         val finished = _state.value.jobs.filter { !it.status.active }
         _state.update { s -> s.copy(jobs = s.jobs.filter { it.status.active }) }
         viewModelScope.launch {
-            runCatching { runOnWorker { finished.mapNotNull { it.outputPath }.forEach(engine::deleteFile) } }
+            runCatching { runOnWorker { finished.flatMap { it.files }.forEach(engine::deleteFile) } }
             refreshStorage()
         }
         persist()
@@ -368,6 +370,11 @@ class AudiopsViewModel(
                         }
                     }
 
+                    JobSpec.Separate -> {
+                        val paths = engine.separate(job.inputId, listener)
+                        job.copy(outputPath = paths.first(), stemPaths = paths)
+                    }
+
                     is JobSpec.Speak -> job.copy(outputPath = engine.speak(spec.text, spec.voice, spec.speed, listener))
 
                     is JobSpec.Process -> job.copy(outputPath = engine.process(job.inputId, spec.operations, listener))
@@ -422,7 +429,7 @@ class AudiopsViewModel(
         val snapshot = _state.value.jobs
         viewModelScope.launch {
             val finished = snapshot.filter { !it.status.active }
-            finished.drop(HistoryRepository.MAX_JOBS).mapNotNull { it.outputPath }.forEach { path ->
+            finished.drop(HistoryRepository.MAX_JOBS).flatMap { it.files }.forEach { path ->
                 runCatching { runOnWorker { engine.deleteFile(path) } }
             }
             runCatching { history.save(finished) }

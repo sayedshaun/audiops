@@ -147,17 +147,29 @@ class AudioFeatures(filterBytes: ByteArray) {
     }
 }
 
-/** Upstream's exponential time mapping with 16 midpoint steps / 32 evaluations. */
+/**
+ * Upstream's midpoint solver for the flow-matching stage. Times follow its exponential mapping,
+ * `t = (1 - e^(-a u)) / (1 - e^(-a))` with `a = 2.4375115` and `u = i / steps`, which puts more
+ * steps near the end. Each step evaluates the network twice, so [UPSTREAM_STEPS] = 16 steps is
+ * upstream's 32 evaluations; fewer steps are faster and slightly less exact.
+ */
 object MidpointSolver {
-    private val times = doubleArrayOf(
-        0.0, 0.15483690, 0.28779418, 0.40196359, 0.5,
-        0.58418312, 0.65647053, 0.71854319, 0.77184451, 0.81761395, 0.85691582,
-        0.89066404, 0.91964338, 0.94452772, 0.96589571, 0.98424425, 1.0,
-    )
+    const val UPSTREAM_STEPS = 16
+    private const val RATE = 2.4375114537440234
 
-    fun integrate(initial: FloatArray, velocity: (FloatArray, Float) -> FloatArray): FloatArray {
+    /** The `steps + 1` time points from 0 to 1. */
+    fun times(steps: Int): DoubleArray {
+        require(steps >= 1) { "steps must be at least 1" }
+        return DoubleArray(steps + 1) { i ->
+            val u = i.toDouble() / steps
+            (1.0 - kotlin.math.exp(-RATE * u)) / (1.0 - kotlin.math.exp(-RATE))
+        }
+    }
+
+    fun integrate(initial: FloatArray, steps: Int = UPSTREAM_STEPS, velocity: (FloatArray, Float) -> FloatArray): FloatArray {
+        val times = times(steps)
         var state = initial.copyOf()
-        for (i in 0 until times.size - 1) {
+        for (i in 0 until steps) {
             throwIfCancelled()
             val t = times[i]
             val dt = (times[i + 1] - t).toFloat()

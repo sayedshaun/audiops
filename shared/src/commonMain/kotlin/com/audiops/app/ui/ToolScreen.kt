@@ -55,6 +55,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -87,7 +88,9 @@ import com.audiops.app.JobStatus
 import com.audiops.app.LoudnessTarget
 import com.audiops.app.Preset
 import com.audiops.app.SaveFormat
+import com.audiops.app.SeparatedStem
 import com.audiops.app.SpeechLanguage
+import com.audiops.app.Stage
 import com.audiops.app.SubtitleFormat
 import com.audiops.app.SupportedSampleRates
 import com.audiops.app.Tool
@@ -100,8 +103,8 @@ import com.audiops.shared.resources.action_choose
 import com.audiops.shared.resources.action_copy
 import com.audiops.shared.resources.action_record
 import com.audiops.shared.resources.action_reset
-import com.audiops.shared.resources.action_save_format
 import com.audiops.shared.resources.action_save_srt
+import com.audiops.shared.resources.action_save_stem
 import com.audiops.shared.resources.action_save_text
 import com.audiops.shared.resources.action_save_vtt
 import com.audiops.shared.resources.action_save_wav
@@ -139,7 +142,10 @@ import com.audiops.shared.resources.report_title
 import com.audiops.shared.resources.result_ready_body
 import com.audiops.shared.resources.result_ready_title
 import com.audiops.shared.resources.sample_rate_khz
+import com.audiops.shared.resources.separate_hint
 import com.audiops.shared.resources.status_cancelled
+import com.audiops.shared.resources.stems_ready_body
+import com.audiops.shared.resources.stems_ready_title
 import com.audiops.shared.resources.step_language
 import com.audiops.shared.resources.step_model
 import com.audiops.shared.resources.step_options
@@ -262,10 +268,16 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
             Spacer(Modifier.width(8.dp))
             Text(stringResource(tool.action), style = MaterialTheme.typography.titleMedium)
         }
-        if (tool == Tool.ENHANCE || tool == Tool.TRANSCRIBE) {
+        val hint = when (tool) {
+            Tool.ENHANCE -> Res.string.enhance_hint
+            Tool.TRANSCRIBE -> Res.string.transcribe_hint
+            Tool.SEPARATE -> Res.string.separate_hint
+            else -> null
+        }
+        if (hint != null) {
             Spacer(Modifier.height(8.dp))
             Text(
-                stringResource(if (tool == Tool.ENHANCE) Res.string.enhance_hint else Res.string.transcribe_hint),
+                stringResource(hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -286,6 +298,8 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
                             actions.onCopied,
                             actions.readText,
                         ),
+                        // The waveform of the recording this job works on, if it is still the one on screen.
+                        peaks = state.waveform?.peaks?.takeIf { state.input?.id == job.inputId },
                     )
                 }
             }
@@ -293,7 +307,7 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
     }
 }
 
-private val Tool.hasOptions: Boolean get() = this != Tool.ANALYZE
+private val Tool.hasOptions: Boolean get() = this != Tool.ANALYZE && this != Tool.SEPARATE
 
 @Composable
 internal fun OptionsCard(content: @Composable () -> Unit) {
@@ -496,6 +510,8 @@ data class ToolOptions(
 
         // Text to speech has its own screen (SpeakScreen) and never builds a spec here.
         Tool.SPEAK -> error("Text to speech uses SpeakScreen")
+
+        Tool.SEPARATE -> JobSpec.Separate
 
         Tool.TRANSCRIBE -> JobSpec.Transcribe(if (model.usesLanguage) language else SpeechLanguage.AUTO, model)
 
@@ -744,7 +760,7 @@ private fun ToolOptionsEditor(
             Hint(stringResource(EnhanceMode.entries[options.enhanceMode].description))
         }
 
-        Tool.ANALYZE, Tool.SPEAK -> Unit
+        Tool.ANALYZE, Tool.SPEAK, Tool.SEPARATE -> Unit
     }
 }
 
@@ -812,10 +828,10 @@ data class JobCardActions(
     val readText: suspend (path: String) -> String?,
 )
 
-/** A job's live progress, or its result: player and Save, transcript, or report. */
+/** A job's live progress (over the recording's [peaks] when known), or its result: player and Save, transcript, or report. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun JobCard(job: Job, actions: JobCardActions, modifier: Modifier = Modifier) {
+fun JobCard(job: Job, actions: JobCardActions, modifier: Modifier = Modifier, peaks: FloatArray? = null) {
     val colors = MaterialTheme.colorScheme
     when (job.status) {
         JobStatus.QUEUED, JobStatus.RUNNING -> Card(
@@ -824,7 +840,13 @@ fun JobCard(job: Job, actions: JobCardActions, modifier: Modifier = Modifier) {
             colors = CardDefaults.cardColors(containerColor = colors.surfaceContainerHigh),
         ) {
             Column(Modifier.padding(20.dp)) {
-                WorkStatus(job.progressText(), job.progress?.fraction)
+                WorkStatus(
+                    status = job.progressText(),
+                    progress = job.progress?.fraction,
+                    downloading = job.progress?.stage == Stage.DOWNLOADING_MODEL,
+                    peaks = peaks,
+                    seed = job.id,
+                )
                 Spacer(Modifier.height(16.dp))
                 OutlinedButton(
                     onClick = { actions.onCancel(job.id) },
@@ -856,6 +878,7 @@ fun JobCard(job: Job, actions: JobCardActions, modifier: Modifier = Modifier) {
         JobStatus.DONE -> when {
             job.report != null -> ReportCard(job.report)
             job.spec is JobSpec.Transcribe -> TranscriptCard(job, actions)
+            job.spec is JobSpec.Separate && job.stemPaths != null -> StemsCard(job, actions)
             job.outputPath != null -> AudioResultCard(job, actions)
             else -> Unit
         }
@@ -866,8 +889,6 @@ fun JobCard(job: Job, actions: JobCardActions, modifier: Modifier = Modifier) {
 @Composable
 private fun AudioResultCard(job: Job, actions: JobCardActions) {
     val path = job.outputPath ?: return
-    var format by rememberSaveable { mutableStateOf(SaveFormat.WAV) }
-    val selected = format.takeIf { it in actions.saveFormats } ?: SaveFormat.WAV
     val saveWav = rememberFileSaver(SaveFormat.WAV.mimeType) { actions.onSave(job, it) }
     val saveM4a = rememberFileSaver(SaveFormat.M4A.mimeType) { actions.onSaveAudio(job, SaveFormat.M4A, it) }
     val saveOpus = rememberFileSaver(SaveFormat.OPUS.mimeType) { actions.onSaveAudio(job, SaveFormat.OPUS, it) }
@@ -877,31 +898,47 @@ private fun AudioResultCard(job: Job, actions: JobCardActions) {
     ) {
         PlayerBar(path)
         Spacer(Modifier.height(12.dp))
-        if (actions.saveFormats.size > 1) {
-            ConnectedChoice(
-                options = actions.saveFormats,
-                selected = selected,
-                label = { stringResource(it.label) },
-                onSelect = { format = it },
-            )
-            Spacer(Modifier.height(12.dp))
+        // The format is asked only now, when saving: a menu under the button lists what this device can write.
+        SaveButton(actions.saveFormats) { format ->
+            val name = derivedFileName(job.inputName, job.tool.name.lowercase(), format.extension)
+            when (format) {
+                SaveFormat.WAV -> saveWav(name)
+                SaveFormat.M4A -> saveM4a(name)
+                SaveFormat.OPUS -> saveOpus(name)
+            }
         }
-        Button(
-            onClick = {
-                val name = derivedFileName(job.inputName, job.tool.name.lowercase(), selected.extension)
-                when (selected) {
-                    SaveFormat.WAV -> saveWav(name)
-                    SaveFormat.M4A -> saveM4a(name)
-                    SaveFormat.OPUS -> saveOpus(name)
+    }
+}
+
+/** The stems of a separation: each one plays and saves on its own, in the format chosen above them. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun StemsCard(job: Job, actions: JobCardActions) {
+    val stems = job.stemPaths ?: return
+    var pending by remember { mutableIntStateOf(0) }
+    fun stemJob(index: Int) = job.copy(outputPath = stems[index])
+    val saveWav = rememberFileSaver(SaveFormat.WAV.mimeType) { actions.onSave(stemJob(pending), it) }
+    val saveM4a = rememberFileSaver(SaveFormat.M4A.mimeType) { actions.onSaveAudio(stemJob(pending), SaveFormat.M4A, it) }
+    val saveOpus = rememberFileSaver(SaveFormat.OPUS.mimeType) { actions.onSaveAudio(stemJob(pending), SaveFormat.OPUS, it) }
+    ResultCard(title = stringResource(Res.string.stems_ready_title), body = stringResource(Res.string.stems_ready_body)) {
+        SeparatedStem.entries.forEachIndexed { index, stem ->
+            if (index < stems.size) {
+                Spacer(Modifier.height(if (index == 0) 4.dp else 16.dp))
+                Text(stringResource(stem.label), style = MaterialTheme.typography.titleSmall)
+                Spacer(Modifier.height(4.dp))
+                PlayerBar(stems[index])
+                Spacer(Modifier.height(8.dp))
+                // The format is asked only when saving this stem.
+                SaveButton(actions.saveFormats) { format ->
+                    pending = index
+                    val name = derivedFileName(job.inputName, stem.fileSuffix, format.extension)
+                    when (format) {
+                        SaveFormat.WAV -> saveWav(name)
+                        SaveFormat.M4A -> saveM4a(name)
+                        SaveFormat.OPUS -> saveOpus(name)
+                    }
                 }
-            },
-            shapes = ButtonDefaults.shapes(),
-            contentPadding = PrimaryButtonPadding,
-            modifier = Modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
-        ) {
-            Icon(Icons.Rounded.Save, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text(stringResource(Res.string.action_save_format, stringResource(selected.label)))
+            }
         }
     }
 }

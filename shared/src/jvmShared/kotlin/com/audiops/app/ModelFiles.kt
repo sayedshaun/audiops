@@ -9,12 +9,14 @@ object ModelFiles {
     private val FOLDERS = mapOf(
         AiModel.ENHANCE to listOf("resemble-enhance", "xnnpack-cache"),
         AiModel.NOISE to listOf("dpdfnet"),
+        AiModel.SCNET to listOf("scnet"),
         AiModel.PARAKEET to listOf("parakeet-tdt-v3"),
         AiModel.OMNILINGUAL to listOf("omnilingual-asr"),
         AiModel.WHISPER to listOf("whisper-tiny"),
         AiModel.BANGLA to listOf("bangla-zipformer"),
         AiModel.POCKET_TTS to listOf("pocket-tts"),
         AiModel.PIPER to listOf("piper-voices", "espeak-ng-data"),
+        AiModel.SUPERTONIC to listOf("supertonic-3"),
     )
 
     /** Bytes used by each downloaded model, in [AiModel] order; models without files are absent. */

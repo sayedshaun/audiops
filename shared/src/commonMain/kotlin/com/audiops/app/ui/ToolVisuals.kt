@@ -10,6 +10,7 @@ import androidx.compose.material.icons.rounded.ContentCut
 import androidx.compose.material.icons.rounded.Equalizer
 import androidx.compose.material.icons.rounded.Gradient
 import androidx.compose.material.icons.rounded.Insights
+import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.RecordVoiceOver
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.SwapHoriz
@@ -29,6 +30,7 @@ val Tool.icon: ImageVector
         Tool.ENHANCE -> Icons.Rounded.AutoFixHigh
         Tool.TRANSCRIBE -> Icons.Rounded.RecordVoiceOver
         Tool.SPEAK -> Icons.Rounded.Campaign
+        Tool.SEPARATE -> Icons.Rounded.LibraryMusic
         Tool.PRESETS -> Icons.Rounded.AutoAwesome
         Tool.DENOISE -> Icons.Rounded.Waves
         Tool.SILENCE -> Icons.Rounded.Compress
@@ -48,6 +50,7 @@ val Tool.shape: RoundedPolygon
         Tool.ENHANCE -> MaterialShapes.Cookie9Sided
         Tool.TRANSCRIBE -> MaterialShapes.Sunny
         Tool.SPEAK -> MaterialShapes.Puffy
+        Tool.SEPARATE -> MaterialShapes.Flower
         Tool.PRESETS -> MaterialShapes.Sunny
         Tool.DENOISE -> MaterialShapes.SoftBurst
         Tool.SILENCE -> MaterialShapes.Pill
@@ -75,5 +78,6 @@ val AiModel.icon: ImageVector
         AiModel.ENHANCE -> Tool.ENHANCE.icon
         AiModel.NOISE -> Tool.DENOISE.icon
         AiModel.PARAKEET, AiModel.OMNILINGUAL, AiModel.WHISPER, AiModel.BANGLA -> Tool.TRANSCRIBE.icon
-        AiModel.POCKET_TTS, AiModel.PIPER -> Tool.SPEAK.icon
+        AiModel.SCNET -> Tool.SEPARATE.icon
+        AiModel.POCKET_TTS, AiModel.PIPER, AiModel.SUPERTONIC -> Tool.SPEAK.icon
     }

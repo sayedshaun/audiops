@@ -13,6 +13,7 @@ import com.audiops.app.JobStatus
 import com.audiops.app.LoudnessTarget
 import com.audiops.app.Preset
 import com.audiops.app.SaveFormat
+import com.audiops.app.SeparatedStem
 import com.audiops.app.SpeechLanguage
 import com.audiops.app.Stage
 import com.audiops.app.Tool
@@ -26,6 +27,7 @@ import com.audiops.shared.resources.Res
 import com.audiops.shared.resources.action_analyze
 import com.audiops.shared.resources.action_enhance
 import com.audiops.shared.resources.action_process
+import com.audiops.shared.resources.action_separate
 import com.audiops.shared.resources.action_speak
 import com.audiops.shared.resources.action_transcribe
 import com.audiops.shared.resources.category_ai
@@ -55,8 +57,11 @@ import com.audiops.shared.resources.error_unreadable
 import com.audiops.shared.resources.error_unsupported_format
 import com.audiops.shared.resources.error_unsupported_platform
 import com.audiops.shared.resources.format_m4a
+import com.audiops.shared.resources.format_m4a_hint
 import com.audiops.shared.resources.format_opus
+import com.audiops.shared.resources.format_opus_hint
 import com.audiops.shared.resources.format_wav
+import com.audiops.shared.resources.format_wav_hint
 import com.audiops.shared.resources.language_arabic
 import com.audiops.shared.resources.language_auto
 import com.audiops.shared.resources.language_bangla
@@ -101,6 +106,10 @@ import com.audiops.shared.resources.model_piper
 import com.audiops.shared.resources.model_piper_purpose
 import com.audiops.shared.resources.model_pocket_tts
 import com.audiops.shared.resources.model_pocket_tts_purpose
+import com.audiops.shared.resources.model_scnet
+import com.audiops.shared.resources.model_scnet_purpose
+import com.audiops.shared.resources.model_supertonic
+import com.audiops.shared.resources.model_supertonic_purpose
 import com.audiops.shared.resources.model_whisper
 import com.audiops.shared.resources.model_whisper_purpose
 import com.audiops.shared.resources.preset_lecture
@@ -122,6 +131,11 @@ import com.audiops.shared.resources.status_done
 import com.audiops.shared.resources.status_failed
 import com.audiops.shared.resources.status_queued
 import com.audiops.shared.resources.status_running
+import com.audiops.shared.resources.stem_bass
+import com.audiops.shared.resources.stem_drums
+import com.audiops.shared.resources.stem_instrumental
+import com.audiops.shared.resources.stem_other
+import com.audiops.shared.resources.stem_vocals
 import com.audiops.shared.resources.summary_fade
 import com.audiops.shared.resources.summary_gain
 import com.audiops.shared.resources.summary_loudness
@@ -148,6 +162,8 @@ import com.audiops.shared.resources.tool_fade_description
 import com.audiops.shared.resources.tool_fade_title
 import com.audiops.shared.resources.tool_presets_description
 import com.audiops.shared.resources.tool_presets_title
+import com.audiops.shared.resources.tool_separate_description
+import com.audiops.shared.resources.tool_separate_title
 import com.audiops.shared.resources.tool_silence_description
 import com.audiops.shared.resources.tool_silence_title
 import com.audiops.shared.resources.tool_speak_description
@@ -166,6 +182,8 @@ import com.audiops.shared.resources.transcription_model_bangla_summary
 import com.audiops.shared.resources.transcription_model_omnilingual_summary
 import com.audiops.shared.resources.transcription_model_parakeet_summary
 import com.audiops.shared.resources.transcription_model_whisper_summary
+import com.audiops.shared.resources.tts_language_ar
+import com.audiops.shared.resources.tts_language_bg
 import com.audiops.shared.resources.tts_language_cs
 import com.audiops.shared.resources.tts_language_da
 import com.audiops.shared.resources.tts_language_de_de
@@ -173,12 +191,19 @@ import com.audiops.shared.resources.tts_language_el
 import com.audiops.shared.resources.tts_language_en_gb
 import com.audiops.shared.resources.tts_language_en_us
 import com.audiops.shared.resources.tts_language_es_es
+import com.audiops.shared.resources.tts_language_et
 import com.audiops.shared.resources.tts_language_fa
 import com.audiops.shared.resources.tts_language_fi
 import com.audiops.shared.resources.tts_language_fr_fr
+import com.audiops.shared.resources.tts_language_hi
+import com.audiops.shared.resources.tts_language_hr
 import com.audiops.shared.resources.tts_language_hu
+import com.audiops.shared.resources.tts_language_id
 import com.audiops.shared.resources.tts_language_it_it
+import com.audiops.shared.resources.tts_language_ja
 import com.audiops.shared.resources.tts_language_kk
+import com.audiops.shared.resources.tts_language_ko
+import com.audiops.shared.resources.tts_language_lt
 import com.audiops.shared.resources.tts_language_lv
 import com.audiops.shared.resources.tts_language_ne
 import com.audiops.shared.resources.tts_language_nl_nl
@@ -234,6 +259,8 @@ val AiModel.title: StringResource
         AiModel.BANGLA -> Res.string.model_bangla
         AiModel.POCKET_TTS -> Res.string.model_pocket_tts
         AiModel.PIPER -> Res.string.model_piper
+        AiModel.SUPERTONIC -> Res.string.model_supertonic
+        AiModel.SCNET -> Res.string.model_scnet
     }
 
 /** What the model is used for. */
@@ -247,6 +274,8 @@ val AiModel.purpose: StringResource
         AiModel.BANGLA -> Res.string.model_bangla_purpose
         AiModel.POCKET_TTS -> Res.string.model_pocket_tts_purpose
         AiModel.PIPER -> Res.string.model_piper_purpose
+        AiModel.SUPERTONIC -> Res.string.model_supertonic_purpose
+        AiModel.SCNET -> Res.string.model_scnet_purpose
     }
 
 val TranscriptionModel.label: StringResource
@@ -301,8 +330,24 @@ fun ttsLanguageLabel(tag: String): StringResource = when (tag) {
     "tr" -> Res.string.tts_language_tr
     "uk" -> Res.string.tts_language_uk
     "vi" -> Res.string.tts_language_vi
+    "ko" -> Res.string.tts_language_ko
+    "ja" -> Res.string.tts_language_ja
+    "ar" -> Res.string.tts_language_ar
+    "bg" -> Res.string.tts_language_bg
+    "et" -> Res.string.tts_language_et
+    "hr" -> Res.string.tts_language_hr
+    "hi" -> Res.string.tts_language_hi
+    "id" -> Res.string.tts_language_id
+    "lt" -> Res.string.tts_language_lt
     else -> Res.string.tts_language_other
 }
+
+val SaveFormat.hint: StringResource
+    get() = when (this) {
+        SaveFormat.WAV -> Res.string.format_wav_hint
+        SaveFormat.M4A -> Res.string.format_m4a_hint
+        SaveFormat.OPUS -> Res.string.format_opus_hint
+    }
 
 val SaveFormat.label: StringResource
     get() = when (this) {
@@ -321,6 +366,15 @@ val EnhanceMode.description: StringResource
     get() = when (this) {
         EnhanceMode.FAST -> Res.string.enhance_mode_fast_description
         EnhanceMode.STUDIO -> Res.string.enhance_mode_studio_description
+    }
+
+val SeparatedStem.label: StringResource
+    get() = when (this) {
+        SeparatedStem.VOCALS -> Res.string.stem_vocals
+        SeparatedStem.INSTRUMENTAL -> Res.string.stem_instrumental
+        SeparatedStem.DRUMS -> Res.string.stem_drums
+        SeparatedStem.BASS -> Res.string.stem_bass
+        SeparatedStem.OTHER -> Res.string.stem_other
     }
 
 val Preset.title: StringResource
@@ -344,6 +398,7 @@ val Tool.title: StringResource
         Tool.ENHANCE -> Res.string.tool_enhance_title
         Tool.TRANSCRIBE -> Res.string.tool_transcribe_title
         Tool.SPEAK -> Res.string.tool_speak_title
+        Tool.SEPARATE -> Res.string.tool_separate_title
         Tool.PRESETS -> Res.string.tool_presets_title
         Tool.DENOISE -> Res.string.tool_denoise_title
         Tool.SILENCE -> Res.string.tool_silence_title
@@ -361,6 +416,7 @@ val Tool.description: StringResource
         Tool.ENHANCE -> Res.string.tool_enhance_description
         Tool.TRANSCRIBE -> Res.string.tool_transcribe_description
         Tool.SPEAK -> Res.string.tool_speak_description
+        Tool.SEPARATE -> Res.string.tool_separate_description
         Tool.PRESETS -> Res.string.tool_presets_description
         Tool.DENOISE -> Res.string.tool_denoise_description
         Tool.SILENCE -> Res.string.tool_silence_description
@@ -379,6 +435,7 @@ val Tool.action: StringResource
         Tool.ENHANCE -> Res.string.action_enhance
         Tool.TRANSCRIBE -> Res.string.action_transcribe
         Tool.SPEAK -> Res.string.action_speak
+        Tool.SEPARATE -> Res.string.action_separate
         Tool.ANALYZE -> Res.string.action_analyze
         else -> Res.string.action_process
     }
@@ -474,7 +531,7 @@ fun InputProblem.text(): String = when (this) {
 /** Short description of what a job did, such as "Peak −1 dB" or "1.25× · +2 st". */
 @Composable
 fun JobSpec.summary(): String? = when (this) {
-    JobSpec.Analyze -> null
+    JobSpec.Analyze, JobSpec.Separate -> null
 
     is JobSpec.Enhance -> stringResource(mode.title)
 

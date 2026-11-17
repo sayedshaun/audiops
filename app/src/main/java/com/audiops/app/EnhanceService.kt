@@ -28,12 +28,16 @@ private const val MSG_DONE = 14
 private const val MSG_ERROR = 15
 private const val KEY_PCM = "pcm"
 private const val KEY_OUT = "out"
+private const val KEY_OUTS = "outs"
+private const val KEY_TASK = "task"
+private const val TASK_ENHANCE = "enhance"
+private const val TASK_SEPARATE = "separate"
 private const val KEY_FRACTION = "fraction"
 private const val KEY_MESSAGE = "message"
 
 /**
- * Runs AI enhancement in its own process (`:enhance`, see the manifest). The vocoder needs
- * up to ~3 GB while it runs; on phones with little free memory Android's low-memory killer
+ * Runs AI enhancement and music separation in their own process (`:enhance`, see the manifest). The
+ * vocoder needs up to ~3 GB while it runs, and one separation segment about 2 GB; on phones with little free memory Android's low-memory killer
  * stops the process. Isolated, only this worker dies: the app stays open and reports a
  * clear error instead of disappearing.
  */
@@ -62,7 +66,8 @@ class EnhanceService : Service() {
     private fun start(request: Message) {
         val reply = request.replyTo ?: return
         val pcm = File(request.data.getString(KEY_PCM) ?: return)
-        val output = File(request.data.getString(KEY_OUT) ?: return)
+        val task = request.data.getString(KEY_TASK) ?: TASK_ENHANCE
+        val outputs = request.data.getStringArrayList(KEY_OUTS)?.map(::File) ?: listOf(File(request.data.getString(KEY_OUT) ?: return))
         fun send(what: Int, arg1: Int = 0, arg2: Int = 0, data: Bundle? = null) {
             runCatching { reply.send(Message.obtain(null, what, arg1, arg2).apply { if (data != null) this.data = data }) }
         }
@@ -75,7 +80,10 @@ class EnhanceService : Service() {
                 override fun onSection(index: Int, total: Int) = send(MSG_SECTION, index, total)
             }
             try {
-                AudioPipelines.enhance(applicationContext, pcm, output, listener)
+                when (task) {
+                    TASK_SEPARATE -> MusicSeparation.separate(applicationContext, pcm, outputs, listener)
+                    else -> AudioPipelines.enhance(applicationContext, pcm, outputs.single(), listener)
+                }
                 send(MSG_DONE)
             } catch (e: Throwable) {
                 send(MSG_ERROR, data = Bundle().apply { putString(KEY_MESSAGE, e.message ?: e.javaClass.simpleName) })
@@ -93,7 +101,14 @@ internal object EnhanceClient {
      * Enhances decoded [pcm] into [output] in the worker process. Blocks the calling worker
      * thread; cancelling (thread interrupt) stops the worker process immediately.
      */
-    fun run(context: Context, pcm: File, output: File, listener: ProcessingListener) {
+    fun run(context: Context, pcm: File, output: File, listener: ProcessingListener) =
+        call(TASK_ENHANCE, context, pcm, listOf(output), listener)
+
+    /** Separates decoded [pcm] into one WAV per stem, written to [outputs], in the worker process. */
+    fun separate(context: Context, pcm: File, outputs: List<File>, listener: ProcessingListener) =
+        call(TASK_SEPARATE, context, pcm, outputs, listener)
+
+    private fun call(task: String, context: Context, pcm: File, outputs: List<File>, listener: ProcessingListener) {
         val app = context.applicationContext
         val replies = HandlerThread("enhance-client").apply { start() }
         val connected = CountDownLatch(1)
@@ -160,8 +175,9 @@ internal object EnhanceClient {
                 Message.obtain(null, MSG_START).apply {
                     replyTo = replyMessenger
                     data = Bundle().apply {
+                        putString(KEY_TASK, task)
                         putString(KEY_PCM, pcm.absolutePath)
-                        putString(KEY_OUT, output.absolutePath)
+                        putStringArrayList(KEY_OUTS, ArrayList(outputs.map { it.absolutePath }))
                     }
                 },
             )
@@ -172,7 +188,7 @@ internal object EnhanceClient {
                 else -> throw IllegalStateException(error.get() ?: "Enhancement failed.")
             }
         } catch (e: Throwable) {
-            output.delete()
+            outputs.forEach { it.delete() }
             throw e
         } finally {
             binder?.let { runCatching { it.unlinkToDeath(death, 0) } }

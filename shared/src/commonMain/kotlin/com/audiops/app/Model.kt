@@ -19,6 +19,7 @@ enum class Tool(val category: ToolCategory) {
     ENHANCE(ToolCategory.AI),
     TRANSCRIBE(ToolCategory.AI),
     SPEAK(ToolCategory.AI),
+    SEPARATE(ToolCategory.AI),
     PRESETS(ToolCategory.CLEAN_UP),
     DENOISE(ToolCategory.CLEAN_UP),
     SILENCE(ToolCategory.CLEAN_UP),
@@ -71,7 +72,7 @@ val transcriptionLanguages = listOf(SpeechLanguage.AUTO, SpeechLanguage.BANGLA, 
 enum class TranscriptionModel { AUTO, PARAKEET, OMNILINGUAL, WHISPER, BANGLA }
 
 /** Downloadable AI models, listed and deleted one by one in Settings → Downloaded models. */
-enum class AiModel { ENHANCE, NOISE, PARAKEET, OMNILINGUAL, WHISPER, BANGLA, POCKET_TTS, PIPER }
+enum class AiModel { ENHANCE, NOISE, SCNET, PARAKEET, OMNILINGUAL, WHISPER, BANGLA, POCKET_TTS, PIPER, SUPERTONIC }
 
 /**
  * One-tap chains of the existing tools for common kinds of recording. Each preset is a fixed list
@@ -202,6 +203,11 @@ sealed interface JobSpec {
     @SerialName("speak")
     data class Speak(val text: String, val voice: String, val speed: Float = 1f) : JobSpec
 
+    /** Music source separation into [SeparatedStem]s. */
+    @Serializable
+    @SerialName("separate")
+    data object Separate : JobSpec
+
     @Serializable
     @SerialName("process")
     data class Process(val operations: List<AudioOperation>) : JobSpec
@@ -263,6 +269,11 @@ data class Job(
     val finishedAt: Long? = null,
     /** Processed audio (WAV) or, for transcription, the transcript text file. */
     val outputPath: String? = null,
+    /**
+     * The files of a separation job, one per [SeparatedStem] in that order (the first is also [outputPath]);
+     * null for every other job.
+     */
+    val stemPaths: List<String>? = null,
     /** First characters of a transcript, for lists. */
     val preview: String? = null,
     /** SubRip (SRT) subtitles of a transcript, when the transcription produced timing. */
@@ -272,6 +283,18 @@ data class Job(
     val failureDetail: String? = null,
     @Transient val progress: JobProgress? = null,
 )
+
+/** Every file a job left in app storage: its output, the stems of a separation and its subtitles. */
+val Job.files: List<String> get() = (listOfNotNull(outputPath, subtitlesPath) + stemPaths.orEmpty()).distinct()
+
+/** The files music separation writes, in this order. */
+enum class SeparatedStem(val fileSuffix: String) {
+    VOCALS("vocals"),
+    INSTRUMENTAL("instrumental"),
+    DRUMS("drums"),
+    BASS("bass"),
+    OTHER("other"),
+}
 
 /** A recording chosen by the user. [id] is a platform document id (URI or file path). */
 data class AudioInput(val id: String, val name: String)

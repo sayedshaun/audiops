@@ -120,6 +120,10 @@ class ResembleEnhancer(
         )
 
         // Relative cost of each stage per chunk, for smooth progress (flow runs the model 32 times).
+
+        /** Midpoint steps of the flow-matching stage (two network runs each); upstream uses 16. */
+        private const val FLOW_STEPS = 8
+
         private const val COST_DENOISER = 1
         private const val COST_ENCODER = 1
         private const val COST_FLOW = 6
@@ -210,7 +214,7 @@ class ResembleEnhancer(
         withModel(FLOW) { flow ->
             for (c in active) {
                 val condition = c.condition!!
-                c.state = MidpointSolver.integrate(c.state!!) { value, time -> flow.run(value, condition, floatArrayOf(time)) }
+                c.state = MidpointSolver.integrate(c.state!!, FLOW_STEPS) { value, time -> flow.run(value, condition, floatArrayOf(time)) }
                 c.condition = null
                 step(COST_FLOW)
             }

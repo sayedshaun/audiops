@@ -18,6 +18,15 @@ interface AudioEngine {
     /** Whether this platform can run text to speech. */
     val supportsSpeak: Boolean
 
+    /** Whether this platform can separate music into stems. */
+    val supportsSeparate: Boolean get() = false
+
+    /**
+     * Splits music into stems. Returns the paths of one WAV file per [SeparatedStem], in that order,
+     * in app storage.
+     */
+    fun separate(source: String, listener: ProcessingListener): List<String> = throw UnsupportedOnPlatformException()
+
     /** AI enhancement. Returns the path of a WAV file in app storage. */
     fun enhance(source: String, listener: ProcessingListener): String
 

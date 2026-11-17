@@ -62,6 +62,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.audiops.app.AudiopsState
 import com.audiops.app.AudiopsViewModel
 import com.audiops.app.Job
+import com.audiops.app.Stage
 import com.audiops.app.Tab
 import com.audiops.app.Tool
 import com.audiops.app.ToolCategory
@@ -467,7 +468,12 @@ private fun ProcessingBanner(job: Job, count: Int, onClick: () -> Unit) {
                 overflow = TextOverflow.Ellipsis,
             )
             Spacer(Modifier.height(12.dp))
-            WorkStatus(job.progressText(), job.progress?.fraction)
+            WorkStatus(
+                status = job.progressText(),
+                progress = job.progress?.fraction,
+                downloading = job.progress?.stage == Stage.DOWNLOADING_MODEL,
+                seed = job.id,
+            )
         }
     }
 }

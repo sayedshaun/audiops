@@ -512,3 +512,52 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 ### Not done
 - Studio is not faster yet. Next: profile it on the phone (denoiser, 32-step solver and vocoder are separate costs) and compare quality at fewer steps.
 - Fast mode speed and quality have not been measured on a phone.
+
+## 2026-11-17: Waveform progress for running jobs (`feature/waveform-progress`)
+
+- The spinner plus wavy bar read as a download for every job. `WorkStatus` now keeps that only for model downloads (`downloading`); processing draws `WaveformProgress`: 56 rounded bars shaped from the recording's peaks (`JobCard(peaks = ...)`, only when the recording on screen is the job's own; otherwise a stable shape from the job id), processed bars lit, the few ahead pulsing, and a travelling wave when progress is unknown. Progress uses the existing animation spec; the loop is a plain tween, so it follows the system animation scale.
+- Checked on the emulator with a speech clip (bars take the clip's shape and fill to 100%) and a 3 minute test tone (flat envelope, so uniform bars): the front glows. Not yet seen on a phone or in dark mode.
+
+## 2026-11-17: Format menu on Save (`feature/save-format-menu`)
+
+- The WAV/M4A/Opus `ConnectedChoice` was always visible on audio results. `AudioResultCard` now has a single `SaveButton`; with more than one format it opens a `DropdownMenu` under the button (format name and a hint each) and saves in the chosen one. Removed the remembered-format state and the unused `action_save_format` string.
+- Checked on the emulator: a Presets result shows player and Save; Save opens the three formats. Choosing one opens the system save dialog as before (not exercised end to end here). Not yet seen on a phone or in dark mode.
+
+## 2026-11-17: Supertonic 3 text to speech (`feature/supertonic-tts`)
+
+### Decision
+- The user chose Supertonic 3 as the TTS engine after hearing it next to Kokoro. In a CPU test on a PC it ran about 4x real time against 0.6x for Kokoro. Its licence is OpenRAIL-M (commercial use allowed, use-based restrictions that must be passed on); the user accepted that and asked for the files to be hosted on their Hugging Face account.
+
+### Added
+- Hugging Face repo `SayedShaun/supertonic-3-sherpa-onnx-int8` (first revision `bfe4786a22304e1e0672d3d7da90f9e63040e529`, now pinned at `25a63a9f1ba817eff0a1960616dc2e6834b6516b`): the int8 files of the k2-fsa `sherpa-onnx-supertonic-3-tts-int8-2026-05-11` package unmodified, plus Supertone's OpenRAIL-M text, the MIT notice for its code and a model card.
+- `TtsEngine.SUPERTONIC`, 62 voices (`supertonic-<language>-<f1|m1>`, 31 languages) sharing one set of 7 files (~145 MB); `supertonicSpeaker` maps the style to the model's speaker id; language goes to the model as `GenerationConfig.extra["lang"]`. Supertonic is listed first in each language and `defaultTtsVoice` is its English female voice. Nine new languages (Korean, Japanese, Arabic, Hindi, Indonesian, Bulgarian, Croatian, Estonian, Lithuanian) take the language count to 37.
+- `AiModel.SUPERTONIC` (Settings → Downloaded models), licence entry, `licenses/SUPERTONIC-3-OPENRAIL-M.txt`, third-party notices and NOTICE.
+- `TtsTest` covers the Supertonic files, speaker mapping and the language/default rules.
+
+### Verified
+- Emulator (x86_64 debug): first run downloaded the 7 files, synthesized an English sentence in the default voice, and Parakeet transcribed it back ("Hello this is Audio. This voice was created on your device, without an internet connection."). Voice styles checked by pitch: F1 about 188 Hz, M1 about 143 Hz.
+- Not yet run on a phone, and not yet timed on one.
+
+### Model card and download counting (same day)
+- The Hugging Face repo got a full model card (quick start in Python and Kotlin, files with SHA-256, voices, the 31 language codes, licence and responsible-use notes). The Python example was run unchanged against the published files (6.0 s of 44.1 kHz audio that transcribes back correctly), and all ten voice styles were checked by pitch: speaker ids 0 to 4 are female (about 160 to 200 Hz) and 5 to 9 male (about 90 to 120 Hz).
+- Hugging Face showed "Downloads are not tracked for this model": it counts requests to `config.json` (and a few similar files). Added a stub `config.json` (as Supertone's own repo has), and the app now fetches it with the other files, so first-time downloads in the app show up on the model page. The revision pin moved to `25a63a9f1ba817eff0a1960616dc2e6834b6516b`; the model files themselves are unchanged.
+
+## 2026-11-17: Music separation with SCNet (`feature/music-separation`)
+
+### Decision
+- The user asked for SCNet separation. Licence checked first: code MIT, weights confirmed MIT by the author (issue 35), but trained on MUSDB18-HQ (academic use); the user asked to build it on that basis, with the caveat labelled.
+
+### Added
+- `Tool.SEPARATE`, `JobSpec.Separate`, `SeparatedStem` (vocals, instrumental, drums, bass, other), `Job.stemPaths` and `Job.files` (every file a job owns; delete, clear and history pruning now remove all of them, which also stops subtitle files leaking), `AudioEngine.supportsSeparate` / `separate`, `AiModel.SCNET`.
+- `ScnetSeparator` (pure Kotlin pipeline), `MusicSeparation` (ONNX Runtime), the `:enhance` worker now takes a task (enhance or separate) and several outputs.
+- A stems card on the tool screen: each stem plays and saves on its own as WAV, M4A or Opus.
+- Licence entry, notices, `licenses/SCNET-MIT.txt`.
+- `tools/patch_onnxruntime_jni.py` and four patched `libonnxruntime4j_jni.so` (see AGENTS.md, "ONNX Runtime on Android").
+
+### Verified
+- Python reference (numpy STFT/iSTFT with onnxruntime) on an 11 s clip: the four stems add back up to the input at 40.5 dB; a speech clip lands 99% in the vocals stem; the channel layout is source-major (drums, bass, other, vocals; left real, left imaginary, right real, right imaginary per source).
+- Kotlin pipeline with the real model on this PC matches that reference at 87 to 135 dB per stem (`ScnetRealModelTest`); 4.5 to 5.7 s per 11 s segment on 4 CPU threads, about 2.2 GB peak.
+- Emulator (x86_64, 4 GB RAM): debug and shrunk release builds ran a full separation; the five files match the reference (vocals 82 dB, instrumental and other 60 dB; drums and bass are near silent in a speech clip, so their 16-bit rounding dominates).
+
+### Not done
+- Not run on a phone, so real speed and memory there are unknown; stems are mono; songs over 12 minutes are refused; quality on real music was not listened to (no music clip was available to the test).

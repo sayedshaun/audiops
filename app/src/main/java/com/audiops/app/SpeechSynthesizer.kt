@@ -6,21 +6,27 @@ import com.google.mediapipe.tasks.audio.texttospeech.TextToSpeech
 import com.google.mediapipe.tasks.audio.texttospeech.TextToSpeechOptions
 import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.core.Delegate
+import com.k2fsa.sherpa.onnx.GenerationConfig
 import com.k2fsa.sherpa.onnx.OfflineTts
 import com.k2fsa.sherpa.onnx.OfflineTtsConfig
 import com.k2fsa.sherpa.onnx.OfflineTtsModelConfig
+import com.k2fsa.sherpa.onnx.OfflineTtsSupertonicModelConfig
 import com.k2fsa.sherpa.onnx.OfflineTtsVitsModelConfig
 import java.io.File
 import java.util.zip.ZipInputStream
 
 /**
- * Text to speech. PocketTTS voices (Kyutai, INT8) run through MediaPipe's TextToSpeech task;
- * Piper voices run through sherpa-onnx with espeak-ng, whose data ships in the APK and is
- * unpacked on first use. Text is synthesized in sentence groups ([TextChunks]) so progress
+ * Text to speech. Supertonic 3 voices (Supertone, INT8, 31 languages) and Piper voices run through
+ * sherpa-onnx (Piper with espeak-ng, whose data ships in the APK and is unpacked on first use);
+ * PocketTTS voices (Kyutai, INT8) run through MediaPipe's TextToSpeech task. Text is synthesized in sentence groups ([TextChunks]) so progress
  * shows and Cancel takes effect between them. The engine is released after each job.
  */
 internal object SpeechSynthesizer {
     private const val GAP_SECONDS = 0.15f
+
+    /** Denoising steps per Supertonic sentence group; more is slower with little gain. */
+    private const val SUPERTONIC_STEPS = 5
+
     private const val ESPEAK_ASSET = "espeak-ng-data.zip"
 
     /** Bump when the bundled espeak-ng-data.zip changes, so it is unpacked again. */
@@ -40,6 +46,7 @@ internal object SpeechSynthesizer {
         when (voice.engine) {
             TtsEngine.POCKET -> pocket(context, directory, voice, speed, pieces, output, listener)
             TtsEngine.PIPER -> piper(context, directory, voice, speed, pieces, output, listener)
+            TtsEngine.SUPERTONIC -> supertonic(directory, voice, speed, pieces, output, listener)
         }
     }
 
@@ -49,6 +56,9 @@ internal object SpeechSynthesizer {
         TtsEngine.POCKET -> "pocket-tts/${voice.revision}"
 
         TtsEngine.PIPER -> "piper-voices/${voice.repo.substringAfter('/')}/${voice.revision}"
+
+        // One folder for every Supertonic language and voice.
+        TtsEngine.SUPERTONIC -> "supertonic-3/${voice.revision}"
     }
 
     private fun pocket(
@@ -75,6 +85,49 @@ internal object SpeechSynthesizer {
                 val result = tts.synthesize(piece, synthesis)
                 result.samples to result.sampleRateHz
             }
+        }
+    }
+
+    private fun supertonic(
+        directory: File,
+        voice: TtsVoice,
+        speed: Float,
+        pieces: List<String>,
+        output: File,
+        listener: ProcessingListener,
+    ) {
+        fun path(name: String) = File(directory, name).absolutePath
+        val tts = OfflineTts(
+            config = OfflineTtsConfig(
+                model = OfflineTtsModelConfig(
+                    supertonic = OfflineTtsSupertonicModelConfig(
+                        durationPredictor = path("duration_predictor.int8.onnx"),
+                        textEncoder = path("text_encoder.int8.onnx"),
+                        vectorEstimator = path("vector_estimator.int8.onnx"),
+                        vocoder = path("vocoder.int8.onnx"),
+                        ttsJson = path("tts.json"),
+                        unicodeIndexer = path("unicode_indexer.bin"),
+                        voiceStyle = path("voice.bin"),
+                    ),
+                    numThreads = 4,
+                    provider = "cpu",
+                ),
+            ),
+        )
+        try {
+            // The language code goes to the model in `extra`; the voice is one of its ten preset styles.
+            val generation = GenerationConfig(
+                speed = speed,
+                sid = supertonicSpeaker(voice),
+                numSteps = SUPERTONIC_STEPS,
+                extra = mapOf("lang" to voice.id.removePrefix("supertonic-").substringBefore('-')),
+            )
+            write(output, pieces, listener) { piece ->
+                val audio = tts.generateWithConfig(piece, generation)
+                audio.samples to audio.sampleRate
+            }
+        } finally {
+            tts.release()
         }
     }
 

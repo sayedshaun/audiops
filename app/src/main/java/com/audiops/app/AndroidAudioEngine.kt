@@ -23,6 +23,7 @@ class AndroidAudioEngine(context: Context) :
     override val supportsEnhance: Boolean = true
     override val supportsTranscribe: Boolean = true
     override val supportsSpeak: Boolean = true
+    override val supportsSeparate: Boolean = true
 
     override fun decode(source: String): File = AudioDecoder.decode(context, source.toUri(), workDir)
 
@@ -31,6 +32,13 @@ class AndroidAudioEngine(context: Context) :
         val output = newOutput("wav")
         EnhanceClient.run(context, pcm, output, listener)
         output.absolutePath
+    }
+
+    /** Music separation also runs in the isolated worker process: one segment needs about 2 GB. */
+    override fun separate(source: String, listener: ProcessingListener): List<String> = withDecoded(source) { pcm ->
+        val outputs = SeparatedStem.entries.map { newOutput("wav") }
+        EnhanceClient.separate(context, pcm, outputs, listener)
+        outputs.map { it.absolutePath }
     }
 
     override fun transcribe(source: String, language: String, model: TranscriptionModel, listener: ProcessingListener): String =

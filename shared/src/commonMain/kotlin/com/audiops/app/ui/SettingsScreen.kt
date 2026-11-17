@@ -125,8 +125,12 @@ import com.audiops.shared.resources.license_pocket
 import com.audiops.shared.resources.license_pocket_summary
 import com.audiops.shared.resources.license_resemble
 import com.audiops.shared.resources.license_resemble_summary
+import com.audiops.shared.resources.license_scnet
+import com.audiops.shared.resources.license_scnet_summary
 import com.audiops.shared.resources.license_sherpa
 import com.audiops.shared.resources.license_sherpa_summary
+import com.audiops.shared.resources.license_supertonic
+import com.audiops.shared.resources.license_supertonic_summary
 import com.audiops.shared.resources.license_whisper
 import com.audiops.shared.resources.license_whisper_summary
 import com.audiops.shared.resources.open_link
@@ -199,6 +203,18 @@ private val licenses = listOf(
         androidOnly = true,
     ),
     LicenseEntry(Res.string.license_dpdfnet, Res.string.license_dpdfnet_summary, "https://github.com/ceva-ip/DPDFNet", androidOnly = true),
+    LicenseEntry(
+        Res.string.license_supertonic,
+        Res.string.license_supertonic_summary,
+        "https://huggingface.co/Supertone/supertonic-3",
+        androidOnly = true,
+    ),
+    LicenseEntry(
+        Res.string.license_scnet,
+        Res.string.license_scnet_summary,
+        "https://github.com/starrytong/SCNet",
+        androidOnly = true,
+    ),
     LicenseEntry(
         Res.string.license_pocket,
         Res.string.license_pocket_summary,

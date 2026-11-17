@@ -1,7 +1,7 @@
 package com.audiops.app
 
-/** Text-to-speech engines. PocketTTS runs through MediaPipe, Piper through sherpa-onnx (with espeak-ng). */
-enum class TtsEngine { POCKET, PIPER }
+/** Text-to-speech engines. PocketTTS runs through MediaPipe; Piper and Supertonic through sherpa-onnx (Piper with espeak-ng). */
+enum class TtsEngine { POCKET, PIPER, SUPERTONIC }
 
 /**
  * One downloadable voice. [language] is a BCP 47 tag; [files] maps each file in the Hugging Face
@@ -48,12 +48,50 @@ private fun pocket(id: String, language: String, name: String, file: String): Tt
     )
 }
 
-/**
- * Every voice offered, grouped by language in display order. PocketTTS (Kyutai, CC BY 4.0) covers
- * its seven languages; Piper voices (one per language, CC0, public domain or CC BY 4.0) cover the
- * rest. Voices with unclear licences are left out.
- */
-val ttsVoices: List<TtsVoice> = listOf(
+private const val SUPERTONIC_REPO = "SayedShaun/supertonic-3-sherpa-onnx-int8"
+private const val SUPERTONIC_REVISION = "25a63a9f1ba817eff0a1960616dc2e6834b6516b"
+
+/** Supertonic 3 int8 files (sherpa-onnx layout, one set for every language and voice): file to SHA-256. */
+private val SUPERTONIC_FILES = mapOf(
+    "duration_predictor.int8.onnx" to "c3eb91414d5ff8a7a239b7fe9e34e7e2bf8a8140d8375ffb14718b1c639325db",
+    "text_encoder.int8.onnx" to "c7befd5ea8c3119769e8a6c1486c4edc6a3bc8365c67621c881bbb774b9902ff",
+    "vector_estimator.int8.onnx" to "20cd86fa5c6effedfda0e7cffe5b0569ca401c440a0c3a1d72bf39286c0db3fd",
+    "vocoder.int8.onnx" to "e923d60f53f95eb1ce235f1dc33ec56d9c057823c96fa6f8acf98f32b0da6152",
+    "tts.json" to "42078d3aef1cd43ab43021f3c54f47d2d75ceb4e75f627f118890128b06a0d09",
+    "unicode_indexer.bin" to "8402ca48e5189a8950138580b0fff64db6f072f24ac07cd54ba8b2fbb9883b30",
+    "voice.bin" to "67d5209b0ee8ce6c74105ffbe12fe6a7628aea3b4ba2fcb308a4a67938a93ce8",
+    // A stub the model never reads: Hugging Face counts a download when it is fetched, so the model page shows usage.
+    "config.json" to "74d23e4e44bd8c6223eaca9cfd59ef38cd896b58923859bc0faa092b36405d4f",
+)
+
+/** Supertonic's own language codes, each with the language tag used in this catalogue. */
+private val SUPERTONIC_LANGUAGES = listOf(
+    "en" to "en-US", "ko" to "ko", "ja" to "ja", "ar" to "ar", "bg" to "bg", "cs" to "cs", "da" to "da", "de" to "de-DE",
+    "el" to "el", "es" to "es-ES", "et" to "et", "fi" to "fi", "fr" to "fr-FR", "hi" to "hi", "hr" to "hr", "hu" to "hu",
+    "id" to "id", "it" to "it-IT", "lt" to "lt", "lv" to "lv", "nl" to "nl-NL", "pl" to "pl", "pt" to "pt-BR", "ro" to "ro",
+    "ru" to "ru", "sk" to "sk", "sl" to "sl", "sv" to "sv", "tr" to "tr", "uk" to "uk", "vi" to "vi",
+)
+
+/** The preset voice styles offered per language: id suffix to display name (a female and a male voice). */
+private val SUPERTONIC_STYLES = listOf("f1" to "Female", "m1" to "Male")
+
+/** Supertonic's ten preset styles in the order of its voice table (speaker ids 0 to 9). */
+val SupertonicStyles: List<String> = listOf("f1", "f2", "f3", "f4", "f5", "m1", "m2", "m3", "m4", "m5")
+
+/** Speaker id of a Supertonic voice (the suffix of its id, such as `f1`). */
+fun supertonicSpeaker(voice: TtsVoice): Int =
+    SupertonicStyles.indexOf(voice.id.substringAfterLast('-')).also { check(it >= 0) { voice.id } }
+
+private val supertonicVoices: List<TtsVoice> = SUPERTONIC_LANGUAGES.flatMap { (code, language) ->
+    SUPERTONIC_STYLES.map { (style, name) ->
+        TtsVoice(
+            "supertonic-$code-$style", language, name, TtsEngine.SUPERTONIC, "OpenRAIL-M", 145, SUPERTONIC_REPO, SUPERTONIC_REVISION,
+            SUPERTONIC_FILES,
+        )
+    }
+}
+
+private val otherVoices: List<TtsVoice> = listOf(
     pocket("alba", "en-US", "Alba", "pocket_tts_en_int8.litertlm"),
     pocket("marius", "en-US", "Marius", "pocket_tts_en_int8.litertlm"),
     pocket("javert", "en-US", "Javert", "pocket_tts_en_int8.litertlm"),
@@ -237,6 +275,16 @@ val ttsVoices: List<TtsVoice> = listOf(
         ),
     ),
 )
+
+/**
+ * Every voice offered, grouped by language in display order. In each language Supertonic 3
+ * (OpenRAIL-M, 31 languages) comes first and is the default; PocketTTS (Kyutai, CC BY 4.0) and Piper
+ * voices (CC0, public domain or CC BY 4.0) follow where they exist. Voices with unclear licences are left out.
+ */
+val ttsVoices: List<TtsVoice> = run {
+    val languages = (otherVoices.map { it.language } + SUPERTONIC_LANGUAGES.map { it.second }).distinct()
+    languages.flatMap { language -> supertonicVoices.filter { it.language == language } + otherVoices.filter { it.language == language } }
+}
 
 /** Languages that have at least one voice, in catalogue order. */
 val ttsLanguages: List<String> = ttsVoices.map { it.language }.distinct()

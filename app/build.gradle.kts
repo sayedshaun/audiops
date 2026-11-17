@@ -73,6 +73,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    packaging {
+        // sherpa-onnx and onnxruntime-android both ship libonnxruntime.so; sherpa's 1.28.2 serves both. The Java bridge
+        // (libonnxruntime4j_jni.so) is the copy in src/main/jniLibs, patched to ask for that library's symbol version
+        // (see tools/patch_onnxruntime_jni.py); the project's own jniLibs come before the dependency's.
+        jniLibs.pickFirsts += listOf("**/libonnxruntime.so", "**/libonnxruntime4j_jni.so")
+    }
+
     lint {
         abortOnError = true
         checkReleaseBuilds = true
@@ -83,6 +90,8 @@ dependencies {
     implementation(project(":shared"))
     implementation(files("libs/sherpa-onnx-1.13.8.aar"))
     implementation("com.google.ai.edge.litert:litert:2.3.0")
+    // Music separation (SCNet). 1.28.x matches the ONNX Runtime 1.28.2 bundled in the sherpa-onnx AAR, which supplies the native library (see packaging).
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.28.0")
     // Text to speech with PocketTTS (MediaPipe TextToSpeech task, self-contained JNI library).
     implementation("com.google.mediapipe:tasks-audio:1.2.3")
 

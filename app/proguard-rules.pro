@@ -2,6 +2,7 @@
 # sherpa-onnx and LiteRT are reached through JNI, so their classes and native
 # method names must survive shrinking and obfuscation.
 -keep class com.k2fsa.sherpa.onnx.** { *; }
+-keep class ai.onnxruntime.** { *; }
 -keep class com.google.ai.edge.litert.** { *; }
 -keepclasseswithmembernames class * {
     native <methods>;
