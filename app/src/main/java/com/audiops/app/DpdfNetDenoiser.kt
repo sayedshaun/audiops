@@ -4,6 +4,7 @@ import android.content.Context
 import com.audiops.app.dsp.AudioProcessor
 import com.audiops.app.dsp.ChunkedEnhancer
 import com.audiops.app.dsp.ResampledProcessor
+import com.audiops.app.dsp.runInWholeFrames
 import com.k2fsa.sherpa.onnx.OfflineSpeechDenoiser
 import com.k2fsa.sherpa.onnx.OfflineSpeechDenoiserConfig
 import com.k2fsa.sherpa.onnx.OfflineSpeechDenoiserDpdfNetModelConfig
@@ -30,6 +31,9 @@ internal object DpdfNetDenoiser {
     private const val WARMUP = 4 * MODEL_RATE
     private const val LOOKAHEAD = MODEL_RATE / 5
 
+    /** DPDFNet works in 10 ms frames and drops a partial last frame. */
+    private const val HOP = MODEL_RATE / 100
+
     fun processor(context: Context, strength: Float, listener: ProcessingListener): AudioProcessor {
         val directory = ModelFiles.ensure(context.noBackupFilesDir, FOLDER, BASE_URL, mapOf(MODEL to DIGEST), listener)
         val denoiser = OfflineSpeechDenoiser(
@@ -43,7 +47,9 @@ internal object DpdfNetDenoiser {
                 ),
             ),
         )
-        val chunked = ChunkedEnhancer(BODY, WARMUP, LOOKAHEAD) { samples -> denoiser.run(samples, MODEL_RATE).samples }
+        val chunked = ChunkedEnhancer(BODY, WARMUP, LOOKAHEAD) { samples ->
+            runInWholeFrames(samples, HOP) { denoiser.run(it, MODEL_RATE).samples }
+        }
         return ReleasingProcessor(ResampledProcessor(MODEL_RATE, chunked)) { denoiser.release() }
     }
 

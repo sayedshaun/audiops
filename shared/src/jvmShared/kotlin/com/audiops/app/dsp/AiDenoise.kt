@@ -75,6 +75,19 @@ class ChunkedEnhancer(
 }
 
 /**
+ * Runs a frame-based model on [samples] and returns exactly as many samples as it was given.
+ * Such models (DPDFNet) drop a partial last frame, so the input is padded with silence to a whole
+ * number of [hop]-sized frames and the result is cut back to the original length.
+ */
+fun runInWholeFrames(samples: FloatArray, hop: Int, run: (FloatArray) -> FloatArray): FloatArray {
+    require(hop > 0)
+    val partial = samples.size % hop
+    val padded = if (partial == 0) samples else samples.copyOf(samples.size + hop - partial)
+    val out = run(padded)
+    return if (out.size == samples.size) out else out.copyOf(samples.size) // cuts the padding, or pads a short result
+}
+
+/**
  * Wraps a processor that works at [modelRate]: resamples the pipeline audio to that rate,
  * processes it, and resamples back (with an anti-alias filter when going down).
  */
