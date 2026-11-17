@@ -4,6 +4,13 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
+/**
+ * How Enhance speech works. [FAST] removes noise with the small AI noise-reduction model (seconds);
+ * [STUDIO] restores the voice with the large Resemble Enhance model (minutes on a phone).
+ */
+@Serializable
+enum class EnhanceMode { FAST, STUDIO }
+
 /** Groups shown on the Tools tab. */
 enum class ToolCategory { AI, CLEAN_UP, EDIT, EFFECTS, UTILITIES }
 
@@ -181,9 +188,10 @@ sealed interface AudioOperation {
 /** What a job does. */
 @Serializable
 sealed interface JobSpec {
+    /** History saved before modes existed has no [mode] and was always the Studio model. */
     @Serializable
     @SerialName("enhance")
-    data object Enhance : JobSpec
+    data class Enhance(val mode: EnhanceMode = EnhanceMode.STUDIO) : JobSpec
 
     @Serializable
     @SerialName("transcribe")

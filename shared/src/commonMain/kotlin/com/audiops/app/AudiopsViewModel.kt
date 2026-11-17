@@ -348,7 +348,14 @@ class AudiopsViewModel(
         try {
             val done = runOnWorker {
                 when (val spec = job.spec) {
-                    JobSpec.Enhance -> job.copy(outputPath = engine.enhance(job.inputId, listener))
+                    is JobSpec.Enhance -> job.copy(
+                        outputPath = when (spec.mode) {
+                            // Fast: the AI noise-reduction model at full strength; Studio: Resemble Enhance.
+                            EnhanceMode.FAST -> engine.process(job.inputId, listOf(AudioOperation.Denoise(1f)), listener)
+
+                            EnhanceMode.STUDIO -> engine.enhance(job.inputId, listener)
+                        },
+                    )
 
                     is JobSpec.Transcribe -> {
                         val path = engine.transcribe(job.inputId, spec.language.code, spec.model, listener)

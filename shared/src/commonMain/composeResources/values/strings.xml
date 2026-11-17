@@ -139,7 +139,11 @@
     <string name="action_open_tool">Open in tool</string>
     <string name="player_unavailable">Can\'t play</string>
 
-    <string name="enhance_hint">The first run downloads about 570 MB of model files. Longer recordings take more time.</string>
+    <string name="enhance_hint">Fast downloads about 11 MB once and takes seconds. Studio downloads about 570 MB once and takes minutes. Longer recordings take more time.</string>
+    <string name="enhance_mode_fast">Fast</string>
+    <string name="enhance_mode_fast_description">Removes noise and hiss with a small AI model. Takes seconds.</string>
+    <string name="enhance_mode_studio">Studio</string>
+    <string name="enhance_mode_studio_description">Restores the voice to a cleaner, fuller sound with a large AI model. Takes several minutes, even for short recordings.</string>
     <string name="transcribe_hint">Each model downloads once, the first time it is needed. Automatic uses Whisper Tiny (about 100 MB) to detect the language, then about 640 MB for English and European languages, 370 MB for other languages or 75 MB for Bangla.</string>
     <string name="transcribe_language_hint">Auto detects the language: English and other European languages use Parakeet v3 (with punctuation), Bangla a dedicated model, and other languages Omnilingual ASR. Urdu uses Whisper Tiny, which is less weak on Urdu.</string>
     <string name="transcribe_whisper_hint">Whisper Tiny is small and fast but less accurate. Pick the language, or Auto to let it detect the language.</string>

@@ -3,6 +3,7 @@ package com.audiops.app.ui
 import androidx.compose.runtime.Composable
 import com.audiops.app.AiModel
 import com.audiops.app.AudioOperation
+import com.audiops.app.EnhanceMode
 import com.audiops.app.EqPreset
 import com.audiops.app.FailureKind
 import com.audiops.app.InputProblem
@@ -32,6 +33,10 @@ import com.audiops.shared.resources.category_clean_up
 import com.audiops.shared.resources.category_edit
 import com.audiops.shared.resources.category_effects
 import com.audiops.shared.resources.category_utilities
+import com.audiops.shared.resources.enhance_mode_fast
+import com.audiops.shared.resources.enhance_mode_fast_description
+import com.audiops.shared.resources.enhance_mode_studio
+import com.audiops.shared.resources.enhance_mode_studio_description
 import com.audiops.shared.resources.eq_bass_boost
 import com.audiops.shared.resources.eq_remove_rumble
 import com.audiops.shared.resources.eq_telephone
@@ -306,6 +311,18 @@ val SaveFormat.label: StringResource
         SaveFormat.OPUS -> Res.string.format_opus
     }
 
+val EnhanceMode.title: StringResource
+    get() = when (this) {
+        EnhanceMode.FAST -> Res.string.enhance_mode_fast
+        EnhanceMode.STUDIO -> Res.string.enhance_mode_studio
+    }
+
+val EnhanceMode.description: StringResource
+    get() = when (this) {
+        EnhanceMode.FAST -> Res.string.enhance_mode_fast_description
+        EnhanceMode.STUDIO -> Res.string.enhance_mode_studio_description
+    }
+
 val Preset.title: StringResource
     get() = when (this) {
         Preset.PODCAST -> Res.string.preset_podcast
@@ -457,7 +474,9 @@ fun InputProblem.text(): String = when (this) {
 /** Short description of what a job did, such as "Peak −1 dB" or "1.25× · +2 st". */
 @Composable
 fun JobSpec.summary(): String? = when (this) {
-    JobSpec.Enhance, JobSpec.Analyze -> null
+    JobSpec.Analyze -> null
+
+    is JobSpec.Enhance -> stringResource(mode.title)
 
     is JobSpec.Transcribe -> stringResource(language.label)
 

@@ -34,7 +34,8 @@ class ModelTest {
             AudioOperation.Resample(16_000),
         )
         val specs = listOf(
-            JobSpec.Enhance,
+            JobSpec.Enhance(),
+            JobSpec.Enhance(EnhanceMode.FAST),
             JobSpec.Analyze,
             JobSpec.Transcribe(SpeechLanguage.BANGLA),
             JobSpec.Transcribe(SpeechLanguage.AUTO, TranscriptionModel.PARAKEET),
@@ -74,6 +75,13 @@ class ModelTest {
     @Test fun transcriptionsSavedBeforeTheModelChoiceLoadAsAuto() {
         val old = json.decodeFromString<JobSpec>("""{"type":"transcribe","language":"BANGLA"}""")
         assertEquals(JobSpec.Transcribe(SpeechLanguage.BANGLA, TranscriptionModel.AUTO), old)
+    }
+
+    @Test fun enhanceSavedBeforeModesLoadsAsStudio() {
+        // Older history has no mode; it was always the Resemble model.
+        assertEquals(JobSpec.Enhance(EnhanceMode.STUDIO), json.decodeFromString<JobSpec>("""{"type":"enhance"}"""))
+        val fast = JobSpec.Enhance(EnhanceMode.FAST)
+        assertEquals(fast, json.decodeFromString<JobSpec>(json.encodeToString<JobSpec>(fast)))
     }
 
     @Test fun storedTypeNamesStayStable() {

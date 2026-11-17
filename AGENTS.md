@@ -18,7 +18,7 @@ Audiops is an open-source, on-device audio toolkit. Audio never leaves the devic
 
 | Category | Tools | Engine |
 | --- | --- | --- |
-| AI | Enhance speech, Transcribe, Text to speech | Resemble Enhance (LiteRT "mobile" set: INT8 dynamic + re-exported FP16 vocoder, ~570 MB); Parakeet TDT 0.6B v3 (English and European languages), Omnilingual ASR 300M (other languages, with a Whisper Tiny fallback), Whisper Tiny (Urdu, language detection), Bangla Zipformer (Bangla) (sherpa-onnx); Automatic routing or a model picked in Settings; text to speech: PocketTTS (Kyutai, via MediaPipe `TextToSpeech`, 7 languages) and Piper voices (sherpa-onnx VITS + espeak-ng, 21 more languages), 28 languages in all |
+| AI | Enhance speech (Fast: DPDFNet noise reduction; Studio: Resemble Enhance), Transcribe, Text to speech | Resemble Enhance (LiteRT "mobile" set: INT8 dynamic + re-exported FP16 vocoder, ~570 MB); Parakeet TDT 0.6B v3 (English and European languages), Omnilingual ASR 300M (other languages, with a Whisper Tiny fallback), Whisper Tiny (Urdu, language detection), Bangla Zipformer (Bangla) (sherpa-onnx); Automatic routing or a model picked in Settings; text to speech: PocketTTS (Kyutai, via MediaPipe `TextToSpeech`, 7 languages) and Piper voices (sherpa-onnx VITS + espeak-ng, 21 more languages), 28 languages in all |
 | Clean up | Presets (one-tap chains of the tools below), Noise reduction, Remove silence | DPDFNet AI (Android, sherpa-onnx; `AiDenoiser`), spectral subtraction elsewhere; frame-based silence gate |
 | Edit | Trim, Fade, Volume (peak, loudness BS.1770, gain) | Streaming DSP |
 | Effects | Speed and pitch, Equalizer | WSOLA time-stretch + cubic resampler; RBJ biquads |

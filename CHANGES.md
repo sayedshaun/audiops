@@ -497,3 +497,18 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 - Moved the global recording card entry from Unreleased into 0.2.0 (it merged before the release), updated the Record entry to say the button is on the Tools tab, and set the 0.2.0 date to 2026-11-17.
 - Tool pages with no recording chosen now show a Choose file button instead of Go to Tools (the one case where a tool page has a picker); `ToolActions.onChoose` is back for it. Choosing there sets the same global recording.
+
+## 2026-11-17: Fast and Studio modes for Enhance speech (`feature/enhance-fast-mode`)
+
+### Decision
+- Resemble Enhance measured about 3 minutes for an 11 s clip on the Moto g96 (~16x slower than real time). The user asked for a faster option; the noise-reduction model (DPDFNet) is far quicker, so Enhance now offers both rather than replacing Resemble.
+
+### Added
+- `EnhanceMode { FAST, STUDIO }` and `JobSpec.Enhance(mode)` (was a data object). History saved before modes has no `mode` and decodes as Studio.
+- `AudiopsViewModel`: Fast runs `engine.process` with `AudioOperation.Denoise(1f)` (the AI denoiser at full strength on Android); Studio calls `engine.enhance` as before.
+- Enhance screen: Fast/Studio toggle (Fast default) with a description of each; strings and hint updated.
+- Tests: `enhanceModesUseTheirOwnModel` (ViewModel) and `enhanceSavedBeforeModesLoadsAsStudio` (ModelTest).
+
+### Not done
+- Studio is not faster yet. Next: profile it on the phone (denoiser, 32-step solver and vocoder are separate costs) and compare quality at fewer steps.
+- Fast mode speed and quality have not been measured on a phone.

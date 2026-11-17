@@ -13,6 +13,9 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+### Added
+- **Fast and Studio modes for Enhance speech.** Enhance now offers two modes. **Fast** (the default) removes noise and hiss with the small AI noise-reduction model (about 11 MB) and takes seconds. **Studio** is the large Resemble Enhance model (about 570 MB) that restores the voice to a fuller sound; on a phone it takes minutes even for a short recording. Enhance jobs in your history from before still show as Studio.
+
 ## [0.2.0] - 2026-11-17
 
 ### Added

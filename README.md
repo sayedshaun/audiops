@@ -26,7 +26,7 @@ Nothing you open is uploaded. AI models download once, then run offline.
 
 | | Tool | What it does |
 | :-: | --- | --- |
-| ✨ | **Enhance speech** | AI restoration of voice recordings ([Resemble Enhance](https://huggingface.co/SayedShaun/resemble-enhance-litert), LiteRT, mobile export). |
+| ✨ | **Enhance speech** | **Fast** mode removes noise in seconds (DPDFNet); **Studio** mode restores voice recordings with [Resemble Enhance](https://huggingface.co/SayedShaun/resemble-enhance-litert) (LiteRT, mobile export), which takes minutes on a phone. |
 | 🗣️ | **Transcribe** | Speech to text in Bangla, Urdu and many other languages, with punctuation for English and European languages ([Parakeet v3](https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8), [Omnilingual ASR](https://huggingface.co/csukuangfj/sherpa-onnx-omnilingual-asr-1600-languages-300M-ctc-int8-2025-11-12), [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny) and [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx); sherpa-onnx). |
 | 📣 | **Text to speech** | Turn text into speech in 28 languages, on your phone ([PocketTTS](https://huggingface.co/litert-community/pocket-tts) through MediaPipe for English, French, German, Spanish, Italian, Portuguese and Dutch; [Piper](https://github.com/rhasspy/piper) voices through sherpa-onnx for 21 more). |
 | 🌊 | **Noise reduction** | On Android, [DPDFNet](https://github.com/ceva-ip/DPDFNet) AI speech enhancement (48 kHz) removes background noise; on desktop, spectral subtraction learns the noise from quiet passages. |
@@ -61,7 +61,7 @@ Only the two AI tools use machine-learning models. Every other tool is classic s
 
 ### Which model runs when
 
-- **Enhance speech** always uses Resemble Enhance. Audio is converted to 44.1 kHz mono and processed in one-second chunks with 50% overlap through five networks: a **denoiser**, an **encoder**, a **flow-matching step** (16 midpoint steps, 32 evaluations), a **decoder** and a **vocoder** that produces the waveform. Long recordings go through in 20-second windows joined with a crossfade.
+- **Enhance speech** in Studio mode uses Resemble Enhance (Fast mode runs the DPDFNet noise-reduction model instead). Audio is converted to 44.1 kHz mono and processed in one-second chunks with 50% overlap through five networks: a **denoiser**, an **encoder**, a **flow-matching step** (16 midpoint steps, 32 evaluations), a **decoder** and a **vocoder** that produces the waveform. Long recordings go through in 20-second windows joined with a crossfade.
 - **Transcribe** uses the model chosen in **Settings → Transcription → Transcription model**. **Automatic** (the default) picks one:
   - The language you choose decides first: **Bangla** uses the dedicated Bangla Zipformer (20-second sections, beam search) and **Urdu** uses Whisper Tiny, which scored better than Omnilingual on Urdu in our benchmark.
   - With **Auto**, Whisper Tiny detects the language from the first 30 seconds. Bangla goes to Bangla Zipformer, Urdu to Whisper Tiny, and Parakeet's 25 European languages (including English) to **Parakeet v3**, which adds punctuation and capital letters. In our test (FLEURS, 25 clips per language, CPU) it made 2.5 to 4 times fewer errors than Omnilingual on English, French, Spanish and German (word error 2 to 8%) and ran about 1.7 times faster.

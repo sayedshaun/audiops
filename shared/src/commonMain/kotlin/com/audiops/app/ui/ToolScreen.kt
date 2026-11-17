@@ -78,6 +78,7 @@ import androidx.compose.ui.unit.dp
 import com.audiops.app.AudioInput
 import com.audiops.app.AudioOperation
 import com.audiops.app.AudioReport
+import com.audiops.app.EnhanceMode
 import com.audiops.app.EqPreset
 import com.audiops.app.InputProblem
 import com.audiops.app.Job
@@ -292,7 +293,7 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
     }
 }
 
-private val Tool.hasOptions: Boolean get() = this != Tool.ENHANCE && this != Tool.ANALYZE
+private val Tool.hasOptions: Boolean get() = this != Tool.ANALYZE
 
 @Composable
 internal fun OptionsCard(content: @Composable () -> Unit) {
@@ -474,6 +475,7 @@ internal fun InputCard(
 /** Tool option values. One instance holds every tool's settings; each tool reads its own. */
 data class ToolOptions(
     val denoiseLevel: Int = 1, // 0 light, 1 medium, 2 strong
+    val enhanceMode: Int = 0, // 0 fast, 1 studio
     val silenceThresholdDb: Float = -40f,
     val silenceMinSeconds: Float = 0.8f,
     val trimStart: Float = 0f,
@@ -490,7 +492,7 @@ data class ToolOptions(
     val preset: Preset = Preset.PODCAST,
 ) {
     fun toSpec(tool: Tool, language: SpeechLanguage, model: TranscriptionModel, durationMs: Long?): JobSpec = when (tool) {
-        Tool.ENHANCE -> JobSpec.Enhance
+        Tool.ENHANCE -> JobSpec.Enhance(if (enhanceMode == 0) EnhanceMode.FAST else EnhanceMode.STUDIO)
 
         // Text to speech has its own screen (SpeakScreen) and never builds a spec here.
         Tool.SPEAK -> error("Text to speech uses SpeakScreen")
@@ -536,7 +538,7 @@ private val ToolOptionsSaver = androidx.compose.runtime.saveable.Saver<ToolOptio
         listOf(
             it.denoiseLevel, it.silenceThresholdDb, it.silenceMinSeconds, it.trimStart, it.trimEnd,
             it.fadeInSeconds, it.fadeOutSeconds, it.volumeMode, it.loudnessTarget.name, it.gainDb,
-            it.speed, it.semitones, it.eqPreset.name, it.sampleRate, it.preset.name,
+            it.speed, it.semitones, it.eqPreset.name, it.sampleRate, it.preset.name, it.enhanceMode,
         )
     },
     restore = {
@@ -546,7 +548,7 @@ private val ToolOptionsSaver = androidx.compose.runtime.saveable.Saver<ToolOptio
             fadeOutSeconds = it[6] as Float, volumeMode = it[7] as Int,
             loudnessTarget = LoudnessTarget.valueOf(it[8] as String), gainDb = it[9] as Float,
             speed = it[10] as Float, semitones = it[11] as Float, eqPreset = EqPreset.valueOf(it[12] as String),
-            sampleRate = it[13] as Int, preset = Preset.valueOf(it[14] as String),
+            sampleRate = it[13] as Int, preset = Preset.valueOf(it[14] as String), enhanceMode = it[15] as Int,
         )
     },
 )
@@ -729,7 +731,20 @@ private fun ToolOptionsEditor(
             Hint(stringResource(Res.string.convert_hint))
         }
 
-        Tool.ENHANCE, Tool.ANALYZE, Tool.SPEAK -> Unit
+        Tool.ENHANCE -> {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                EnhanceMode.entries.forEach { mode ->
+                    ToggleButton(
+                        checked = options.enhanceMode == mode.ordinal,
+                        onCheckedChange = { onChange(options.copy(enhanceMode = mode.ordinal)) },
+                        modifier = Modifier.heightIn(min = 48.dp).semantics { role = Role.RadioButton },
+                    ) { Text(stringResource(mode.title)) }
+                }
+            }
+            Hint(stringResource(EnhanceMode.entries[options.enhanceMode].description))
+        }
+
+        Tool.ANALYZE, Tool.SPEAK -> Unit
     }
 }
 

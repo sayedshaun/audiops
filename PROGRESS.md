@@ -45,6 +45,8 @@ Audiops is a Kotlin Multiplatform audio toolkit: eleven tools on Android, nine o
 
 ## Next steps
 
+- **Enhance Studio speed:** profile Resemble on the phone and try fewer solver steps (it uses 32 evaluations today); Fast mode (DPDFNet) is the quick option.
+
 1. Test background jobs, Transcribe with Omnilingual (including Urdu, which comes out in Devanagari), and a long (3–5 minute) file on the Moto g96 (screen off, swipe away, Android 16).
 2. Launch and screenshot the desktop app on Linux and Windows.
 3. Faster enhancement (fewer flow steps or a quality setting), after measuring where the time goes.

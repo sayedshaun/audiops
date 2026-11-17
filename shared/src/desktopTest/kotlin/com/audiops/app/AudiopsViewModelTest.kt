@@ -44,7 +44,12 @@ private class FakeEngine(
 
     @Volatile var transcript = "hello world"
 
-    override fun enhance(source: String, listener: ProcessingListener) = "/out/enhanced.wav"
+    val enhanced = AtomicInteger()
+
+    override fun enhance(source: String, listener: ProcessingListener): String {
+        enhanced.incrementAndGet()
+        return "/out/enhanced.wav"
+    }
 
     @Volatile var subtitles: String? = null
 
@@ -253,8 +258,23 @@ class AudiopsViewModelTest {
     @Test fun unsupportedToolsFailWithoutRunning() {
         val vm = viewModel(FakeEngine(supportsEnhance = false))
         assertEquals(setOf(Tool.ENHANCE), vm.unsupportedTools)
-        vm.start(Tool.ENHANCE, JobSpec.Enhance)
+        vm.start(Tool.ENHANCE, JobSpec.Enhance())
         assertEquals(FailureKind.UNSUPPORTED, vm.awaitJobs(1, JobStatus.FAILED).single().failure)
+    }
+
+    @Test fun enhanceModesUseTheirOwnModel() {
+        val engine = FakeEngine()
+        val vm = viewModel(engine)
+        vm.start(Tool.ENHANCE, JobSpec.Enhance(EnhanceMode.FAST))
+        val fast = vm.awaitJobs(1, JobStatus.DONE).single()
+        // Fast runs the AI noise-reduction operation at full strength; Studio runs Resemble Enhance.
+        assertEquals(listOf(listOf<AudioOperation>(AudioOperation.Denoise(1f))), engine.processed.toList())
+        assertEquals(0, engine.enhanced.get())
+        assertEquals("/out/processed-1.wav", fast.outputPath)
+        vm.start(Tool.ENHANCE, JobSpec.Enhance(EnhanceMode.STUDIO))
+        vm.awaitJobs(2, JobStatus.DONE)
+        assertEquals(1, engine.enhanced.get())
+        assertEquals(1, engine.processed.size)
     }
 
     @Test fun jobsRunOneAtATimeInQueueOrder() {
