@@ -496,3 +496,4 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 ## 2026-11-17: Changelog for 0.2.0 (`docs/changelog-0.2.0`)
 
 - Moved the global recording card entry from Unreleased into 0.2.0 (it merged before the release), updated the Record entry to say the button is on the Tools tab, and set the 0.2.0 date to 2026-11-17.
+- Tool pages with no recording chosen now show a Choose file button instead of Go to Tools (the one case where a tool page has a picker); `ToolActions.onChoose` is back for it. Choosing there sets the same global recording.

@@ -124,6 +124,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                 snackbar = snackbar,
                 actions = ToolActions(
                     onBack = { viewModel.back() },
+                    onChoose = viewModel::chooseInput,
                     onLanguage = viewModel::setLanguage,
                     onStart = { spec -> viewModel.start(tool, spec) },
                     onCancel = viewModel::cancel,
@@ -150,6 +151,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                 snackbar = snackbar,
                 actions = ToolActions(
                     onBack = { viewModel.back() },
+                    onChoose = viewModel::chooseInput,
                     onLanguage = viewModel::setLanguage,
                     onStart = { spec -> viewModel.start(tool, spec) },
                     onCancel = viewModel::cancel,

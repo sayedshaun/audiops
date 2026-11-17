@@ -26,7 +26,7 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 - **Choose the transcription model** in Settings → Transcription: Automatic (recommended), Parakeet v3, Omnilingual ASR, Whisper Tiny or Bangla Zipformer.
 
 ### Changed
-- **Choose a file or record once, on the Tools tab.** The Choose file and Record buttons moved from every tool to a "recording" card at the top of the Tools tab. Pick or record a recording there, then open any tool: each tool page shows the current recording (waveform and player; Trim still shows its selection) and its options. If nothing is chosen yet, a tool page says so and offers Go to Tools.
+- **Choose a file or record once, on the Tools tab.** The Choose file and Record buttons moved from every tool to a "recording" card at the top of the Tools tab. Pick or record a recording there, then open any tool: each tool page shows the current recording (waveform and player; Trim still shows its selection) and its options. If nothing is chosen yet, a tool page offers Choose file.
 - **AI noise reduction on Android.** Noise reduction now uses DPDFNet (Ceva, Apache 2.0), an AI speech enhancer that runs on the phone, instead of spectral subtraction. It downloads once (about 11 MB). Light, Medium and Strong set how much of the removed sound is kept (9 dB, 18 dB, no limit). Desktop still uses spectral subtraction.
 - **Settings → Storage has one Downloaded models row.** It shows how many models are downloaded and their total size; tap it to see each model with its size and delete it.
 
