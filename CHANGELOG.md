@@ -13,6 +13,9 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+### Changed
+- **Choose a file or record once, on the Tools tab.** The Choose file and Record buttons moved from every tool to a "recording" card at the top of the Tools tab. Pick or record a recording there, then open any tool: each tool page shows the current recording (waveform and player; Trim still shows its selection) and its options. If nothing is chosen yet, a tool page says so and offers Go to Tools.
+
 ## [0.2.0] - 2026-11-16
 
 ### Added

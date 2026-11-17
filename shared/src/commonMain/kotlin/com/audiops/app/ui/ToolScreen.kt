@@ -97,6 +97,7 @@ import com.audiops.shared.resources.action_cancel
 import com.audiops.shared.resources.action_change
 import com.audiops.shared.resources.action_choose
 import com.audiops.shared.resources.action_copy
+import com.audiops.shared.resources.action_go_to_tools
 import com.audiops.shared.resources.action_record
 import com.audiops.shared.resources.action_reset
 import com.audiops.shared.resources.action_save_format
@@ -123,6 +124,7 @@ import com.audiops.shared.resources.option_trim_range
 import com.audiops.shared.resources.recording_active
 import com.audiops.shared.resources.recording_none
 import com.audiops.shared.resources.recording_pick_hint
+import com.audiops.shared.resources.recording_pick_on_tools
 import com.audiops.shared.resources.recording_reading
 import com.audiops.shared.resources.recording_ready
 import com.audiops.shared.resources.report_clipping
@@ -174,8 +176,6 @@ data class ToolScreenState(
 /** Events from [ToolScreen]. */
 data class ToolActions(
     val onBack: () -> Unit,
-    val onChoose: (id: String, name: String) -> Unit,
-    val onRecordFailed: (detail: String?) -> Unit,
     val onLanguage: (SpeechLanguage) -> Unit,
     val onStart: (JobSpec) -> Unit,
     val onCancel: (jobId: String) -> Unit,
@@ -191,9 +191,6 @@ data class ToolActions(
 @Composable
 fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: ToolActions) {
     val tool = state.tool
-    val pickRecording = rememberAudioPicker(actions.onChoose)
-    val recorder = rememberRecorder(actions.onChoose, actions.onRecordFailed)
-    KeepScreenOn(recorder.state.recording)
     // Option values survive rotation; each tool keeps its own.
     var options by rememberSaveable(tool, stateSaver = ToolOptionsSaver) { mutableStateOf(ToolOptions()) }
     val job = state.latestJob
@@ -223,8 +220,9 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
             loading = state.waveformLoading,
             problem = state.inputProblem,
             selection = if (tool == Tool.TRIM) options.trimStart..options.trimEnd else 0f..1f,
-            onChoose = pickRecording,
-            recorder = recorder,
+            onChoose = null,
+            recorder = null,
+            onOpenTools = actions.onBack,
         )
 
         if (tool.hasOptions) {
@@ -343,17 +341,22 @@ private fun RecordingPanel(state: RecorderState, onStop: () -> Unit) {
     }
 }
 
-/** Recording picker with the waveform preview, a play button, and recording from the microphone. */
+/**
+ * The current recording with its waveform preview and a play button. With [onChoose] and [recorder]
+ * it is the global recording card on the Tools tab (choose a file or record); without them it is the
+ * read-only summary a tool screen shows, with [onOpenTools] to go back and pick one.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun InputCard(
+internal fun InputCard(
     input: AudioInput?,
     waveform: WaveformData?,
     loading: Boolean,
     problem: InputProblem?,
     selection: ClosedFloatingPointRange<Float>,
-    onChoose: () -> Unit,
-    recorder: Recorder,
+    onChoose: (() -> Unit)?,
+    recorder: Recorder?,
+    onOpenTools: (() -> Unit)? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     val player = LocalAudioPlayer.current
@@ -383,6 +386,7 @@ private fun InputCard(
                     )
                     Text(
                         when {
+                            input == null && onChoose == null -> stringResource(Res.string.recording_pick_on_tools)
                             input == null -> stringResource(Res.string.recording_pick_hint)
                             waveform != null -> formatDuration(waveform.durationMs)
                             loading -> stringResource(Res.string.recording_reading)
@@ -421,6 +425,19 @@ private fun InputCard(
                     Spacer(Modifier.height(8.dp))
                     PlayerBar(input.id)
                 }
+            }
+            if (onChoose == null || recorder == null) {
+                if (input == null && onOpenTools != null) {
+                    Spacer(Modifier.height(16.dp))
+                    FilledTonalButton(
+                        onClick = onOpenTools,
+                        shapes = ButtonDefaults.shapes(),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+                    ) {
+                        Text(stringResource(Res.string.action_go_to_tools))
+                    }
+                }
+                return@Column
             }
             Spacer(Modifier.height(16.dp))
             val recording = recorder.state

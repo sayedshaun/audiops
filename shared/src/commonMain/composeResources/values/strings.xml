@@ -62,7 +62,9 @@
     <string name="step_options">Options</string>
     <string name="step_language">Language</string>
     <string name="recording_none">No recording selected</string>
-    <string name="recording_pick_hint">Choose an audio file to begin.</string>
+    <string name="recording_pick_hint">Choose an audio file or record one, then pick a tool.</string>
+    <string name="recording_pick_on_tools">Choose or record a recording on the Tools tab first.</string>
+    <string name="action_go_to_tools">Go to Tools</string>
     <string name="recording_reading">Reading audio…</string>
     <string name="recording_ready">Ready to process</string>
     <string name="action_choose">Choose file</string>
