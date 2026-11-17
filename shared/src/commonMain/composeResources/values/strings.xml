@@ -11,7 +11,6 @@
     <string name="tab_settings">Settings</string>
 
     <!-- Tools tab -->
-    <string name="home_subtitle">On-device audio tools</string>
     <string name="home_hero_title">Transform audio, without the cloud.</string>
     <string name="home_hero_body">Every tool runs on this device. Nothing is uploaded.</string>
     <string name="home_footer">AI models download once, then run on this device. Other tools need no download.</string>

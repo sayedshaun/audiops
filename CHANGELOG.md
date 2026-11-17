@@ -13,6 +13,9 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+### Changed
+- **A cleaner home screen.** The large "Audiops, on-device audio tools" title is gone from the Tools tab, so the banner and your recording start right at the top. The waveform in the "Transform audio" banner is now alive: a slow wave rolls through its bars.
+
 ## [0.2.0] - 2026-11-17
 
 ### Added
