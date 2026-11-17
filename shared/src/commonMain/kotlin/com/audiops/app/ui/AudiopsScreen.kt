@@ -37,7 +37,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
@@ -48,7 +47,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,7 +55,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -77,7 +74,6 @@ import com.audiops.shared.resources.banner_processing
 import com.audiops.shared.resources.home_footer
 import com.audiops.shared.resources.home_hero_body
 import com.audiops.shared.resources.home_hero_title
-import com.audiops.shared.resources.home_subtitle
 import com.audiops.shared.resources.tab_activity
 import com.audiops.shared.resources.tab_settings
 import com.audiops.shared.resources.tab_tools
@@ -303,17 +299,8 @@ private fun ToolsTab(
     val pickRecording = rememberAudioPicker(onChoose)
     val recorder = rememberRecorder(onChoose, onRecordFailed)
     KeepScreenOn(recorder.state.recording)
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            LargeFlexibleTopAppBar(
-                title = { Text(stringResource(Res.string.app_name)) },
-                subtitle = { Text(stringResource(Res.string.home_subtitle)) },
-                scrollBehavior = scrollBehavior,
-            )
-        },
-    ) { padding ->
+    // No title bar: the banner at the top already says what the app is.
+    Scaffold { padding ->
         // Each category fills its rows: tiles stretch to share the width, so wide windows
         // (desktop) have no empty cells at the end of a row.
         BoxWithConstraints(Modifier.fillMaxSize()) {

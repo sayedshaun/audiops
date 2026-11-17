@@ -1,6 +1,11 @@
 package com.audiops.app.ui
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -97,15 +102,26 @@ fun ShapedIcon(icon: ImageVector, shape: Shape, container: Color, content: Color
     }
 }
 
-/** Decorative bars that suggest audio. Hidden from accessibility services. */
+/**
+ * Decorative bars that suggest audio. With [live], a slow wave rolls through them so the bars breathe
+ * like a signal being heard. Hidden from accessibility services.
+ */
 @Composable
-fun Waveform(modifier: Modifier, color: Color, bars: Int) {
+fun Waveform(modifier: Modifier, color: Color, bars: Int, live: Boolean = false) {
+    val phase by rememberInfiniteTransition(label = "waveform").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(durationMillis = 3600, easing = LinearEasing)),
+        label = "waveform phase",
+    )
     Canvas(modifier.clearAndSetSemantics { }) {
         val step = size.width / bars
         for (i in 0 until bars) {
             val envelope = 0.2f + 0.8f * kotlin.math.sin(Math.PI.toFloat() * (i + 1) / (bars + 1))
             val variation = 0.25f + 0.75f * kotlin.math.abs(kotlin.math.sin(i * 2.19f))
-            val height = (size.height * envelope * variation).coerceAtLeast(3.dp.toPx())
+            // Each bar swells and shrinks a little behind its neighbour, so the motion travels along the strip.
+            val motion = if (live) 0.55f + 0.45f * kotlin.math.sin((phase - i / bars.toFloat() * 1.6f) * 2f * Math.PI.toFloat()) else 1f
+            val height = (size.height * envelope * variation * motion).coerceAtLeast(3.dp.toPx())
             val x = (i + 0.5f) * step
             drawLine(
                 color,
@@ -161,7 +177,7 @@ fun HeroBanner(title: String, body: String, modifier: Modifier = Modifier) {
             Spacer(Modifier.height(6.dp))
             Text(body, color = colors.onPrimaryContainer.copy(alpha = 0.85f), style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(12.dp))
-            Waveform(Modifier.fillMaxWidth().height(20.dp), colors.primary.copy(alpha = 0.6f), bars = 43)
+            Waveform(Modifier.fillMaxWidth().height(20.dp), colors.primary.copy(alpha = 0.6f), bars = 43, live = true)
         }
     }
 }
