@@ -6,6 +6,7 @@ import com.audiops.app.dsp.ChunkedEnhancer
 import com.audiops.app.dsp.DspPipeline
 import com.audiops.app.dsp.PcmFile
 import com.audiops.app.dsp.ResampledProcessor
+import com.audiops.app.dsp.runInWholeFrames
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -55,6 +56,28 @@ class AiDenoiseTest {
         assertTrue(windows.all { it <= 1350 })
         assertEquals(1050f, out[0])
         assertEquals(1350f, out[1500])
+    }
+
+    @Test fun frameBasedModelsThatDropAPartialFrameStillKeepTheLength() {
+        // A fake model like DPDFNet: it only returns whole 480-sample frames, so a partial last frame is lost.
+        val model = { x: FloatArray -> x.copyOf(x.size / 480 * 480) }
+        for (n in listOf(480, 481, 507_999, 508_592, 959, 1)) {
+            val input = FloatArray(n) { it + 1f }
+            val out = runInWholeFrames(input, 480, model)
+            assertEquals("length for $n", n, out.size)
+            assertEquals("last sample for $n", n.toFloat(), out[n - 1], 0f)
+        }
+        // Through the chunked enhancer, the case that failed on a phone (10.6 s at 48 kHz, 272 samples over a frame).
+        val long = FloatArray(508_592) { sin(it * 0.01f) }
+        val out =
+            feed(
+                ChunkedEnhancer(body = 20 * 48_000, warmup = 4 * 48_000, lookahead = 9_600) {
+                    runInWholeFrames(it, 480, model)
+                },
+                long,
+                4096,
+            )
+        assertEquals(long.size, out.size)
     }
 
     @Test fun resampledProcessorKeepsTheLength() {

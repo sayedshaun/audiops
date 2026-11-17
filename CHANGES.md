@@ -480,3 +480,9 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 ## 2026-11-16: Website roadmap (`docs/website-roadmap`)
 
 - Roadmap renamed "Ideas we're exploring" (no dates) with four items and an Issues link. Dropped real-time sound classification (the plan is a file tool), music source separation and translations.
+
+## 2026-11-17: AI noise reduction failed on most files (`fix/denoise-partial-frame`)
+
+- Found on a phone: "enhancer returned 508320 samples for 508592". DPDFNet works in 10 ms frames (480 samples at 48 kHz) and drops a partial last frame, so any recording whose length was not a whole number of frames failed. The emulator tests used lengths that happened to divide evenly.
+- `runInWholeFrames` pads the chunk with silence to whole frames and cuts the result back to the input length; `DpdfNetDenoiser` uses it. `AiDenoiseTest` covers awkward lengths (including 508,592) and the chunked path.
+- The bug was never in a release (DPDFNet is new in 0.2.0), so the changelog is unchanged.
