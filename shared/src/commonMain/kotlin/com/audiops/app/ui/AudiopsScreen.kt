@@ -124,8 +124,6 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                 snackbar = snackbar,
                 actions = ToolActions(
                     onBack = { viewModel.back() },
-                    onChoose = viewModel::chooseInput,
-                    onRecordFailed = viewModel::recordFailed,
                     onLanguage = viewModel::setLanguage,
                     onStart = { spec -> viewModel.start(tool, spec) },
                     onCancel = viewModel::cancel,
@@ -152,8 +150,6 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                 snackbar = snackbar,
                 actions = ToolActions(
                     onBack = { viewModel.back() },
-                    onChoose = viewModel::chooseInput,
-                    onRecordFailed = viewModel::recordFailed,
                     onLanguage = viewModel::setLanguage,
                     onStart = { spec -> viewModel.start(tool, spec) },
                     onCancel = viewModel::cancel,
@@ -178,6 +174,8 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                         unsupported = viewModel.unsupportedTools,
                         onOpen = viewModel::open,
                         onShowActivity = { viewModel.selectTab(Tab.ACTIVITY) },
+                        onChoose = viewModel::chooseInput,
+                        onRecordFailed = viewModel::recordFailed,
                     )
 
                     Tab.ACTIVITY -> ActivityTab(
@@ -292,7 +290,17 @@ private fun TabIcon(item: TabItem, activeJobs: Int) {
 /** The Tools tab: hero, live processing banner, and tools grouped by category. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ToolsTab(state: AudiopsState, unsupported: Set<Tool>, onOpen: (Tool) -> Unit, onShowActivity: () -> Unit) {
+private fun ToolsTab(
+    state: AudiopsState,
+    unsupported: Set<Tool>,
+    onOpen: (Tool) -> Unit,
+    onShowActivity: () -> Unit,
+    onChoose: (id: String, name: String) -> Unit,
+    onRecordFailed: (detail: String?) -> Unit,
+) {
+    val pickRecording = rememberAudioPicker(onChoose)
+    val recorder = rememberRecorder(onChoose, onRecordFailed)
+    KeepScreenOn(recorder.state.recording)
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -328,6 +336,17 @@ private fun ToolsTab(state: AudiopsState, unsupported: Set<Tool>, onOpen: (Tool)
                             body = stringResource(Res.string.home_hero_body),
                         )
                     }
+                }
+                item(key = "recording") {
+                    InputCard(
+                        input = state.input,
+                        waveform = state.waveform,
+                        loading = state.waveformLoading,
+                        problem = state.inputProblem,
+                        selection = 0f..1f,
+                        onChoose = pickRecording,
+                        recorder = recorder,
+                    )
                 }
                 ToolCategory.entries.forEach { category ->
                     item(key = "title-${category.name}") {

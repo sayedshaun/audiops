@@ -486,3 +486,9 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - Found on a phone: "enhancer returned 508320 samples for 508592". DPDFNet works in 10 ms frames (480 samples at 48 kHz) and drops a partial last frame, so any recording whose length was not a whole number of frames failed. The emulator tests used lengths that happened to divide evenly.
 - `runInWholeFrames` pads the chunk with silence to whole frames and cuts the result back to the input length; `DpdfNetDenoiser` uses it. `AiDenoiseTest` covers awkward lengths (including 508,592) and the chunked path.
 - The bug was never in a release (DPDFNet is new in 0.2.0), so the changelog is unchanged.
+
+## 2026-11-17: Global recording card (`feature/global-input`)
+
+- The recording input (Choose file, Record, waveform, player) is now one `InputCard` at the top of the Tools tab (`ToolsTab` owns `rememberAudioPicker` and `rememberRecorder`). Tool screens render the same card read-only (`onChoose`/`recorder` null) with a Go to Tools button when nothing is chosen. `ToolActions` lost `onChoose` and `onRecordFailed`.
+- Recording now starts and stops on the Tools tab; opening a tool while recording leaves the tab and stops the recording (the recorder is released with the screen).
+- Checked on the emulator in light and dark: Tools tab empty and with a file, a tool page with a file, a tool page with none.
