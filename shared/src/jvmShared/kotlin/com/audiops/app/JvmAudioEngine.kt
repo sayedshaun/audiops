@@ -8,8 +8,8 @@ import java.io.File
 import com.audiops.app.dsp.analyze as analyzePcm
 
 /**
- * Engine logic shared by Android and desktop: decoded-audio cache, DSP tools, analysis,
- * waveform and storage. Platforms supply decoding (and, where available, AI models).
+ * Engine logic the Android engine builds on: decoded-audio cache, DSP tools, analysis,
+ * waveform and storage. The Android engine adds decoding and the AI models.
  *
  * @param workDir temporary files (decoded audio, pipeline stages); safe to clear.
  * @param outputDir processed files kept for the Activity tab.

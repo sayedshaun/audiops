@@ -11,8 +11,7 @@ Open an [issue](https://github.com/sayedshaun/audiops/issues/new/choose) and pic
 You need JDK 17 (with `javac`) and the Android SDK with platform 37. Android Studio provides both.
 
 ```sh
-./gradlew :app:installDebug     # Android
-./gradlew :desktopApp:run       # desktop
+./gradlew :app:installDebug     # on a connected device or emulator
 ```
 
 Install the pre-commit hook once per clone. It checks formatting and runs the unit tests before each commit:
@@ -46,8 +45,6 @@ Releases are built and published by [`.github/workflows/release.yml`](.github/wo
 2. Create a GitHub Release with a new tag `vMAJOR.MINOR.PATCH` (for example `v0.2.0`). A `-beta.1` suffix marks a pre-release.
 3. Publishing the release starts the workflow. It runs the tests, then attaches these files to the release:
    - Android: per-ABI APKs `audiops-<version>-android-{arm64-v8a,armeabi-v7a,x86_64,x86}.apk`, a universal APK `…-android-universal.apk`, and an `.aab` for app stores (all signed). Without signing secrets the APKs end in `-unsigned` and no `.aab` is attached.
-   - Linux: `.deb` and `.rpm`
-   - Windows: `.msi` and `-setup.exe`
    - `SHA256SUMS.txt`
 4. To rebuild an existing release, run the workflow manually (Actions → Release → Run workflow) with its tag.
 5. To test the pipeline without publishing, run the workflow manually with an **empty** tag: it builds every artifact from the selected branch as version `0.0.0-dryrun` and keeps them as workflow artifacts.

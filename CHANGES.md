@@ -586,3 +586,11 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 ### Changed
 - Tagline, tool count (fourteen), platform table and roadmap match 0.3.0; new Tools and Enhance screenshots (the Transcript and Activity images are from 0.1 and should be re-taken).
+## 2026-11-18: desktop removed (`fix/android-only-release`)
+
+### Changed
+- Deleted `:desktopApp` and `shared/src/desktopMain`, the `jvm("desktop")` target, `isDesktop`, the desktop-only strings and settings branches, the desktop job in `release.yml`, and the Linux/Windows rows in README and CONTRIBUTING. Architecture diagrams redrawn without the desktop box.
+- Unit tests moved from `shared/src/desktopTest` to `shared/src/androidHostTest` and run with `:shared:testAndroidHostTest`; Makefile, pre-commit hook, android.yml and release.yml updated.
+
+### Verified
+- `make ci`: spotless, 121 tests (1 skipped, needs an external model), Android lint, R8 release build.

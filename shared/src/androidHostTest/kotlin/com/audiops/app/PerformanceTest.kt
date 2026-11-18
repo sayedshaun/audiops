@@ -79,7 +79,7 @@ class PerformanceTest {
         AudioAnalyzer(rate).apply { blocks { add(it) } }.report()
         println("perf %-16s %6.2f s".format("analyze", (System.nanoTime() - start) / 1e9))
 
-        // A loose bound that still catches accidental O(n²) work; desktop runs reach 50-500x.
+        // A loose bound that still catches accidental O(n²) work; host runs reach 50-500x.
         factors.forEach { (name, factor) -> assertTrue("$name only ${factor}x real time", factor > 5.0) }
     }
 }
