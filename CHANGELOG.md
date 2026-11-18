@@ -13,6 +13,8 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-18
+
 ### Fixed
 - **Ukrainian text to speech.** The Piper Ukrainian voice produced less than a second of audio, so it is removed. Ukrainian still works with the default Supertonic voices.
 - **Transcribe history names the model.** Activity said "Transcribe · Auto", which no longer means anything. It now shows the model that ran (and the language for Whisper).
@@ -92,7 +94,9 @@ First public release.
 - Smaller downloads: an Android APK for each processor type (about 40 MB for most phones) besides the universal APK.
 - Input formats: anything Android can decode (MP3, AAC/M4A, OGG, Opus, FLAC, WAV…); WAV, AIFF and AU on desktop. Output is 16-bit WAV.
 
-[Unreleased]: https://github.com/sayedshaun/audiops/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/sayedshaun/audiops/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/sayedshaun/audiops/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/sayedshaun/audiops/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/sayedshaun/audiops/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/sayedshaun/audiops/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/sayedshaun/audiops/compare/v0.1.0...v0.1.1
