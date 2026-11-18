@@ -585,7 +585,7 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 ## 2026-11-18: README and website refresh
 
 ### Changed
-- Tagline, tool count (fourteen), platform table and roadmap match 0.3.0; new Tools and Enhance screenshots (the Transcript and Activity images are from 0.1 and should be re-taken).
+- Tagline, tool count (fourteen), platform table and roadmap match 0.3.0; new Tools and Enhance screenshots (all four README images are now from 0.3).
 ## 2026-11-18: desktop removed (`fix/android-only-release`)
 
 ### Changed
