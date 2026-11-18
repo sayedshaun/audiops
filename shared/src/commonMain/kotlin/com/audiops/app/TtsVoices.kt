@@ -259,14 +259,6 @@ private val otherVoices: List<TtsVoice> = listOf(
         ),
     ),
     TtsVoice(
-        "piper-uk-ukrainian-tts", "uk", "Lada", TtsEngine.PIPER, "CC0", 77,
-        "csukuangfj/vits-piper-uk_UA-ukrainian_tts-medium", "4fd40e3e9fc24f8d95cc4dec05fa2ad6bd749c62",
-        mapOf(
-            "uk_UA-ukrainian_tts-medium.onnx" to "18d3c09ab8be906b240249e52178c089c4be9d1907b873d9066bfadcfef8d6ba",
-            "tokens.txt" to "67a6c6b42c95340c3bd64dabcd74259bb12839ffcd5fe347700dcb2656e90d52",
-        ),
-    ),
-    TtsVoice(
         "piper-vi-vais1000", "vi", "Vais", TtsEngine.PIPER, "CC BY 4.0", 63,
         "csukuangfj/vits-piper-vi_VN-vais1000-medium", "3d92898cf942406c23330da466a831d3d923c2a2",
         mapOf(
