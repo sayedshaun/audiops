@@ -14,6 +14,7 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 ## [Unreleased]
 
 ### Fixed
+- **Ukrainian text to speech.** The Piper Ukrainian voice produced less than a second of audio, so it is removed. Ukrainian still works with the default Supertonic voices.
 - **Transcribe history names the model.** Activity said "Transcribe · Auto", which no longer means anything. It now shows the model that ran (and the language for Whisper).
 - **Colourful start-up icon.** The icon shown while the app opens was only the white waveform, so it looked black and white. It now shows the full purple app icon.
 

@@ -604,3 +604,8 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 ### Fixed
 - Activity showed "Transcribe · Auto" because the summary used the language label. `JobSpec.Transcribe.summary()` now shows the model, plus the language for Whisper only. Checked on the emulator.
+
+## 2026-11-18: Piper Ukrainian removed (`fix/piper-ukrainian`)
+
+### Fixed
+- `piper-uk-ukrainian-tts` made under a second of audio; removed from `TtsVoices.kt` (Supertonic covers `uk`). Piper now has 20 voices in 20 languages; the 37-language total is unchanged. README and AGENTS counts updated.
