@@ -6,7 +6,7 @@
 
 [![Build and test](https://github.com/sayedshaun/audiops/actions/workflows/android.yml/badge.svg)](https://github.com/sayedshaun/audiops/actions/workflows/android.yml) [![Release](https://img.shields.io/github/v/release/sayedshaun/audiops?include_prereleases&sort=semver&label=release)](https://github.com/sayedshaun/audiops/releases) [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE) ![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20Linux%20%7C%20Windows-5B47C8) ![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin-Multiplatform-7F52FF?logo=kotlin&logoColor=white) ![Material 3 Expressive](https://img.shields.io/badge/Material%203-Expressive-6750A4?logo=materialdesign&logoColor=white)
 
-**Clean up, edit, transcribe and analyze audio, entirely on your device.**<br>
+**Enhance, transcribe, speak, separate, edit and analyze audio, entirely on your device.**<br>
 Nothing you open is uploaded. AI models download once, then run offline.
 
 [**Download**](https://github.com/sayedshaun/audiops/releases/latest) · [Features](#features) · [Models](#models) · [Screenshots](#screenshots) · [Build from source](#build-from-source) · [Contributing](CONTRIBUTING.md)
@@ -18,7 +18,7 @@ Nothing you open is uploaded. AI models download once, then run offline.
 ## Why Audiops
 
 - **Private by design.** Audio never leaves your device. The app has no accounts, no analytics and no server. It asks for the microphone only when you tap Record, and for notifications only to show job progress.
-- **One toolkit, not ten apps.** Eleven tools behind one consistent interface, with a queue so several jobs can run while you keep working.
+- **One toolkit, not ten apps.** Fourteen tools behind one consistent interface, with a queue so several jobs can run while you keep working.
 - **Built for long recordings.** Every tool streams audio in blocks, so a two-hour lecture uses the same memory as a voice note.
 - **Open source, one codebase.** Kotlin Multiplatform and Compose Multiplatform power Android, Linux and Windows.
 
@@ -83,12 +83,12 @@ Only the two AI tools use machine-learning models. Every other tool is classic s
 
 <div align="center">
 
-<img src="docs/images/screenshots/tools.png" alt="Tools tab" width="24%">
-<img src="docs/images/screenshots/tool-equalizer.png" alt="Equalizer with waveform and playback" width="24%">
+<img src="docs/images/screenshots/tools.png" alt="Tools tab with a recording loaded" width="24%">
+<img src="docs/images/screenshots/tool-enhance.png" alt="Enhance speech with Fast and Studio modes and a finished result" width="24%">
 <img src="docs/images/screenshots/transcript.png" alt="Transcript" width="24%">
 <img src="docs/images/screenshots/activity.png" alt="Activity tab with job history" width="24%">
 
-<sub>Tools · Equalizer with waveform and playback · Transcription · Activity history</sub>
+<sub>Tools · Enhance speech (Fast and Studio) · Transcription · Activity history</sub>
 
 </div>
 
@@ -110,7 +110,7 @@ Every release includes `SHA256SUMS.txt`. Verify a download with `sha256sum -c SH
 | | Android | Linux / Windows |
 | --- | :-: | :-: |
 | Noise reduction, Remove silence, Trim, Fade, Volume, Speed and pitch, Equalizer, Convert, Analyze | ✅ | ✅ |
-| AI Enhance and Transcribe | ✅ | Planned |
+| AI tools (Enhance, Transcribe, Text to speech, Separate music) | ✅ | Planned |
 | Input formats | Anything the device decodes | WAV, AIFF, AU |
 
 ## Build from source
@@ -159,6 +159,7 @@ See [CHANGELOG.md](CHANGELOG.md) for what changed in each release.
 
 - AI enhancement and transcription on desktop (sherpa-onnx JVM build), with broader desktop format support.
 - A lighter vocoder export, so AI enhancement fits phones with 4 GB of RAM.
+- Stereo stems for music separation.
 - Translations (Bangla first).
 
 Suggestions are welcome in [Issues](https://github.com/sayedshaun/audiops/issues).
