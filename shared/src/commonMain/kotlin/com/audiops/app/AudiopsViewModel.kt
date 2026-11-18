@@ -37,7 +37,7 @@ data class AudiopsState(
     val waveform: WaveformData? = null,
     val waveformLoading: Boolean = false,
     val inputProblem: InputProblem? = null,
-    val language: SpeechLanguage = SpeechLanguage.AUTO,
+    val language: SpeechLanguage = SpeechLanguage.ENGLISH,
     /** Active jobs first (in queue order), then history, newest first. */
     val jobs: List<Job> = emptyList(),
 ) {
@@ -69,7 +69,7 @@ class AudiopsViewModel(
             language = savedState.get<String>(KEY_LANGUAGE)
                 ?.let { name -> SpeechLanguage.entries.firstOrNull { it.name == name } }
                 ?.takeIf { it in transcriptionLanguages }
-                ?: SpeechLanguage.AUTO,
+                ?: SpeechLanguage.ENGLISH,
         ),
     )
     val state: StateFlow<AudiopsState> = _state.asStateFlow()

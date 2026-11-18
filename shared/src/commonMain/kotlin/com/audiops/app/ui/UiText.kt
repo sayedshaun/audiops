@@ -62,24 +62,65 @@ import com.audiops.shared.resources.format_opus
 import com.audiops.shared.resources.format_opus_hint
 import com.audiops.shared.resources.format_wav
 import com.audiops.shared.resources.format_wav_hint
+import com.audiops.shared.resources.language_afrikaans
+import com.audiops.shared.resources.language_amharic
 import com.audiops.shared.resources.language_arabic
 import com.audiops.shared.resources.language_auto
+import com.audiops.shared.resources.language_azerbaijani
 import com.audiops.shared.resources.language_bangla
+import com.audiops.shared.resources.language_bulgarian
+import com.audiops.shared.resources.language_burmese
+import com.audiops.shared.resources.language_catalan
 import com.audiops.shared.resources.language_chinese
+import com.audiops.shared.resources.language_croatian
+import com.audiops.shared.resources.language_czech
+import com.audiops.shared.resources.language_danish
+import com.audiops.shared.resources.language_dutch
 import com.audiops.shared.resources.language_english
+import com.audiops.shared.resources.language_estonian
+import com.audiops.shared.resources.language_filipino
+import com.audiops.shared.resources.language_finnish
 import com.audiops.shared.resources.language_french
 import com.audiops.shared.resources.language_german
+import com.audiops.shared.resources.language_greek
+import com.audiops.shared.resources.language_gujarati
+import com.audiops.shared.resources.language_hebrew
 import com.audiops.shared.resources.language_hindi
+import com.audiops.shared.resources.language_hungarian
 import com.audiops.shared.resources.language_indonesian
 import com.audiops.shared.resources.language_italian
 import com.audiops.shared.resources.language_japanese
+import com.audiops.shared.resources.language_kannada
+import com.audiops.shared.resources.language_kazakh
+import com.audiops.shared.resources.language_khmer
 import com.audiops.shared.resources.language_korean
+import com.audiops.shared.resources.language_latvian
+import com.audiops.shared.resources.language_lithuanian
+import com.audiops.shared.resources.language_malay
+import com.audiops.shared.resources.language_malayalam
+import com.audiops.shared.resources.language_maltese
+import com.audiops.shared.resources.language_marathi
+import com.audiops.shared.resources.language_nepali
+import com.audiops.shared.resources.language_norwegian
 import com.audiops.shared.resources.language_persian
+import com.audiops.shared.resources.language_polish
 import com.audiops.shared.resources.language_portuguese
+import com.audiops.shared.resources.language_punjabi
+import com.audiops.shared.resources.language_romanian
 import com.audiops.shared.resources.language_russian
+import com.audiops.shared.resources.language_serbian
+import com.audiops.shared.resources.language_slovak
+import com.audiops.shared.resources.language_slovenian
 import com.audiops.shared.resources.language_spanish
+import com.audiops.shared.resources.language_swahili
+import com.audiops.shared.resources.language_swedish
+import com.audiops.shared.resources.language_tamil
+import com.audiops.shared.resources.language_telugu
+import com.audiops.shared.resources.language_thai
 import com.audiops.shared.resources.language_turkish
+import com.audiops.shared.resources.language_ukrainian
 import com.audiops.shared.resources.language_urdu
+import com.audiops.shared.resources.language_uzbek
 import com.audiops.shared.resources.language_vietnamese
 import com.audiops.shared.resources.loudness_broadcast
 import com.audiops.shared.resources.loudness_podcast
@@ -247,6 +288,47 @@ val SpeechLanguage.label: StringResource
         SpeechLanguage.TURKISH -> Res.string.language_turkish
         SpeechLanguage.URDU -> Res.string.language_urdu
         SpeechLanguage.VIETNAMESE -> Res.string.language_vietnamese
+        SpeechLanguage.BULGARIAN -> Res.string.language_bulgarian
+        SpeechLanguage.CZECH -> Res.string.language_czech
+        SpeechLanguage.DANISH -> Res.string.language_danish
+        SpeechLanguage.GREEK -> Res.string.language_greek
+        SpeechLanguage.ESTONIAN -> Res.string.language_estonian
+        SpeechLanguage.FINNISH -> Res.string.language_finnish
+        SpeechLanguage.CROATIAN -> Res.string.language_croatian
+        SpeechLanguage.HUNGARIAN -> Res.string.language_hungarian
+        SpeechLanguage.LITHUANIAN -> Res.string.language_lithuanian
+        SpeechLanguage.LATVIAN -> Res.string.language_latvian
+        SpeechLanguage.MALTESE -> Res.string.language_maltese
+        SpeechLanguage.DUTCH -> Res.string.language_dutch
+        SpeechLanguage.POLISH -> Res.string.language_polish
+        SpeechLanguage.ROMANIAN -> Res.string.language_romanian
+        SpeechLanguage.SLOVAK -> Res.string.language_slovak
+        SpeechLanguage.SLOVENIAN -> Res.string.language_slovenian
+        SpeechLanguage.SWEDISH -> Res.string.language_swedish
+        SpeechLanguage.UKRAINIAN -> Res.string.language_ukrainian
+        SpeechLanguage.THAI -> Res.string.language_thai
+        SpeechLanguage.SWAHILI -> Res.string.language_swahili
+        SpeechLanguage.TAMIL -> Res.string.language_tamil
+        SpeechLanguage.TELUGU -> Res.string.language_telugu
+        SpeechLanguage.MARATHI -> Res.string.language_marathi
+        SpeechLanguage.GUJARATI -> Res.string.language_gujarati
+        SpeechLanguage.PUNJABI -> Res.string.language_punjabi
+        SpeechLanguage.KANNADA -> Res.string.language_kannada
+        SpeechLanguage.MALAYALAM -> Res.string.language_malayalam
+        SpeechLanguage.NEPALI -> Res.string.language_nepali
+        SpeechLanguage.HEBREW -> Res.string.language_hebrew
+        SpeechLanguage.MALAY -> Res.string.language_malay
+        SpeechLanguage.FILIPINO -> Res.string.language_filipino
+        SpeechLanguage.BURMESE -> Res.string.language_burmese
+        SpeechLanguage.KHMER -> Res.string.language_khmer
+        SpeechLanguage.AMHARIC -> Res.string.language_amharic
+        SpeechLanguage.AFRIKAANS -> Res.string.language_afrikaans
+        SpeechLanguage.CATALAN -> Res.string.language_catalan
+        SpeechLanguage.NORWEGIAN -> Res.string.language_norwegian
+        SpeechLanguage.SERBIAN -> Res.string.language_serbian
+        SpeechLanguage.AZERBAIJANI -> Res.string.language_azerbaijani
+        SpeechLanguage.KAZAKH -> Res.string.language_kazakh
+        SpeechLanguage.UZBEK -> Res.string.language_uzbek
     }
 
 val AiModel.title: StringResource
@@ -298,7 +380,7 @@ val TranscriptionModel.summary: StringResource
 
 /** Whether the transcription screen asks for a language with this model. */
 val TranscriptionModel.usesLanguage: Boolean
-    get() = this == TranscriptionModel.AUTO || this == TranscriptionModel.WHISPER
+    get() = this == TranscriptionModel.WHISPER
 
 /** Display name of a text-to-speech language (a BCP 47 tag from [ttsLanguages]). */
 fun ttsLanguageLabel(tag: String): StringResource = when (tag) {

@@ -61,7 +61,6 @@ import com.audiops.app.ttsVoice
 import com.audiops.app.ttsVoices
 import com.audiops.shared.resources.Res
 import com.audiops.shared.resources.action_cancel
-import com.audiops.shared.resources.speak_hint
 import com.audiops.shared.resources.speak_language
 import com.audiops.shared.resources.speak_non_commercial
 import com.audiops.shared.resources.speak_speed
@@ -182,26 +181,18 @@ fun SpeakScreen(latestJob: Job?, snackbar: SnackbarHostState, actions: ToolActio
                     onDismiss = { voiceDialog = false },
                 )
             }
+            Button(
+                onClick = { actions.onStart(JobSpec.Speak(text.trim(), voice.id, speed)) },
+                enabled = text.isNotBlank(),
+                shapes = ButtonDefaults.shapes(),
+                contentPadding = PrimaryButtonPadding,
+                modifier = Modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
+            ) {
+                Icon(tool.icon, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(tool.action), style = MaterialTheme.typography.titleMedium)
+            }
         }
-
-        Spacer(Modifier.height(24.dp))
-        Button(
-            onClick = { actions.onStart(JobSpec.Speak(text.trim(), voice.id, speed)) },
-            enabled = text.isNotBlank(),
-            shapes = ButtonDefaults.shapes(),
-            contentPadding = PrimaryButtonPadding,
-            modifier = Modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
-        ) {
-            Icon(tool.icon, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text(stringResource(tool.action), style = MaterialTheme.typography.titleMedium)
-        }
-        Spacer(Modifier.height(8.dp))
-        Text(
-            stringResource(Res.string.speak_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
 
         AnimatedVisibility(visible = latestJob != null, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
             if (latestJob != null) {

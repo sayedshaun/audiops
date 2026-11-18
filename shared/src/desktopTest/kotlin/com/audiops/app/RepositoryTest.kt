@@ -90,8 +90,8 @@ class RepositoryTest {
         }
         val settings = SettingsRepository(store).settings.first()
         assertEquals(ThemeMode.SYSTEM, settings.themeMode)
-        assertEquals(SpeechLanguage.AUTO, settings.defaultLanguage)
-        assertEquals(TranscriptionModel.AUTO, settings.transcriptionModel)
+        assertEquals(SpeechLanguage.ENGLISH, settings.defaultLanguage)
+        assertEquals(TranscriptionModel.PARAKEET, settings.transcriptionModel)
         assertTrue(dir.listFiles()!!.isNotEmpty())
     }
 }

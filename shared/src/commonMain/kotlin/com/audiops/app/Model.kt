@@ -59,10 +59,54 @@ enum class SpeechLanguage(val code: String) {
     TURKISH("tr"),
     URDU("ur"),
     VIETNAMESE("vi"),
+    BULGARIAN("bg"),
+    CZECH("cs"),
+    DANISH("da"),
+    GREEK("el"),
+    ESTONIAN("et"),
+    FINNISH("fi"),
+    CROATIAN("hr"),
+    HUNGARIAN("hu"),
+    LITHUANIAN("lt"),
+    LATVIAN("lv"),
+    MALTESE("mt"),
+    DUTCH("nl"),
+    POLISH("pl"),
+    ROMANIAN("ro"),
+    SLOVAK("sk"),
+    SLOVENIAN("sl"),
+    SWEDISH("sv"),
+    UKRAINIAN("uk"),
+    THAI("th"),
+    SWAHILI("sw"),
+    TAMIL("ta"),
+    TELUGU("te"),
+    MARATHI("mr"),
+    GUJARATI("gu"),
+    PUNJABI("pa"),
+    KANNADA("kn"),
+    MALAYALAM("ml"),
+    NEPALI("ne"),
+    HEBREW("he"),
+    MALAY("ms"),
+    FILIPINO("tl"),
+    BURMESE("my"),
+    KHMER("km"),
+    AMHARIC("am"),
+    AFRIKAANS("af"),
+    CATALAN("ca"),
+    NORWEGIAN("no"),
+    SERBIAN("sr"),
+    AZERBAIJANI("az"),
+    KAZAKH("kk"),
+    UZBEK("uz"),
 }
 
-/** The languages offered in the app. Omnilingual covers the rest through Auto. */
-val transcriptionLanguages = listOf(SpeechLanguage.AUTO, SpeechLanguage.BANGLA, SpeechLanguage.URDU)
+/**
+ * The languages offered for Whisper (the only model that is told the language), A to Z. [SpeechLanguage.AUTO] is kept only so
+ * history saved by earlier versions still decodes; it is never offered.
+ */
+val transcriptionLanguages = (SpeechLanguage.entries - SpeechLanguage.AUTO).sortedBy { it.name }
 
 /**
  * The speech recognition model a transcription uses, chosen in Settings. [AUTO] detects the
@@ -70,6 +114,9 @@ val transcriptionLanguages = listOf(SpeechLanguage.AUTO, SpeechLanguage.BANGLA, 
  */
 @Serializable
 enum class TranscriptionModel { AUTO, PARAKEET, OMNILINGUAL, WHISPER, BANGLA }
+
+/** The models a user can pick. [TranscriptionModel.AUTO] only exists for history saved by earlier versions. */
+val selectableTranscriptionModels = TranscriptionModel.entries - TranscriptionModel.AUTO
 
 /** Downloadable AI models, listed and deleted one by one in Settings → Downloaded models. */
 enum class AiModel { ENHANCE, NOISE, SCNET, PARAKEET, OMNILINGUAL, WHISPER, BANGLA, POCKET_TTS, PIPER, SUPERTONIC }

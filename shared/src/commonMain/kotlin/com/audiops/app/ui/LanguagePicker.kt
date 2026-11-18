@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Translate
@@ -63,7 +65,7 @@ fun LanguageField(selected: SpeechLanguage, onSelect: (SpeechLanguage) -> Unit, 
     }
 }
 
-/** Single-choice list of the offered languages: Auto (Omnilingual detects the language) and Bangla. */
+/** Scrollable single-choice list of the offered languages: Auto, then A to Z. */
 @Composable
 fun LanguageDialog(title: String, selected: SpeechLanguage, onSelect: (SpeechLanguage) -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
@@ -71,7 +73,7 @@ fun LanguageDialog(title: String, selected: SpeechLanguage, onSelect: (SpeechLan
         icon = { Icon(Icons.Rounded.Translate, contentDescription = null) },
         title = { Text(title) },
         text = {
-            Column(Modifier.selectableGroup()) {
+            Column(Modifier.selectableGroup().verticalScroll(rememberScrollState())) {
                 transcriptionLanguages.forEach { language ->
                     Row(
                         Modifier

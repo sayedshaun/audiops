@@ -24,6 +24,9 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 - **A new look for running jobs.** While a job is processing, your recording's own waveform fills in as the work progresses, with a soft glow at the front, instead of a spinner and a download-style bar. While a model downloads you still see the progress bar with its percentage, and while the length of the work is not yet known the waveform ripples.
 - **Choose the file format only when you save.** The WAV, M4A and Opus choice no longer sits on every result. A result has one Save button; tap it and a small menu offers the formats your phone can write, each with a line on what it is good for.
 - **A calmer home screen.** The big title is gone, and the waveform in the "Transform audio" banner now moves.
+- **You choose the transcription model; no more guessing.** Automatic language detection is gone. Pick Parakeet (English and 24 European languages, the default), Omnilingual (over 1,600 languages), Whisper Tiny (about 60 languages to pick from) or Bangla in Settings. Choices saved as Automatic become Parakeet and English. No new download.
+- **Hints on long press.** The long text under buttons is gone; press and hold Fast, Studio, a preset, a Volume option or similar to see its description in a small window over a blurred screen.
+- **Buttons inside their cards.** Every tool's main button now sits in its Options card.
 - **Even tool tiles.** On the Tools tab every tile is the same size; a last tile in an odd row no longer stretches across the row.
 - **Licence notice clarified.** Audiops' own code stays Apache 2.0, but the app includes eSpeak NG (GPL-3.0) through sherpa-onnx, so release builds are distributed under the GPL-3.0; the README, NOTICE and Settings now say so.
 

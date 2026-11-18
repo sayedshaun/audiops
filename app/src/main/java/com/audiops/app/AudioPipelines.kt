@@ -73,37 +73,18 @@ internal object AudioPipelines {
     }
 
     /**
-     * Transcribes decoded [audio] with [model]. [language] is a Whisper code (`bn` for Bangla,
-     * `ur` for Urdu) or empty for automatic detection; only Auto and Whisper use it.
+     * Transcribes decoded [audio] with the model the user picked. [language] is a Whisper code and
+     * only [TranscriptionModel.WHISPER] uses it; the other models work out the language themselves.
+     * [TranscriptionModel.AUTO] exists only for history saved by earlier versions and is treated
+     * as Parakeet.
      */
     fun transcribe(context: Context, audio: File, language: String, model: TranscriptionModel, listener: ProcessingListener): Transcript =
         when (model) {
-            TranscriptionModel.PARAKEET -> ParakeetTranscriber.transcribe(context, audio, listener)
+            TranscriptionModel.PARAKEET, TranscriptionModel.AUTO -> ParakeetTranscriber.transcribe(context, audio, listener)
             TranscriptionModel.OMNILINGUAL -> OmnilingualTranscriber.transcribe(context, audio, listener)
             TranscriptionModel.WHISPER -> WhisperTranscriber.transcribe(context, audio, language, listener)
             TranscriptionModel.BANGLA -> BanglaTranscriber.transcribe(context, audio, listener)
-            TranscriptionModel.AUTO -> automatic(context, audio, language, listener)
         }
-
-    /**
-     * Auto: Bangla uses its dedicated model and Urdu Whisper Tiny (the less weak model on Urdu in
-     * our benchmark). Otherwise the language is detected from the first 30 seconds: Bangla goes to
-     * the Bangla model, Parakeet's 25 European languages to Parakeet, and everything else to
-     * Omnilingual, which falls back to Whisper Tiny when it returns no text.
-     */
-    private fun automatic(context: Context, audio: File, language: String, listener: ProcessingListener): Transcript {
-        val detected = language.ifEmpty { LanguageDetector.detect(context, audio, listener) }
-        return when {
-            detected == "bn" -> BanglaTranscriber.transcribe(context, audio, listener)
-
-            detected == "ur" -> WhisperTranscriber.transcribe(context, audio, detected, listener)
-
-            detected in ParakeetTranscriber.languages -> ParakeetTranscriber.transcribe(context, audio, listener)
-
-            else -> OmnilingualTranscriber.transcribe(context, audio, listener).takeUnless { it.isBlank }
-                ?: WhisperTranscriber.transcribe(context, audio, "", listener)
-        }
-    }
 
     private fun crossfade(previous: FloatArray, enhanced: FloatArray): FloatArray {
         val overlap = minOf(previous.size, enhanced.size)

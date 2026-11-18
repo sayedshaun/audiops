@@ -49,9 +49,21 @@ class ModelTest {
         }
     }
 
-    @Test fun onlyAutoBanglaAndUrduAreOffered() {
-        assertEquals(listOf(SpeechLanguage.AUTO, SpeechLanguage.BANGLA, SpeechLanguage.URDU), transcriptionLanguages)
+    @Test fun theLanguageListIsSortedAndHasNoAuto() {
+        assertTrue(SpeechLanguage.AUTO !in transcriptionLanguages)
+        assertEquals(transcriptionLanguages.sortedBy { it.name }, transcriptionLanguages)
+        assertTrue(
+            listOf(SpeechLanguage.BANGLA, SpeechLanguage.URDU, SpeechLanguage.THAI, SpeechLanguage.POLISH).all {
+                it in
+                    transcriptionLanguages
+            },
+        )
         assertEquals("bn", SpeechLanguage.BANGLA.code)
+    }
+
+    @Test fun autoIsNotASelectableModel() {
+        assertTrue(TranscriptionModel.AUTO !in selectableTranscriptionModels)
+        assertEquals(4, selectableTranscriptionModels.size)
     }
 
     @Test fun everyLanguageSurvivesAJsonRoundTripWithAUniqueCode() {

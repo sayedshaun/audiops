@@ -24,9 +24,9 @@ data class UserSettings(
     /** Keep the screen on while a recording is being processed. */
     val keepScreenOn: Boolean = true,
     /** Spoken language preselected for new transcriptions. */
-    val defaultLanguage: SpeechLanguage = SpeechLanguage.AUTO,
+    val defaultLanguage: SpeechLanguage = SpeechLanguage.ENGLISH,
     /** Speech recognition model for new transcriptions. */
-    val transcriptionModel: TranscriptionModel = TranscriptionModel.AUTO,
+    val transcriptionModel: TranscriptionModel = TranscriptionModel.PARAKEET,
 )
 
 /**
@@ -52,10 +52,11 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
                 defaultLanguage = prefs[DEFAULT_LANGUAGE]
                     ?.let { name -> SpeechLanguage.entries.firstOrNull { it.name == name } }
                     ?.takeIf { it in transcriptionLanguages }
-                    ?: SpeechLanguage.AUTO,
+                    ?: SpeechLanguage.ENGLISH,
                 transcriptionModel = prefs[TRANSCRIPTION_MODEL]
                     ?.let { name -> TranscriptionModel.entries.firstOrNull { it.name == name } }
-                    ?: TranscriptionModel.AUTO,
+                    ?.takeIf { it != TranscriptionModel.AUTO }
+                    ?: TranscriptionModel.PARAKEET,
             )
         }
 
