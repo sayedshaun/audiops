@@ -28,7 +28,6 @@ Nothing you open is uploaded. AI models download once, then run offline.
 | :-: | --- | --- |
 | ✨ | **Enhance speech** | **Fast** mode removes noise in seconds (DPDFNet); **Studio** mode restores voice recordings with [Resemble Enhance](https://huggingface.co/SayedShaun/resemble-enhance-litert) (LiteRT, mobile export), which takes minutes on a phone. |
 | 🎼 | **Separate music** | Splits a song into vocals, an instrumental, drums, bass and other instruments ([SCNet](https://github.com/starrytong/SCNet), int8 ONNX through ONNX Runtime). |
-| ✨ | **Enhance speech** | AI restoration of voice recordings ([Resemble Enhance](https://huggingface.co/SayedShaun/resemble-enhance-litert), LiteRT, mobile export). |
 | 🗣️ | **Transcribe** | Speech to text in Bangla, Urdu and many other languages, with punctuation for English and European languages ([Parakeet v3](https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8), [Omnilingual ASR](https://huggingface.co/csukuangfj/sherpa-onnx-omnilingual-asr-1600-languages-300M-ctc-int8-2025-11-12), [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny) and [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx); sherpa-onnx). |
 | 📣 | **Text to speech** | Turn text into speech in 37 languages, on your phone ([Supertonic 3](https://huggingface.co/Supertone/supertonic-3) through sherpa-onnx for 31 of them, the default; [PocketTTS](https://huggingface.co/litert-community/pocket-tts) through MediaPipe for English, French, German, Spanish, Italian, Portuguese and Dutch; [Piper](https://github.com/rhasspy/piper) voices through sherpa-onnx for 21 more). |
 | 🌊 | **Noise reduction** | On Android, [DPDFNet](https://github.com/ceva-ip/DPDFNet) AI speech enhancement (48 kHz) removes background noise; on desktop, spectral subtraction learns the noise from quiet passages. |
@@ -41,7 +40,7 @@ Nothing you open is uploaded. AI models download once, then run offline.
 | 🔁 | **Convert** | Anti-aliased resampling to 8, 16, 22.05, 44.1 or 48 kHz. |
 | 📊 | **Analyze** | Integrated loudness, peak, RMS, clipping, silence and DC offset. |
 
-Open MP3, AAC/M4A, WAV, FLAC, OGG and anything else your device decodes. Results are saved as WAV files (mono, 16-bit).
+Open MP3, AAC/M4A, WAV, FLAC, OGG and anything else your device decodes. Results are saved as WAV (mono, 16-bit), M4A or Opus; the format is chosen when you save.
 
 **And around the tools:** waveform previews and playback, an Activity tab with the job queue and history, light, dark and pure-black themes, dynamic color on Android 12+, predictive back, haptics, screen-reader labels and large touch targets.
 
@@ -65,7 +64,7 @@ Only the two AI tools use machine-learning models. Every other tool is classic s
 
 ### Which model runs when
 
-- **Enhance speech** in Studio mode uses Resemble Enhance (Fast mode runs the DPDFNet noise-reduction model instead). Audio is converted to 44.1 kHz mono and processed in one-second chunks with 50% overlap through five networks: a **denoiser**, an **encoder**, a **flow-matching step** (16 midpoint steps, 32 evaluations), a **decoder** and a **vocoder** that produces the waveform. Long recordings go through in 20-second windows joined with a crossfade.
+- **Enhance speech** in Studio mode uses Resemble Enhance (Fast mode runs the DPDFNet noise-reduction model instead). Audio is converted to 44.1 kHz mono and processed in one-second chunks with 50% overlap through five networks: a **denoiser**, an **encoder**, a **flow-matching step** (8 midpoint steps, 16 evaluations; upstream uses 16 steps), a **decoder** and a **vocoder** that produces the waveform. Long recordings go through in 20-second windows joined with a crossfade.
 - **Transcribe** uses the model chosen in **Settings → Transcription → Transcription model**. **Automatic** (the default) picks one:
   - The language you choose decides first: **Bangla** uses the dedicated Bangla Zipformer (20-second sections, beam search) and **Urdu** uses Whisper Tiny, which scored better than Omnilingual on Urdu in our benchmark.
   - With **Auto**, Whisper Tiny detects the language from the first 30 seconds. Bangla goes to Bangla Zipformer, Urdu to Whisper Tiny, and Parakeet's 25 European languages (including English) to **Parakeet v3**, which adds punctuation and capital letters. In our test (FLEURS, 25 clips per language, CPU) it made 2.5 to 4 times fewer errors than Omnilingual on English, French, Spanish and German (word error 2 to 8%) and ran about 1.7 times faster.
@@ -160,7 +159,6 @@ See [CHANGELOG.md](CHANGELOG.md) for what changed in each release.
 ## Roadmap
 
 - AI enhancement and transcription on desktop (sherpa-onnx JVM build), with broader desktop format support.
-- Background processing with a foreground service and completion notifications.
 - A lighter vocoder export, so AI enhancement fits phones with 4 GB of RAM.
 - Translations (Bangla first).
 
@@ -192,3 +190,5 @@ The app shows every license in full under **Settings → Open-source licenses �
 Audiops is licensed under the [Apache License 2.0](LICENSE). Copyright 2026 Sayed Shaun; see [`NOTICE`](NOTICE).
 
 Third-party models and libraries keep their own licenses, listed above and in [`licenses/`](licenses).
+
+**Binary builds.** The Android library sherpa-onnx contains [eSpeak NG](https://github.com/espeak-ng/espeak-ng), which is GPL-3.0. Audiops' own source stays Apache 2.0, but an APK or desktop package that includes eSpeak NG is distributed as a whole under the GPL-3.0 terms, and the corresponding source is this repository at the release tag. Two models carry extra terms: Supertonic 3 is OpenRAIL-M (use restrictions travel with the model) and the SCNet weights were trained on MUSDB18-HQ (academic-use data), so check both before any commercial use.

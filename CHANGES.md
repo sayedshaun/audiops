@@ -561,3 +561,13 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 ### Not done
 - Not run on a phone, so real speed and memory there are unknown; stems are mono; songs over 12 minutes are refused; quality on real music was not listened to (no music clip was available to the test).
+
+## 2026-11-18: release 0.3.0 prepared (combined branch)
+
+### Changed
+- Merged the Separate music, waveform progress, Save-format menu, home screen, Supertonic and Fast/Studio Enhance work into `release/0.3.0`; one changelog section, README, website, NOTICE and the licence line clarified (source Apache 2.0, binaries GPL-3.0 because of eSpeak NG).
+- Tools tab: tiles keep one width; an incomplete last row is padded with a spacer (`balancedRows` and its test removed).
+- Resemble Studio keeps 8 midpoint steps (README now says so).
+
+### Verified
+- Emulator (x86_64, 4 GB): Studio Enhance, 11 s clip, 8 steps, ~9 min after the 570 MB download; Parakeet transcribes the result word for word. Supertonic English female created speech. Home and Tools screens checked.

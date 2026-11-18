@@ -369,7 +369,7 @@
     <string name="settings_source_code">Source code</string>
     <string name="settings_source_code_summary">github.com/sayedshaun/audiops</string>
     <string name="settings_app_license">License</string>
-    <string name="settings_app_license_summary">Audiops is open source under the Apache License 2.0</string>
+    <string name="settings_app_license_summary">Open source: the code is Apache 2.0; this build includes GPL-3.0 eSpeak NG</string>
     <string name="license_notices">Third-party notices</string>
     <string name="license_notices_summary">Full license text for every component</string>
     <string name="license_resemble">Resemble Enhance</string>

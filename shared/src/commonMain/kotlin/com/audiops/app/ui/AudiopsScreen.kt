@@ -347,7 +347,7 @@ private fun ToolsTab(
                             modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 2.dp),
                         )
                     }
-                    balancedRows(Tool.entries.filter { it.category == category }, columns).forEach { row ->
+                    Tool.entries.filter { it.category == category }.chunked(columns).forEach { row ->
                         item(key = row.joinToString { it.name }) {
                             Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(TileGap)) {
                                 row.forEach { tool ->
@@ -358,6 +358,8 @@ private fun ToolsTab(
                                         modifier = Modifier.weight(1f).fillMaxHeight(),
                                     )
                                 }
+                                // An incomplete last row keeps every tile the same width.
+                                repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
                             }
                         }
                     }
@@ -377,19 +379,6 @@ private fun ToolsTab(
 
 private val TileMinWidth = 168.dp
 private val TileGap = 10.dp
-
-/** Splits [items] into rows of at most [columns], as even as possible (5 in 3 columns: 3 + 2). */
-internal fun <T> balancedRows(items: List<T>, columns: Int): List<List<T>> {
-    if (items.isEmpty()) return emptyList()
-    val rows = (items.size + columns - 1) / columns
-    val base = items.size / rows
-    val extra = items.size % rows
-    var start = 0
-    return List(rows) { index ->
-        val size = base + if (index < extra) 1 else 0
-        items.subList(start, start + size).also { start += size }
-    }
-}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

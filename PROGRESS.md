@@ -1,6 +1,6 @@
 # Progress
 
-Snapshot as of 2026-11-16, after the v0.1.2 release; v0.2.0 is prepared but not tagged (see Open questions). Updated in place; the history is in `CHANGES.md`.
+Snapshot as of 2026-11-18: v0.3.0 is prepared on `release/0.3.0` (all pending features combined), not yet tagged. Updated in place; the history is in `CHANGES.md`.
 
 ## Status
 

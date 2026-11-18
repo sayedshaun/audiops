@@ -1,7 +1,9 @@
 Audiops
 Copyright 2026 Sayed Shaun
 
-This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+This product's source code is licensed under the Apache License, Version 2.0 (see LICENSE).
+Binary builds include eSpeak NG (GPL v3) through sherpa-onnx and are therefore distributed as a
+whole under the GPL v3; the corresponding source is the repository at the release tag.
 
 It includes or downloads third-party components under their own licenses. Full texts are
 in the licenses/ directory and in the app (Settings > Open-source licenses > Third-party

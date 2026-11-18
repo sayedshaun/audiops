@@ -13,14 +13,19 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-17
+
 ### Added
+- **Separate music.** A new AI tool splits a song into vocals, an instrumental (everything but the vocals), drums, bass and other instruments, all on your phone, with the SCNet model (about 13 MB, downloaded once). Play each stem and save it as WAV, M4A or Opus. A full song can take many minutes, longer on slower phones, and the tool needs about 2 GB of free memory. Results are mono for now. SCNet's weights are MIT-licensed, but it was trained on MUSDB18-HQ, which is licensed for academic use; see Settings → Open-source licenses.
+- **Supertonic 3 text to speech.** A new, much faster voice engine from Supertone is now the default in Text to speech: 31 languages, a female and a male voice in each, one 145 MB download shared by every language. It adds nine languages the app did not speak before: Korean, Japanese, Arabic, Hindi, Indonesian, Bulgarian, Croatian, Estonian and Lithuanian, so text to speech now covers 37 languages. PocketTTS and the Piper voices are still there as alternatives in the voice picker. Supertonic's licence (OpenRAIL-M) allows commercial use but carries use restrictions, shown under Settings → Open-source licenses.
 - **Fast and Studio modes for Enhance speech.** Enhance now offers two modes. **Fast** (the default) removes noise and hiss with the small AI noise-reduction model (about 11 MB) and takes seconds. **Studio** is the large Resemble Enhance model (about 570 MB) that restores the voice to a fuller sound; on a phone it takes minutes even for a short recording. Enhance jobs in your history from before still show as Studio.
+
 ### Changed
 - **A new look for running jobs.** While a job is processing, your recording's own waveform fills in as the work progresses, with a soft glow at the front, instead of a spinner and a download-style bar. While a model downloads you still see the progress bar with its percentage, and while the length of the work is not yet known the waveform ripples.
-### Changed
 - **Choose the file format only when you save.** The WAV, M4A and Opus choice no longer sits on every result. A result has one Save button; tap it and a small menu offers the formats your phone can write, each with a line on what it is good for.
-- **Supertonic 3 text to speech.** A new, much faster voice engine from Supertone is now the default in Text to speech: 31 languages, a female and a male voice in each, one 145 MB download shared by every language. It adds nine languages the app did not speak before: Korean, Japanese, Arabic, Hindi, Indonesian, Bulgarian, Croatian, Estonian and Lithuanian, so text to speech now covers 37 languages. PocketTTS and the Piper voices are still there as alternatives in the voice picker. Supertonic's licence (OpenRAIL-M) allows commercial use but carries use restrictions, shown under Settings → Open-source licenses.
-- **Separate music.** A new AI tool splits a song into vocals, an instrumental (everything but the vocals), drums, bass and other instruments, all on your phone, with the SCNet model (about 13 MB, downloaded once). Play each stem and save it as WAV, M4A or Opus. A full song can take many minutes, longer on slower phones, and the tool needs about 2 GB of free memory. Results are mono for now. SCNet's weights are MIT-licensed, but it was trained on MUSDB18-HQ, which is licensed for academic use; see Settings → Open-source licenses.
+- **A calmer home screen.** The big title is gone, and the waveform in the "Transform audio" banner now moves.
+- **Even tool tiles.** On the Tools tab every tile is the same size; a last tile in an odd row no longer stretches across the row.
+- **Licence notice clarified.** Audiops' own code stays Apache 2.0, but the app includes eSpeak NG (GPL-3.0) through sherpa-onnx, so release builds are distributed under the GPL-3.0; the README, NOTICE and Settings now say so.
 
 ## [0.2.0] - 2026-11-17
 
