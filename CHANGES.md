@@ -609,3 +609,8 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 ### Fixed
 - `piper-uk-ukrainian-tts` made under a second of audio; removed from `TtsVoices.kt` (Supertonic covers `uk`). Piper now has 20 voices in 20 languages; the 37-language total is unchanged. README and AGENTS counts updated.
+
+## 2026-11-18: release 0.3.1 prepared (`release/0.3.1`)
+
+### Changed
+- CHANGELOG: Unreleased became 0.3.1 (colourful splash icon, Transcribe history names the model, Piper Ukrainian removed, Android only). versionCode 3001.
