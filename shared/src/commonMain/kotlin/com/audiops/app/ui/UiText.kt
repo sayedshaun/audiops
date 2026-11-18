@@ -617,7 +617,11 @@ fun JobSpec.summary(): String? = when (this) {
 
     is JobSpec.Enhance -> stringResource(mode.title)
 
-    is JobSpec.Transcribe -> stringResource(language.label)
+    // The model that ran, plus the language only for Whisper (the one model that is given a language).
+    is JobSpec.Transcribe -> listOfNotNull(
+        stringResource(model.label),
+        if (model.usesLanguage && language != SpeechLanguage.AUTO) stringResource(language.label) else null,
+    ).joinToString(" · ")
 
     is JobSpec.Speak -> listOfNotNull(ttsVoice(voice)?.name, ttsVoice(voice)?.let { stringResource(ttsLanguageLabel(it.language)) })
         .joinToString(" · ")

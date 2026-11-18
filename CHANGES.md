@@ -599,3 +599,8 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 ### Fixed
 - `windowSplashScreenAnimatedIcon` pointed at `launcher_foreground` (white shapes only); it now uses the adaptive `@mipmap/ic_launcher`, so the splash has the gradient background. Checked on the Android 17 emulator.
+
+## 2026-11-18: Transcribe history summary (`fix/transcribe-summary`)
+
+### Fixed
+- Activity showed "Transcribe · Auto" because the summary used the language label. `JobSpec.Transcribe.summary()` now shows the model, plus the language for Whisper only. Checked on the emulator.
