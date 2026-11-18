@@ -13,6 +13,9 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+### Fixed
+- **Colourful start-up icon.** The icon shown while the app opens was only the white waveform, so it looked black and white. It now shows the full purple app icon.
+
 ### Changed
 - **Android only.** The Linux and Windows apps are gone: no packages in releases and no desktop code in the repository. The AI tools are the point of Audiops and they run only on Android.
 

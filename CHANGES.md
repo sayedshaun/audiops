@@ -594,3 +594,8 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 ### Verified
 - `make ci`: spotless, 121 tests (1 skipped, needs an external model), Android lint, R8 release build.
+
+## 2026-11-18: splash icon (`fix/splash-icon`)
+
+### Fixed
+- `windowSplashScreenAnimatedIcon` pointed at `launcher_foreground` (white shapes only); it now uses the adaptive `@mipmap/ic_launcher`, so the splash has the gradient background. Checked on the Android 17 emulator.
