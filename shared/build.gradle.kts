@@ -53,6 +53,8 @@ kotlin {
         desktopTest.dependencies {
             implementation("junit:junit:4.13.2")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+            // Only for ScnetRealModelTest, which runs when SCNET_MODEL points at the ONNX file (never in CI).
+            implementation("com.microsoft.onnxruntime:onnxruntime:1.28.0")
         }
     }
 }

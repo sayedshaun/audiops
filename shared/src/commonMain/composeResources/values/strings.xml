@@ -11,7 +11,6 @@
     <string name="tab_settings">Settings</string>
 
     <!-- Tools tab -->
-    <string name="home_subtitle">On-device audio tools</string>
     <string name="home_hero_title">Transform audio, without the cloud.</string>
     <string name="home_hero_body">Every tool runs on this device. Nothing is uploaded.</string>
     <string name="home_footer">AI models download once, then run on this device. Other tools need no download.</string>
@@ -36,8 +35,10 @@
     <string name="preset_lecture_description">Removes rumble and noise, skips long silences and brings quiet speakers up (−16 LUFS).</string>
     <string name="preset_noisy">Noisy recording</string>
     <string name="preset_noisy_description">Strong noise reduction and a clearer voice, at broadcast loudness (−23 LUFS).</string>
+    <string name="tool_separate_title">Separate music</string>
+    <string name="tool_separate_description">Split a song into vocals and instruments.</string>
     <string name="tool_speak_title">Text to speech</string>
-    <string name="tool_speak_description">Turn text into natural speech in 28 languages.</string>
+    <string name="tool_speak_description">Turn text into natural speech in 37 languages.</string>
     <string name="tool_denoise_title">Noise reduction</string>
     <string name="tool_denoise_description">Remove hiss, hum and steady background noise.</string>
     <string name="tool_silence_title">Remove silence</string>
@@ -71,6 +72,22 @@
     <string name="action_enhance">Enhance audio</string>
     <string name="action_transcribe">Transcribe audio</string>
     <string name="action_speak">Create speech</string>
+    <string name="action_save">Save</string>
+    <string name="format_wav_hint">Lossless, the largest file</string>
+    <string name="format_m4a_hint">Small, plays almost everywhere</string>
+    <string name="format_opus_hint">Smallest for its quality</string>
+    <string name="action_separate">Separate music</string>
+    <string name="separate_hint">Splits a song into vocals, an instrumental, drums, bass and other sounds. The first run downloads about 13 MB. A full song can take many minutes, longer on slower phones, and it needs about 2 GB of free memory, so close other apps first. Results are mono.</string>
+    <string name="stems_ready_title">Your stems are ready</string>
+    <string name="stems_ready_body">Play each one, then save the ones you want.</string>
+    <string name="action_save_stem">Save as %1$s</string>
+    <string name="stem_vocals">Vocals</string>
+    <string name="stem_instrumental">Instrumental (no vocals)</string>
+    <string name="stem_drums">Drums</string>
+    <string name="stem_bass">Bass</string>
+    <string name="stem_other">Other instruments</string>
+    <string name="model_scnet">SCNet music separation</string>
+    <string name="model_scnet_purpose">Separate music into vocals, drums, bass and other</string>
     <string name="action_save_format">Save %1$s</string>
     <string name="message_input_ready">“%1$s” is ready. Choose a tool.</string>
     <string name="error_import">Could not open the shared audio: %1$s</string>
@@ -122,6 +139,15 @@
     <string name="tts_language_tr">Turkish</string>
     <string name="tts_language_uk">Ukrainian</string>
     <string name="tts_language_vi">Vietnamese</string>
+    <string name="tts_language_ko">Korean</string>
+    <string name="tts_language_ja">Japanese</string>
+    <string name="tts_language_ar">Arabic</string>
+    <string name="tts_language_bg">Bulgarian</string>
+    <string name="tts_language_et">Estonian</string>
+    <string name="tts_language_hr">Croatian</string>
+    <string name="tts_language_hi">Hindi</string>
+    <string name="tts_language_id">Indonesian</string>
+    <string name="tts_language_lt">Lithuanian</string>
     <string name="tts_language_other">Other</string>
     <string name="action_process">Process audio</string>
     <string name="action_analyze">Analyze audio</string>
@@ -139,7 +165,11 @@
     <string name="action_open_tool">Open in tool</string>
     <string name="player_unavailable">Can\'t play</string>
 
-    <string name="enhance_hint">The first run downloads about 570 MB of model files. Longer recordings take more time.</string>
+    <string name="enhance_hint">Fast downloads about 11 MB once and takes seconds. Studio downloads about 570 MB once and takes minutes. Longer recordings take more time.</string>
+    <string name="enhance_mode_fast">Fast</string>
+    <string name="enhance_mode_fast_description">Removes noise and hiss with a small AI model. Takes seconds.</string>
+    <string name="enhance_mode_studio">Studio</string>
+    <string name="enhance_mode_studio_description">Restores the voice to a cleaner, fuller sound with a large AI model. Takes several minutes, even for short recordings.</string>
     <string name="transcribe_hint">Each model downloads once, the first time it is needed. Automatic uses Whisper Tiny (about 100 MB) to detect the language, then about 640 MB for English and European languages, 370 MB for other languages or 75 MB for Bangla.</string>
     <string name="transcribe_language_hint">Auto detects the language: English and other European languages use Parakeet v3 (with punctuation), Bangla a dedicated model, and other languages Omnilingual ASR. Urdu uses Whisper Tiny, which is less weak on Urdu.</string>
     <string name="transcribe_whisper_hint">Whisper Tiny is small and fast but less accurate. Pick the language, or Auto to let it detect the language.</string>
@@ -309,6 +339,8 @@
     <string name="model_whisper">Whisper Tiny</string>
     <string name="model_whisper_purpose">Transcribe Urdu, detect the language, and a fallback when Omnilingual finds no speech</string>
     <string name="model_bangla">Bangla Zipformer</string>
+    <string name="model_supertonic">Supertonic 3 voices</string>
+    <string name="model_supertonic_purpose">Text to speech in 31 languages (the default voice)</string>
     <string name="model_pocket_tts">PocketTTS voices</string>
     <string name="model_pocket_tts_purpose">Text to speech: English, French, German, Spanish, Italian, Portuguese, Dutch</string>
     <string name="model_piper">Piper voices</string>
@@ -337,15 +369,19 @@
     <string name="settings_source_code">Source code</string>
     <string name="settings_source_code_summary">github.com/sayedshaun/audiops</string>
     <string name="settings_app_license">License</string>
-    <string name="settings_app_license_summary">Audiops is open source under the Apache License 2.0</string>
+    <string name="settings_app_license_summary">Open source: the code is Apache 2.0; this build includes GPL-3.0 eSpeak NG</string>
     <string name="license_notices">Third-party notices</string>
     <string name="license_notices_summary">Full license text for every component</string>
     <string name="license_resemble">Resemble Enhance</string>
     <string name="license_resemble_summary">MIT License · Resemble AI</string>
     <string name="license_dpdfnet">DPDFNet</string>
     <string name="license_dpdfnet_summary">Apache License 2.0 · Ceva (ONNX export: k2-fsa sherpa-onnx)</string>
+    <string name="license_scnet">SCNet music separation</string>
+    <string name="license_scnet_summary">MIT License · starrytong (trained on MUSDB18-HQ; ONNX export: audiojs)</string>
     <string name="license_pocket">PocketTTS voices</string>
     <string name="license_pocket_summary">Creative Commons Attribution 4.0 · Kyutai (LiteRT bundles: litert-community)</string>
+    <string name="license_supertonic">Supertonic 3 voices</string>
+    <string name="license_supertonic_summary">BigScience OpenRAIL-M, with use restrictions · Supertone (int8 export: k2-fsa sherpa-onnx)</string>
     <string name="license_piper">Piper voices</string>
     <string name="license_piper_summary">CC0, public domain or CC BY 4.0, depending on the voice · rhasspy/piper, ONNX export: k2-fsa sherpa-onnx</string>
     <string name="license_espeak">eSpeak NG</string>

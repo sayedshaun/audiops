@@ -32,6 +32,7 @@ private class FakeEngine(
     override val supportsEnhance: Boolean = true,
     override val supportsTranscribe: Boolean = true,
     override val supportsSpeak: Boolean = true,
+    override val supportsSeparate: Boolean = true,
 ) : AudioEngine {
     val deleted: MutableList<String> = Collections.synchronizedList(mutableListOf())
     val processed: MutableList<List<AudioOperation>> = Collections.synchronizedList(mutableListOf())
@@ -44,11 +45,23 @@ private class FakeEngine(
 
     @Volatile var transcript = "hello world"
 
-    override fun enhance(source: String, listener: ProcessingListener) = "/out/enhanced.wav"
+    val enhanced = AtomicInteger()
+
+    override fun enhance(source: String, listener: ProcessingListener): String {
+        enhanced.incrementAndGet()
+        return "/out/enhanced.wav"
+    }
 
     @Volatile var subtitles: String? = null
 
     override fun subtitlesFor(transcriptPath: String): String? = subtitles
+
+    val separated = AtomicInteger()
+
+    override fun separate(source: String, listener: ProcessingListener): List<String> {
+        val run = separated.incrementAndGet()
+        return SeparatedStem.entries.map { "/out/separated-$run-${it.fileSuffix}.wav" }
+    }
 
     val spoken: MutableList<Triple<String, String, Float>> = Collections.synchronizedList(mutableListOf())
 
@@ -253,7 +266,42 @@ class AudiopsViewModelTest {
     @Test fun unsupportedToolsFailWithoutRunning() {
         val vm = viewModel(FakeEngine(supportsEnhance = false))
         assertEquals(setOf(Tool.ENHANCE), vm.unsupportedTools)
-        vm.start(Tool.ENHANCE, JobSpec.Enhance)
+        vm.start(Tool.ENHANCE, JobSpec.Enhance())
+        assertEquals(FailureKind.UNSUPPORTED, vm.awaitJobs(1, JobStatus.FAILED).single().failure)
+    }
+
+    @Test fun enhanceModesUseTheirOwnModel() {
+        val engine = FakeEngine()
+        val vm = viewModel(engine)
+        vm.start(Tool.ENHANCE, JobSpec.Enhance(EnhanceMode.FAST))
+        val fast = vm.awaitJobs(1, JobStatus.DONE).single()
+        // Fast runs the AI noise-reduction operation at full strength; Studio runs Resemble Enhance.
+        assertEquals(listOf(listOf<AudioOperation>(AudioOperation.Denoise(1f))), engine.processed.toList())
+        assertEquals(0, engine.enhanced.get())
+        assertEquals("/out/processed-1.wav", fast.outputPath)
+        vm.start(Tool.ENHANCE, JobSpec.Enhance(EnhanceMode.STUDIO))
+        vm.awaitJobs(2, JobStatus.DONE)
+        assertEquals(1, engine.enhanced.get())
+        assertEquals(1, engine.processed.size)
+    }
+
+    @Test fun separationKeepsEveryStemAndDeletingRemovesThemAll() {
+        val engine = FakeEngine()
+        val vm = viewModel(engine)
+        vm.start(Tool.SEPARATE, JobSpec.Separate)
+        val job = vm.awaitJobs(1, JobStatus.DONE).single()
+        val stems = checkNotNull(job.stemPaths)
+        assertEquals(SeparatedStem.entries.size, stems.size)
+        assertEquals(stems.first(), job.outputPath)
+        assertEquals(stems.toSet(), job.files.toSet())
+        vm.delete(job.id)
+        eventually { engine.deleted.toSet().containsAll(stems) }
+    }
+
+    @Test fun separationIsUnsupportedWhereTheEngineCannotDoIt() {
+        val vm = viewModel(FakeEngine(supportsSeparate = false))
+        assertEquals(setOf(Tool.SEPARATE), vm.unsupportedTools)
+        vm.start(Tool.SEPARATE, JobSpec.Separate)
         assertEquals(FailureKind.UNSUPPORTED, vm.awaitJobs(1, JobStatus.FAILED).single().failure)
     }
 

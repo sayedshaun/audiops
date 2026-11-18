@@ -37,7 +37,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
@@ -48,7 +47,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,7 +55,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -65,6 +62,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.audiops.app.AudiopsState
 import com.audiops.app.AudiopsViewModel
 import com.audiops.app.Job
+import com.audiops.app.Stage
 import com.audiops.app.Tab
 import com.audiops.app.Tool
 import com.audiops.app.ToolCategory
@@ -77,7 +75,6 @@ import com.audiops.shared.resources.banner_processing
 import com.audiops.shared.resources.home_footer
 import com.audiops.shared.resources.home_hero_body
 import com.audiops.shared.resources.home_hero_title
-import com.audiops.shared.resources.home_subtitle
 import com.audiops.shared.resources.tab_activity
 import com.audiops.shared.resources.tab_settings
 import com.audiops.shared.resources.tab_tools
@@ -303,17 +300,8 @@ private fun ToolsTab(
     val pickRecording = rememberAudioPicker(onChoose)
     val recorder = rememberRecorder(onChoose, onRecordFailed)
     KeepScreenOn(recorder.state.recording)
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            LargeFlexibleTopAppBar(
-                title = { Text(stringResource(Res.string.app_name)) },
-                subtitle = { Text(stringResource(Res.string.home_subtitle)) },
-                scrollBehavior = scrollBehavior,
-            )
-        },
-    ) { padding ->
+    // No title bar: the banner at the top already says what the app is.
+    Scaffold { padding ->
         // Each category fills its rows: tiles stretch to share the width, so wide windows
         // (desktop) have no empty cells at the end of a row.
         BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -359,7 +347,7 @@ private fun ToolsTab(
                             modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 2.dp),
                         )
                     }
-                    balancedRows(Tool.entries.filter { it.category == category }, columns).forEach { row ->
+                    Tool.entries.filter { it.category == category }.chunked(columns).forEach { row ->
                         item(key = row.joinToString { it.name }) {
                             Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(TileGap)) {
                                 row.forEach { tool ->
@@ -370,6 +358,8 @@ private fun ToolsTab(
                                         modifier = Modifier.weight(1f).fillMaxHeight(),
                                     )
                                 }
+                                // An incomplete last row keeps every tile the same width.
+                                repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
                             }
                         }
                     }
@@ -389,19 +379,6 @@ private fun ToolsTab(
 
 private val TileMinWidth = 168.dp
 private val TileGap = 10.dp
-
-/** Splits [items] into rows of at most [columns], as even as possible (5 in 3 columns: 3 + 2). */
-internal fun <T> balancedRows(items: List<T>, columns: Int): List<List<T>> {
-    if (items.isEmpty()) return emptyList()
-    val rows = (items.size + columns - 1) / columns
-    val base = items.size / rows
-    val extra = items.size % rows
-    var start = 0
-    return List(rows) { index ->
-        val size = base + if (index < extra) 1 else 0
-        items.subList(start, start + size).also { start += size }
-    }
-}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -480,7 +457,12 @@ private fun ProcessingBanner(job: Job, count: Int, onClick: () -> Unit) {
                 overflow = TextOverflow.Ellipsis,
             )
             Spacer(Modifier.height(12.dp))
-            WorkStatus(job.progressText(), job.progress?.fraction)
+            WorkStatus(
+                status = job.progressText(),
+                progress = job.progress?.fraction,
+                downloading = job.progress?.stage == Stage.DOWNLOADING_MODEL,
+                seed = job.id,
+            )
         }
     }
 }

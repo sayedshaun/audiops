@@ -1,7 +1,9 @@
 Audiops
 Copyright 2026 Sayed Shaun
 
-This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+This product's source code is licensed under the Apache License, Version 2.0 (see LICENSE).
+Binary builds include eSpeak NG (GPL v3) through sherpa-onnx and are therefore distributed as a
+whole under the GPL v3; the corresponding source is the repository at the release tag.
 
 It includes or downloads third-party components under their own licenses. Full texts are
 in the licenses/ directory and in the app (Settings > Open-source licenses > Third-party
@@ -24,6 +26,8 @@ Downloaded on first use (Android):
 - Resemble Enhance by Resemble AI (MIT)
 - DPDFNet by Ceva (Apache 2.0); ONNX export by k2-fsa sherpa-onnx (Apache 2.0)
 - PocketTTS voices by Kyutai (CC BY 4.0); LiteRT bundles by litert-community/pocket-tts
+- Supertonic 3 by Supertone Inc. (BigScience OpenRAIL-M, with use-based restrictions); int8 sherpa-onnx files by k2-fsa, hosted at SayedShaun/supertonic-3-sherpa-onnx-int8
+- SCNet music separation by starrytong (MIT, weights confirmed MIT by the author; trained on MUSDB18-HQ, academic-use data: commercial use unsettled); checkpoint via ZFTurbo/Music-Source-Separation-Training; int8 ONNX export by audiojs
 - Piper voices by rhasspy/piper and voice authors (CC0, public domain or CC BY 4.0, per voice); ONNX exports by k2-fsa sherpa-onnx
 - Parakeet TDT 0.6B v3 by NVIDIA (CC BY 4.0); ONNX export by k2-fsa sherpa-onnx
 - Omnilingual ASR by Meta Platforms (Apache 2.0); ONNX export by k2-fsa sherpa-onnx (Apache 2.0)

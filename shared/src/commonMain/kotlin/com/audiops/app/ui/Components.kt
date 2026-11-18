@@ -1,6 +1,11 @@
 package com.audiops.app.ui
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -28,10 +33,14 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AudioFile
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.Save
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonShapes
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
@@ -51,6 +60,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,7 +83,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.audiops.app.SaveFormat
 import com.audiops.shared.resources.Res
+import com.audiops.shared.resources.action_save
 import com.audiops.shared.resources.back
 import org.jetbrains.compose.resources.stringResource
 
@@ -97,15 +111,26 @@ fun ShapedIcon(icon: ImageVector, shape: Shape, container: Color, content: Color
     }
 }
 
-/** Decorative bars that suggest audio. Hidden from accessibility services. */
+/**
+ * Decorative bars that suggest audio. With [live], a slow wave rolls through them so the bars breathe
+ * like a signal being heard. Hidden from accessibility services.
+ */
 @Composable
-fun Waveform(modifier: Modifier, color: Color, bars: Int) {
+fun Waveform(modifier: Modifier, color: Color, bars: Int, live: Boolean = false) {
+    val phase by rememberInfiniteTransition(label = "waveform").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(durationMillis = 3600, easing = LinearEasing)),
+        label = "waveform phase",
+    )
     Canvas(modifier.clearAndSetSemantics { }) {
         val step = size.width / bars
         for (i in 0 until bars) {
             val envelope = 0.2f + 0.8f * kotlin.math.sin(Math.PI.toFloat() * (i + 1) / (bars + 1))
             val variation = 0.25f + 0.75f * kotlin.math.abs(kotlin.math.sin(i * 2.19f))
-            val height = (size.height * envelope * variation).coerceAtLeast(3.dp.toPx())
+            // Each bar swells and shrinks a little behind its neighbour, so the motion travels along the strip.
+            val motion = if (live) 0.55f + 0.45f * kotlin.math.sin((phase - i / bars.toFloat() * 1.6f) * 2f * Math.PI.toFloat()) else 1f
+            val height = (size.height * envelope * variation * motion).coerceAtLeast(3.dp.toPx())
             val x = (i + 0.5f) * step
             drawLine(
                 color,
@@ -161,7 +186,7 @@ fun HeroBanner(title: String, body: String, modifier: Modifier = Modifier) {
             Spacer(Modifier.height(6.dp))
             Text(body, color = colors.onPrimaryContainer.copy(alpha = 0.85f), style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(12.dp))
-            Waveform(Modifier.fillMaxWidth().height(20.dp), colors.primary.copy(alpha = 0.6f), bars = 43)
+            Waveform(Modifier.fillMaxWidth().height(20.dp), colors.primary.copy(alpha = 0.6f), bars = 43, live = true)
         }
     }
 }
@@ -194,22 +219,24 @@ fun StepTitle(number: Int, title: String) {
 }
 
 /**
- * Progress for running work: the expressive loading indicator next to the status, and a
- * wavy progress bar. Announced to screen readers as it changes.
+ * What a running job looks like: the status text and, under it, a progress bar while a model downloads,
+ * or the recording's waveform filling in while it is processed ([peaks] from the recording, or a stable
+ * shape from [seed] when there is none). Announced to screen readers as it changes.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun WorkStatus(status: String, progress: Float?) {
-    val target = progress
+fun WorkStatus(status: String, progress: Float?, downloading: Boolean = false, peaks: FloatArray? = null, seed: String = "") {
     val animated by animateFloatAsState(
-        targetValue = target ?: 0f,
+        targetValue = progress ?: 0f,
         animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
         label = "progress",
     )
     Column(Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite }) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            LoadingIndicator(Modifier.size(40.dp))
-            Spacer(Modifier.width(12.dp))
+            if (downloading) {
+                LoadingIndicator(Modifier.size(40.dp))
+                Spacer(Modifier.width(12.dp))
+            }
             Text(
                 status,
                 style = MaterialTheme.typography.bodyLarge,
@@ -218,10 +245,52 @@ fun WorkStatus(status: String, progress: Float?) {
             )
         }
         Spacer(Modifier.height(12.dp))
-        if (target != null) {
-            LinearWavyProgressIndicator(progress = { animated }, modifier = Modifier.fillMaxWidth())
-        } else {
-            LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
+        when {
+            !downloading -> WaveformProgress(progress, peaks, seed)
+            progress != null -> LinearWavyProgressIndicator(progress = { animated }, modifier = Modifier.fillMaxWidth())
+            else -> LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
+        }
+    }
+}
+
+/**
+ * A Save button. With one format it saves straight away; with several, a menu under the button asks
+ * which one (with a line on what each is good for) and [onSave] gets the choice.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun SaveButton(formats: List<SaveFormat>, modifier: Modifier = Modifier, onSave: (SaveFormat) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box(modifier.fillMaxWidth()) {
+        Button(
+            onClick = { if (formats.size > 1) open = true else onSave(formats.first()) },
+            shapes = ButtonDefaults.shapes(),
+            contentPadding = PrimaryButtonPadding,
+            modifier = Modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
+        ) {
+            Icon(Icons.Rounded.Save, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(Res.string.action_save), style = MaterialTheme.typography.titleMedium)
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            formats.forEach { format ->
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(stringResource(format.label), style = MaterialTheme.typography.titleSmall)
+                            Text(
+                                stringResource(format.hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    },
+                    onClick = {
+                        open = false
+                        onSave(format)
+                    },
+                )
+            }
         }
     }
 }
