@@ -10,8 +10,8 @@ import com.audiops.app.ThemeMode
 import com.audiops.app.UserSettings
 
 /**
- * The whole app, shared by Android and desktop: applies the user's theme settings and
- * shows the navigation root. Platforms only host it (Activity or Window).
+ * The whole app: applies the user's theme settings and
+ * shows the navigation root. The Activity only hosts it.
  */
 @Composable
 fun AudiopsApp(viewModel: AudiopsViewModel, appVersion: String) {

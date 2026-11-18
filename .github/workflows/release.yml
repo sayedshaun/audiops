@@ -114,7 +114,7 @@ jobs:
           ./gradlew --no-daemon
           -PaudiopsVersion=${{ needs.version.outputs.version }}
           -PaudiopsVersionCode=${{ needs.version.outputs.code }}
-          spotlessCheck :shared:desktopTest :app:lintRelease :app:bundleRelease
+          spotlessCheck :shared:testAndroidHostTest :app:lintRelease :app:bundleRelease
 
       - name: Build per-ABI and universal APKs
         env:
@@ -149,69 +149,9 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
-  desktop:
-    name: Desktop (${{ matrix.name }})
-    needs: version
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: Linux
-            os: ubuntu-latest
-            tasks: :desktopApp:packageDeb :desktopApp:packageRpm
-          - name: Windows
-            os: windows-latest
-            tasks: :desktopApp:packageMsi :desktopApp:packageExe
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.version.outputs.ref }}
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - uses: gradle/actions/setup-gradle@v4
-
-      - name: Install RPM tools
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y rpm fakeroot
-
-      - name: Test and package
-        shell: bash
-        run: ./gradlew --no-daemon -PaudiopsVersion=${{ needs.version.outputs.numeric }} :desktopApp:test ${{ matrix.tasks }}
-
-      - name: Collect artifacts
-        shell: bash
-        run: |
-          mkdir -p dist
-          v=${{ needs.version.outputs.version }}
-          shopt -s nullglob
-          for f in desktopApp/build/compose/binaries/main/*/*.{deb,rpm,msi,exe}; do
-            ext="${f##*.}"
-            case "$ext" in
-              deb) name="audiops-$v-linux-amd64.deb" ;;
-              rpm) name="audiops-$v-linux-x86_64.rpm" ;;
-              msi) name="audiops-$v-windows-x64.msi" ;;
-              exe) name="audiops-$v-windows-x64-setup.exe" ;;
-            esac
-            cp "$f" "dist/$name"
-          done
-          ls -la dist
-          [ -n "$(ls dist)" ] || { echo "::error::No installers were produced"; exit 1; }
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: desktop-${{ matrix.name }}
-          path: dist/*
-          if-no-files-found: error
-
   publish:
     name: Publish to the release
-    needs: [version, android, desktop]
+    needs: [version, android]
     if: needs.version.outputs.dry_run != 'true'
     runs-on: ubuntu-latest
     steps:

@@ -140,7 +140,6 @@ import com.audiops.shared.resources.settings_app_license
 import com.audiops.shared.resources.settings_app_license_summary
 import com.audiops.shared.resources.settings_default_language
 import com.audiops.shared.resources.settings_dynamic_color
-import com.audiops.shared.resources.settings_dynamic_color_desktop
 import com.audiops.shared.resources.settings_dynamic_color_summary
 import com.audiops.shared.resources.settings_dynamic_color_unsupported
 import com.audiops.shared.resources.settings_keep_screen_on
@@ -387,7 +386,6 @@ private fun SettingsMain(
                             summary = stringResource(
                                 when {
                                     supportsDynamicColor -> Res.string.settings_dynamic_color_summary
-                                    isDesktop -> Res.string.settings_dynamic_color_desktop
                                     else -> Res.string.settings_dynamic_color_unsupported
                                 },
                             ),
@@ -436,20 +434,18 @@ private fun SettingsMain(
                     )
                 }
             }
-            if (!isDesktop) {
-                item { SectionHeader(stringResource(Res.string.settings_section_processing)) }
-                item {
-                    SettingsGroup({ shape ->
-                        SwitchRow(
-                            icon = Icons.Rounded.Smartphone,
-                            title = stringResource(Res.string.settings_keep_screen_on),
-                            summary = stringResource(Res.string.settings_keep_screen_on_summary),
-                            checked = settings.keepScreenOn,
-                            shape = shape,
-                            onCheckedChange = actions.onKeepScreenOn,
-                        )
-                    })
-                }
+            item { SectionHeader(stringResource(Res.string.settings_section_processing)) }
+            item {
+                SettingsGroup({ shape ->
+                    SwitchRow(
+                        icon = Icons.Rounded.Smartphone,
+                        title = stringResource(Res.string.settings_keep_screen_on),
+                        summary = stringResource(Res.string.settings_keep_screen_on_summary),
+                        checked = settings.keepScreenOn,
+                        shape = shape,
+                        onCheckedChange = actions.onKeepScreenOn,
+                    )
+                })
             }
 
             item { SectionHeader(stringResource(Res.string.settings_section_storage)) }

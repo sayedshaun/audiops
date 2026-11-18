@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 // Brand palette generated from the seed colour #5145CD. Used where dynamic colour is
-// unavailable or turned off: Android 11 and older, and desktop.
+// unavailable or turned off (Android 11 and older).
 private val LightScheme: ColorScheme = lightColorScheme(
     primary = Color(0xFF5145CD),
     onPrimary = Color(0xFFFFFFFF),

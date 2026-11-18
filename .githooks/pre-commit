@@ -21,7 +21,7 @@ fi
 
 if [ "${AUDIOPS_SKIP_TESTS:-0}" != "1" ]; then
   echo "pre-commit: running unit tests…"
-  if ! ./gradlew --quiet :shared:desktopTest :desktopApp:test; then
+  if ! ./gradlew --quiet :shared:testAndroidHostTest; then
     echo
     echo "pre-commit: tests failed. Fix them before committing (reports in */build/reports/tests)."
     exit 1

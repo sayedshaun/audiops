@@ -20,7 +20,6 @@ Bundled:
 - JLargeArrays, Copyright (C) 2013 onward University of Warsaw, ICM (BSD 2-Clause)
 - Google Play asset delivery and Play services libraries pulled in by LiteRT
   (Android Software Development Kit License)
-- Desktop installers: OpenJDK runtime (GPL v2 with the Classpath Exception)
 
 Downloaded on first use (Android):
 - Resemble Enhance by Resemble AI (MIT)

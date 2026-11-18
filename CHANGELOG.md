@@ -13,6 +13,9 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+### Changed
+- **Android only.** The Linux and Windows apps are gone: no packages in releases and no desktop code in the repository. The AI tools are the point of Audiops and they run only on Android.
+
 ## [0.3.0] - 2026-11-17
 
 ### Added

@@ -227,7 +227,7 @@ private val tabs = listOf(
 
 /**
  * Top-level navigation: an Expressive short navigation bar on phones, a navigation rail
- * on wide windows (tablets, desktop). Tabs fade through each other.
+ * on wide windows (tablets). Tabs fade through each other.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -303,7 +303,7 @@ private fun ToolsTab(
     // No title bar: the banner at the top already says what the app is.
     Scaffold { padding ->
         // Each category fills its rows: tiles stretch to share the width, so wide windows
-        // (desktop) have no empty cells at the end of a row.
+        // (tablets) have no empty cells at the end of a row.
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val columns = ((maxWidth - 32.dp + TileGap) / (TileMinWidth + TileGap)).toInt().coerceAtLeast(1)
             LazyColumn(

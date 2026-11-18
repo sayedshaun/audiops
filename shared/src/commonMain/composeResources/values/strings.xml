@@ -236,7 +236,7 @@
     <string name="level_light">Light</string>
     <string name="level_medium">Medium</string>
     <string name="level_strong">Strong</string>
-    <string name="denoise_hint">On Android this uses DPDFNet, an AI speech enhancer that runs on this device (the first run downloads about 11 MB). Light keeps more of the original sound; Strong removes the most noise. On desktop it learns the noise from the quietest parts of the recording.</string>
+    <string name="denoise_hint">This uses DPDFNet, an AI speech enhancer that runs on this device (the first run downloads about 11 MB). Light keeps more of the original sound; Strong removes the most noise.</string>
     <string name="option_silence_threshold">Silence below %1$s dB</string>
     <string name="option_min_pause">Shorten pauses longer than %1$s s</string>
     <string name="option_trim_range">%1$s – %2$s (%3$s)</string>
@@ -346,7 +346,6 @@
     <string name="settings_dynamic_color">Dynamic color</string>
     <string name="settings_dynamic_color_summary">Use colors from your wallpaper</string>
     <string name="settings_dynamic_color_unsupported">Requires Android 12 or newer</string>
-    <string name="settings_dynamic_color_desktop">Available on Android 12 and newer</string>
     <string name="settings_pure_black">Pure black dark theme</string>
     <string name="settings_pure_black_summary">Black backgrounds in the dark theme. Saves power on OLED screens.</string>
     <string name="settings_section_transcription">Transcription</string>

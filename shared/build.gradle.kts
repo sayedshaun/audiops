@@ -17,15 +17,15 @@ kotlin {
         compileSdk = 37
         minSdk = 26
         androidResources { enable = true }
+        // Unit tests run on the JVM (./gradlew :shared:testAndroidHostTest), no device needed.
+        withHostTest { isReturnDefaultValues = true }
     }
-    jvm("desktop")
 
     sourceSets {
-        // JVM code shared by Android and desktop: DSP, WAV, chunking, model downloads.
+        // Plain JVM code: DSP, WAV, chunking, model downloads.
         val jvmShared = create("jvmShared") { dependsOn(commonMain.get()) }
         androidMain.get().dependsOn(jvmShared)
-        val desktopMain = getByName("desktopMain") { dependsOn(jvmShared) }
-        val desktopTest = getByName("desktopTest")
+        val androidHostTest = getByName("androidHostTest")
 
         commonMain.dependencies {
             implementation("org.jetbrains.compose.runtime:runtime:$cmp")
@@ -47,10 +47,7 @@ kotlin {
         androidMain.dependencies {
             implementation("androidx.activity:activity-compose:1.13.0")
         }
-        desktopMain.dependencies {
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.11.0")
-        }
-        desktopTest.dependencies {
+        androidHostTest.dependencies {
             implementation("junit:junit:4.13.2")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
             // Only for ScnetRealModelTest, which runs when SCNET_MODEL points at the ONNX file (never in CI).

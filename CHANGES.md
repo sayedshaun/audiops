@@ -581,3 +581,12 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 ### Verified
 - `make check`, `make ci`; Studio Enhance on a Moto g96 (arm64) finished an 11 s clip in under 3 minutes at 8 steps; hint window checked on the phone.
+
+## 2026-11-18: desktop removed (`fix/android-only-release`)
+
+### Changed
+- Deleted `:desktopApp` and `shared/src/desktopMain`, the `jvm("desktop")` target, `isDesktop`, the desktop-only strings and settings branches, the desktop job in `release.yml`, and the Linux/Windows rows in README and CONTRIBUTING. Architecture diagrams redrawn without the desktop box.
+- Unit tests moved from `shared/src/desktopTest` to `shared/src/androidHostTest` and run with `:shared:testAndroidHostTest`; Makefile, pre-commit hook, android.yml and release.yml updated.
+
+### Verified
+- `make ci`: spotless, 121 tests (1 skipped, needs an external model), Android lint, R8 release build.

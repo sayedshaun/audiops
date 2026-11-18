@@ -14,7 +14,6 @@ Bundled in the apps
 - Apache Commons Math 3: Apache License 2.0 (NOTICE below)
 - JTransforms and JLargeArrays (FFT): BSD 2-Clause License
 - Google Play asset delivery and Play services basement/tasks, pulled in by LiteRT (Android only; not used by Audiops): Android Software Development Kit License, https://developer.android.com/studio/terms
-- Desktop only: the bundled Java runtime (OpenJDK) is licensed under the GNU General Public License version 2 with the Classpath Exception; its notices are installed in lib/runtime/legal.
 
 Downloaded on first use (Android)
 ---------------------------------

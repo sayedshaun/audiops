@@ -24,26 +24,23 @@ Audiops is an open-source, on-device audio toolkit. Audio never leaves the devic
 | Effects | Speed and pitch, Equalizer | WSOLA time-stretch + cubic resampler; RBJ biquads |
 | Utilities | Convert (sample rate), Analyze | Anti-aliased resampler; loudness/peak/clipping meter |
 
-All DSP is pure Kotlin in `jvmShared` and streams in blocks (constant memory), so it runs on Android and desktop.
+All DSP is pure Kotlin in `jvmShared` and streams in blocks (constant memory), so it is easy to unit test on the JVM.
 
 ### Platforms
 
 - **Android 8.0+** (API 26): every tool. Compile SDK 37, target SDK 36.
-- **Desktop (Linux, Windows)**: every DSP tool, analysis, playback, history and settings. Input is WAV/AIFF/AU (Java Sound). AI tools report "not available on this platform yet".
-- Kotlin Multiplatform + Compose Multiplatform: one codebase. Platform APIs stay behind `AudioEngine` and the `expect` declarations in `ui/Platform.kt` / `ui/Player.kt`.
+- **Android only.** There is no desktop app: the AI tools are the product and run only on Android. Platform APIs stay behind `AudioEngine` and the `expect` declarations in `ui/Platform.kt` / `ui/Player.kt` (each has one Android `actual`).
 
 ## Modules
 
 ```
-shared/        Kotlin Multiplatform library (Android + desktop JVM)
+shared/        Kotlin Multiplatform library (Android target)
   commonMain/  UI (Compose Multiplatform), AudiopsViewModel, model, settings, history, strings
-  jvmShared/   JVM code shared by Android and desktop: DSP, WAV, PCM, model downloads, JvmAudioEngine
+  jvmShared/   Plain JVM code: DSP, WAV, PCM, model downloads, JvmAudioEngine
   androidMain/ Android actuals: pickers, MediaPlayer, dynamic colour, back handling, previews
-  desktopMain/ Desktop actuals: AWT file dialogs, Java Sound player
-  desktopTest/ JVM unit tests (DSP correctness, performance, chunking, WAV, math)
+  androidHostTest/ JVM unit tests, no device needed (DSP correctness, performance, chunking, WAV, math, ViewModel)
 app/           Android application: MainActivity, AudiopsApplication, AndroidAudioEngine,
                MediaCodec decoder, LiteRT enhancer, sherpa-onnx transcribers
-desktopApp/    Desktop application: Main.kt, DesktopAudioEngine (+ tests); packages DEB/RPM/MSI/EXE
 ```
 
 The Android engine lives in `app/` because a library module cannot depend on the local sherpa-onnx `.aar`. `app/` also holds the MediaPipe Tasks Audio dependency (`com.google.mediapipe:tasks-audio`, PocketTTS) and `assets/espeak-ng-data.zip` (espeak-ng pronunciation data, unpacked on first use).
@@ -66,16 +63,13 @@ The underlying Gradle tasks:
 ```sh
 ./gradlew spotlessCheck              # formatting and style (ktlint 1.8, rules in .editorconfig)
 ./gradlew spotlessApply              # fix formatting
-./gradlew :shared:desktopTest        # DSP, model, repository, ViewModel and performance tests (must pass)
-./gradlew :desktopApp:test           # desktop engine tests (must pass)
+./gradlew :shared:testAndroidHostTest # DSP, model, repository, ViewModel and performance tests (must pass)
 ./gradlew :app:lintDebug             # Android lint (0 errors required)
 ./gradlew :app:assembleRelease       # R8 + resource shrinking
 ./gradlew :app:installDebug          # run on a device or emulator
-./gradlew :desktopApp:run            # run the desktop app
-./gradlew :desktopApp:packageDistributionForCurrentOS   # DEB/RPM on Linux, MSI/EXE on Windows
 ```
 
-Run `make ci` (or `spotlessCheck` plus the first four) before you call work done. For releases, also install the R8 build on a device and launch it: R8 issues (for example Room/WorkManager reflection and MediaPipe's protobuf reflection, see `app/proguard-rules.pro`) only show at runtime: sign the release APK with the debug key (`apksigner`, `~/.android/debug.keystore`), install it over the debug build, and run text to speech, a transcription and an export on it. CI (`.github/workflows/android.yml`) runs the same checks on every pull request to `main` and every push to `main`, as three jobs: **Format and style**, **Unit tests**, and **Android lint and build**.
+Run `make ci` (or `spotlessCheck` plus the tests, lint and the R8 build) before you call work done. For releases, also install the R8 build on a device and launch it: R8 issues (for example Room/WorkManager reflection and MediaPipe's protobuf reflection, see `app/proguard-rules.pro`) only show at runtime: sign the release APK with the debug key (`apksigner`, `~/.android/debug.keystore`), install it over the debug build, and run text to speech, a transcription and an export on it. CI (`.github/workflows/android.yml`) runs the same checks on every pull request to `main` and every push to `main`, as three jobs: **Format and style**, **Unit tests**, and **Android lint and build**.
 
 ### Code style and structure
 
@@ -85,7 +79,7 @@ Run `make ci` (or `spotlessCheck` plus the first four) before you call work done
 
 ### Tests
 
-Unit tests live in `shared/src/desktopTest` (run on the JVM, cover common and `jvmShared` code) and `desktopApp/src/test`.
+Unit tests live in `shared/src/androidHostTest` (run on the JVM with `:shared:testAndroidHostTest`, cover common and `jvmShared` code).
 
 | Test | Covers |
 | --- | --- |
@@ -95,7 +89,6 @@ Unit tests live in `shared/src/desktopTest` (run on the JVM, cover common and `j
 | `AudiopsViewModelTest` | Job queue with a fake engine: success, failure, no speech, unsupported tools, ordering, cancel, delete, navigation |
 | `AudioChunkingTest`, `ResembleMathTest`, `WavWriterTest` | AI pre/post-processing and WAV output |
 | `AiDenoiseTest` | Chunked AI enhancement (history, lookahead, exact identity), resampling round trip, the pipeline's AI denoiser hook |
-| `DesktopAudioEngineTest`, `DesktopRenderTest` | Desktop decoding; off-screen renders of the main screens |
 
 New behaviour needs a test: a new `AudioOperation` gets a `DspTest` case and a `ModelTest` round trip; ViewModel changes get an `AudiopsViewModelTest` case.
 
@@ -107,11 +100,11 @@ Unidirectional data flow: **ViewModel → immutable `AudiopsState` → stateless
 - **Jobs:** `AudiopsViewModel.start(tool, spec)` queues a `Job`. One worker coroutine runs jobs in order through `runOnWorker` (= `runInterruptible(Dispatchers.IO)`). Cancelling interrupts the worker; every loop calls `throwIfCancelled()`, and interrupt-caused I/O errors are reported as cancellation. Finished jobs persist in `HistoryRepository` (DataStore JSON, max 100); their outputs live in the engine's output directory.
 - **Background jobs (Android):** `AudiopsApplication` owns the single `AudiopsViewModel` (not the Activity), so jobs survive the Activity being destroyed; its selections are written to the Activity's saved state (`saveViewModelState`) and restored after process death. `JobNotifications` watches the job list: while jobs are active it publishes a `JobNotice` to `JobService`, a foreground service (`mediaProcessing` on Android 15+, `dataSync` before) with a partial wake lock and a progress notification with Cancel (`cancelAll`); jobs that end while no Activity is started get a "finished"/"failed" notification. The bound `:enhance` worker inherits the service's priority. Notification text comes from Compose resources through `ui/NotificationText.kt`.
 - **AI enhancement process:** `AndroidAudioEngine.enhance` runs `AudioPipelines.enhance` inside `EnhanceService` (process `:enhance`) through `EnhanceClient`. Models load one at a time with an XNNPACK weight cache (`noBackupFilesDir/xnnpack-cache`), so the re-exported vocoder peaks at about 1.5 GB of anonymous memory (the old INT8 vocoder needed ~4.7 GB and was killed on an 8 GB phone); if the system kills the worker anyway, the app survives and reports it. Cancel kills the worker. Keep heavy native inference out of the main process.
-- **Engine:** `AudioEngine` (commonMain) is the only platform boundary for audio. `JvmAudioEngine` (jvmShared) implements DSP tools, analysis, waveform, storage and a reference-counted decode cache; `AndroidAudioEngine` and `DesktopAudioEngine` add decoding and AI tools.
+- **Engine:** `AudioEngine` (commonMain) is the only platform boundary for audio. `JvmAudioEngine` (jvmShared) implements DSP tools, analysis, waveform, storage and a reference-counted decode cache; `AndroidAudioEngine` adds decoding and the AI tools.
 - **DSP:** `AudioProcessor` blocks in `dsp/`; `DspPipeline` chains them over decoded 44.1 kHz mono PCM16, splitting into stages where an operation must measure its input first (normalize, denoise). Presets (`Preset` in `Model.kt`) are fixed operation lists run as a normal `JobSpec.Process`; `PresetTest` runs each through the pipeline and checks its loudness target. New operations: add an `AudioOperation` subtype (serializable), map it in `DspPipeline.processorFor`, add UI in `ToolScreen.kt`, and add tests in `DspTest` and `ModelTest`.
 - **Shared audio (Android):** `MainActivity` (`singleTask`) accepts `ACTION_SEND` and `ACTION_VIEW` for `audio/*` and `application/ogg`. `SharedAudio` copies the file into `cacheDir/shared` (the sender's read permission is short-lived and jobs may run later) and `AudiopsViewModel.inputShared` makes the copy the current recording. Do not read shared URIs directly from jobs.
 - **Choosing the recording:** one global recording at a time. The Tools tab holds the Choose file and Record controls (`InputCard`); tool screens show it read-only (with a Choose file button only while nothing is chosen). Shared audio (`inputShared`) sets the same recording.
-- **Recording (Android):** `rememberRecorder` (`ui/Recorder.kt`, Android actual in `Recorder.android.kt`) records with `AudioRecord` at 44.1 kHz mono straight into a WAV in `cache/recordings` (kept a week); `RECORD_AUDIO` is asked only on the first tap on Record, and recording stops when the Activity stops (Android blocks the microphone for background apps without a foreground service). Desktop has a stub that hides the button.
+- **Recording (Android):** `rememberRecorder` (`ui/Recorder.kt`, Android actual in `Recorder.android.kt`) records with `AudioRecord` at 44.1 kHz mono straight into a WAV in `cache/recordings` (kept a week); `RECORD_AUDIO` is asked only on the first tap on Record, and recording stops when the Activity stops (Android blocks the microphone for background apps without a foreground service).
 - **Music separation (Android):** `ScnetSeparator` (jvmShared, pure Kotlin: standardize, 11 s segments, STFT n 4096 hop 1024 with no window, network, iSTFT, linear-fade overlap-add, streaming output) wraps SCNet's int8 ONNX network (`audiojs/scnet` at a pinned revision) behind `SpectrumNetwork`; `MusicSeparation` (app) runs it with ONNX Runtime in the `:enhance` worker (one segment peaks at about 2 GB) and writes five WAVs in `SeparatedStem` order (vocals, instrumental = drums + bass + other, drums, bass, other); `Job.stemPaths` holds them and `Job.files` lists every file a job owns for cleanup. Input is the mono 44.1 kHz decode fed to both channels, so stems are mono. `ScnetSeparatorTest` checks the pipeline with a stand-in network; `ScnetRealModelTest` (run with `SCNET_MODEL`, `SCNET_MIX`, `SCNET_REFERENCE`) compares the real model with a Python reference.
 - **ONNX Runtime on Android:** sherpa-onnx's AAR bundles `libonnxruntime.so` 1.28.2 with symbols tagged `VERS_1.28.2`; `onnxruntime-android` 1.28.0 (the nearest on Maven Central) asks for `VERS_1.28.0` and fails with "cannot locate symbol OrtGetApiBase". `app/src/main/jniLibs/*/libonnxruntime4j_jni.so` are the 1.28.0 bridges with that one string changed to `VERS_1.28.2` (`tools/patch_onnxruntime_jni.py`, same C API version 28), and `packaging.jniLibs.pickFirsts` keeps sherpa's library and our bridges. Re-run the script and re-test separation whenever either version changes.
 - **Errors:** pipelines throw with a clear message; the ViewModel records a `FailureKind` and detail; the UI localizes it. One-shot messages go to the snackbar as `UiMessage`.

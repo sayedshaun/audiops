@@ -1,12 +1,12 @@
 package com.audiops.app
 
 /**
- * Platform boundary for audio work. Android and desktop each supply one implementation
+ * Platform boundary for audio work. The Android app supplies the implementation
  * (most of it shared through `JvmAudioEngine`); shared code only talks to this.
  *
  * Everything except the `supports*` properties is blocking and is called on a worker
  * thread via [runOnWorker]; implementations stop promptly when the thread is interrupted.
- * Sources are platform document ids (content URIs on Android, file paths on desktop).
+ * Sources are platform document ids (content URIs on Android).
  */
 interface AudioEngine {
     /** Whether this platform can run AI enhancement. */
