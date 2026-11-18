@@ -19,7 +19,7 @@ internal object WhisperTranscriber {
         "tokens.txt" to "b34b360dbb493e781e479794586d661700670d65564001f23024971d1f2fa126",
     )
 
-    /** Downloads (once) and verifies the model; returns its folder. [LanguageDetector] uses the same files. */
+    /** Downloads (once) and verifies the model; returns its folder. */
     fun files(context: Context, listener: ProcessingListener): File =
         ModelFiles.ensure(context.noBackupFilesDir, "whisper-tiny/$REVISION", BASE_URL, digests, listener)
 

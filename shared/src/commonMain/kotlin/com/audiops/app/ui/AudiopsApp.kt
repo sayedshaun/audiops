@@ -27,7 +27,7 @@ fun AudiopsApp(viewModel: AudiopsViewModel, appVersion: String) {
     ) {
         // One player for the whole app: starting another item stops the previous one.
         CompositionLocalProvider(LocalAudioPlayer provides rememberAudioPlayer()) {
-            AudiopsScreen(viewModel, appVersion)
+            HintHost { AudiopsScreen(viewModel, appVersion) }
         }
     }
 }

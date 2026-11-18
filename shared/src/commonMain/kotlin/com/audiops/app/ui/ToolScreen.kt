@@ -111,7 +111,6 @@ import com.audiops.shared.resources.action_save_wav
 import com.audiops.shared.resources.action_stop_recording
 import com.audiops.shared.resources.convert_hint
 import com.audiops.shared.resources.denoise_hint
-import com.audiops.shared.resources.enhance_hint
 import com.audiops.shared.resources.level_light
 import com.audiops.shared.resources.level_medium
 import com.audiops.shared.resources.level_strong
@@ -142,7 +141,6 @@ import com.audiops.shared.resources.report_title
 import com.audiops.shared.resources.result_ready_body
 import com.audiops.shared.resources.result_ready_title
 import com.audiops.shared.resources.sample_rate_khz
-import com.audiops.shared.resources.separate_hint
 import com.audiops.shared.resources.status_cancelled
 import com.audiops.shared.resources.stems_ready_body
 import com.audiops.shared.resources.stems_ready_title
@@ -150,8 +148,6 @@ import com.audiops.shared.resources.step_language
 import com.audiops.shared.resources.step_model
 import com.audiops.shared.resources.step_options
 import com.audiops.shared.resources.step_recording
-import com.audiops.shared.resources.transcribe_hint
-import com.audiops.shared.resources.transcribe_language_hint
 import com.audiops.shared.resources.transcribe_model_used
 import com.audiops.shared.resources.transcribe_whisper_hint
 import com.audiops.shared.resources.transcript_title
@@ -175,7 +171,7 @@ data class ToolScreenState(
     val waveformLoading: Boolean,
     val inputProblem: InputProblem?,
     val language: SpeechLanguage,
-    val transcriptionModel: TranscriptionModel = TranscriptionModel.AUTO,
+    val transcriptionModel: TranscriptionModel = TranscriptionModel.PARAKEET,
     val latestJob: Job?,
 )
 
@@ -233,6 +229,20 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
             onChooseWhenEmpty = pickRecording,
         )
 
+        val ready = state.input != null && state.inputProblem == null
+        val action: @Composable () -> Unit = {
+            Button(
+                onClick = { actions.onStart(options.toSpec(tool, state.language, state.transcriptionModel, state.waveform?.durationMs)) },
+                enabled = ready,
+                shapes = ButtonDefaults.shapes(),
+                contentPadding = PrimaryButtonPadding,
+                modifier = Modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
+            ) {
+                Icon(tool.icon, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(tool.action), style = MaterialTheme.typography.titleMedium)
+            }
+        }
         if (tool.hasOptions) {
             Spacer(Modifier.height(28.dp))
             val stepTitle = when {
@@ -252,35 +262,13 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
                     onLanguage = actions.onLanguage,
                     onChange = { options = it },
                 )
+                action()
             }
         }
 
-        Spacer(Modifier.height(24.dp))
-        val ready = state.input != null && state.inputProblem == null
-        Button(
-            onClick = { actions.onStart(options.toSpec(tool, state.language, state.transcriptionModel, state.waveform?.durationMs)) },
-            enabled = ready,
-            shapes = ButtonDefaults.shapes(),
-            contentPadding = PrimaryButtonPadding,
-            modifier = Modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
-        ) {
-            Icon(tool.icon, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text(stringResource(tool.action), style = MaterialTheme.typography.titleMedium)
-        }
-        val hint = when (tool) {
-            Tool.ENHANCE -> Res.string.enhance_hint
-            Tool.TRANSCRIBE -> Res.string.transcribe_hint
-            Tool.SEPARATE -> Res.string.separate_hint
-            else -> null
-        }
-        if (hint != null) {
-            Spacer(Modifier.height(8.dp))
-            Text(
-                stringResource(hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        if (!tool.hasOptions) {
+            Spacer(Modifier.height(28.dp))
+            OptionsCard { action() }
         }
 
         AnimatedVisibility(visible = job != null, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
@@ -586,7 +574,6 @@ private fun ToolOptionsEditor(
                 LanguageField(selected = language, onSelect = onLanguage)
             }
             when (transcriptionModel) {
-                TranscriptionModel.AUTO -> Hint(stringResource(Res.string.transcribe_language_hint))
                 TranscriptionModel.WHISPER -> Hint(stringResource(Res.string.transcribe_whisper_hint))
                 else -> Hint(stringResource(transcriptionModel.summary))
             }
@@ -600,8 +587,8 @@ private fun ToolOptionsEditor(
                 selected = options.denoiseLevel,
                 label = { stringResource(listOf(Res.string.level_light, Res.string.level_medium, Res.string.level_strong)[it]) },
                 onSelect = { onChange(options.copy(denoiseLevel = it)) },
+                hint = { stringResource(Res.string.denoise_hint) },
             )
-            Hint(stringResource(Res.string.denoise_hint))
         }
 
         Tool.SILENCE -> {
@@ -665,9 +652,10 @@ private fun ToolOptionsEditor(
                 selected = options.volumeMode,
                 label = { stringResource(listOf(Res.string.volume_peak, Res.string.volume_loudness, Res.string.volume_gain)[it]) },
                 onSelect = { onChange(options.copy(volumeMode = it)) },
+                hint = { if (it == 0) stringResource(Res.string.volume_peak_hint) else null },
             )
             when (options.volumeMode) {
-                0 -> Hint(stringResource(Res.string.volume_peak_hint))
+                0 -> Unit
 
                 1 -> {
                     ConnectedChoice(
@@ -675,8 +663,8 @@ private fun ToolOptionsEditor(
                         selected = options.loudnessTarget,
                         label = { stringResource(it.title) },
                         onSelect = { onChange(options.copy(loudnessTarget = it)) },
+                        hint = { stringResource(Res.string.volume_loudness_hint, it.lufs.roundToInt()) },
                     )
-                    Hint(stringResource(Res.string.volume_loudness_hint, options.loudnessTarget.lufs.roundToInt()))
                 }
 
                 else -> LabeledSlider(
@@ -714,14 +702,15 @@ private fun ToolOptionsEditor(
         Tool.PRESETS -> {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Preset.entries.forEach { preset ->
-                    ToggleButton(
-                        checked = options.preset == preset,
-                        onCheckedChange = { onChange(options.copy(preset = preset)) },
-                        modifier = Modifier.heightIn(min = 48.dp).semantics { role = Role.RadioButton },
-                    ) { Text(stringResource(preset.title)) }
+                    HintTip(stringResource(preset.description)) {
+                        ToggleButton(
+                            checked = options.preset == preset,
+                            onCheckedChange = { onChange(options.copy(preset = preset)) },
+                            modifier = Modifier.heightIn(min = 48.dp).semantics { role = Role.RadioButton },
+                        ) { Text(stringResource(preset.title)) }
+                    }
                 }
             }
-            Hint(stringResource(options.preset.description))
         }
 
         Tool.EQUALIZER -> FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -737,27 +726,29 @@ private fun ToolOptionsEditor(
         Tool.CONVERT -> {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SupportedSampleRates.forEach { rate ->
-                    ToggleButton(
-                        checked = options.sampleRate == rate,
-                        onCheckedChange = { onChange(options.copy(sampleRate = rate)) },
-                        modifier = Modifier.heightIn(min = 48.dp).semantics { role = Role.RadioButton },
-                    ) { Text(stringResource(Res.string.sample_rate_khz, decimal(rate / 1000f, 2))) }
+                    HintTip(stringResource(Res.string.convert_hint)) {
+                        ToggleButton(
+                            checked = options.sampleRate == rate,
+                            onCheckedChange = { onChange(options.copy(sampleRate = rate)) },
+                            modifier = Modifier.heightIn(min = 48.dp).semantics { role = Role.RadioButton },
+                        ) { Text(stringResource(Res.string.sample_rate_khz, decimal(rate / 1000f, 2))) }
+                    }
                 }
             }
-            Hint(stringResource(Res.string.convert_hint))
         }
 
         Tool.ENHANCE -> {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 EnhanceMode.entries.forEach { mode ->
-                    ToggleButton(
-                        checked = options.enhanceMode == mode.ordinal,
-                        onCheckedChange = { onChange(options.copy(enhanceMode = mode.ordinal)) },
-                        modifier = Modifier.heightIn(min = 48.dp).semantics { role = Role.RadioButton },
-                    ) { Text(stringResource(mode.title)) }
+                    HintTip(stringResource(mode.description)) {
+                        ToggleButton(
+                            checked = options.enhanceMode == mode.ordinal,
+                            onCheckedChange = { onChange(options.copy(enhanceMode = mode.ordinal)) },
+                            modifier = Modifier.heightIn(min = 48.dp).semantics { role = Role.RadioButton },
+                        ) { Text(stringResource(mode.title)) }
+                    }
                 }
             }
-            Hint(stringResource(EnhanceMode.entries[options.enhanceMode].description))
         }
 
         Tool.ANALYZE, Tool.SPEAK, Tool.SEPARATE -> Unit
@@ -796,23 +787,31 @@ internal fun LabeledSlider(label: String, value: Float, range: ClosedFloatingPoi
 /** Connected toggle buttons for a single choice (Material 3 Expressive button group). */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun <T> ConnectedChoice(options: List<T>, selected: T, label: @Composable (T) -> String, onSelect: (T) -> Unit) {
+fun <T> ConnectedChoice(
+    options: List<T>,
+    selected: T,
+    label: @Composable (T) -> String,
+    onSelect: (T) -> Unit,
+    hint: @Composable (T) -> String? = { null },
+) {
     val haptics = LocalHapticFeedback.current
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
         options.forEachIndexed { index, option ->
-            ToggleButton(
-                checked = option == selected,
-                onCheckedChange = {
-                    haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
-                    onSelect(option)
-                },
-                shapes = when (index) {
-                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                    options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                },
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp).semantics { role = Role.RadioButton },
-            ) { Text(label(option), maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            HintTip(hint(option), Modifier.weight(1f)) {
+                ToggleButton(
+                    checked = option == selected,
+                    onCheckedChange = {
+                        haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                        onSelect(option)
+                    },
+                    shapes = when (index) {
+                        0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                        options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                        else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                    },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics { role = Role.RadioButton },
+                ) { Text(label(option), maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            }
         }
     }
 }

@@ -58,19 +58,18 @@ Only the two AI tools use machine-learning models. Every other tool is classic s
 | **Text to speech** (21 more languages) | [Piper](https://github.com/rhasspy/piper) voices, ONNX exports by [k2-fsa](https://huggingface.co/csukuangfj) | sherpa-onnx + eSpeak NG (GPL-3.0), CPU | model, tokens | ~63 MB per voice | CC0, public domain or CC BY 4.0, per voice |
 | **Transcribe** (English and 24 European languages) | [Parakeet TDT 0.6B v3](https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8/tree/ed5d745623472f97cfc2e6c2916ee248798fc5a8) (NVIDIA), INT8 transducer | sherpa-onnx, CPU | encoder, decoder, joiner, tokens | ~640 MB | CC BY 4.0 (NVIDIA) |
 | **Transcribe** (other languages; Whisper Tiny fallback) | [Omnilingual ASR 300M](https://huggingface.co/csukuangfj/sherpa-onnx-omnilingual-asr-1600-languages-300M-ctc-int8-2025-11-12/tree/6abf1ece20cd2308bdb7d13cd78ec1c44fa4c094), CTC INT8 | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), CPU | model, tokens | ~366 MB | Apache 2.0 (Meta Platforms) |
-| **Transcribe** (Urdu, language detection) | [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny), INT8 ONNX | sherpa-onnx, CPU | encoder, decoder, tokens | ~103 MB | MIT (OpenAI) · Apache 2.0 (ONNX export) |
+| **Transcribe** (Whisper Tiny, about 100 languages) | [Whisper Tiny](https://huggingface.co/ippocode/indic-asr-onnx/tree/1f6243ec6dffc4de2db84fe1446576d1ff52c252/models/whisper-tiny), INT8 ONNX | sherpa-onnx, CPU | encoder, decoder, tokens | ~103 MB | MIT (OpenAI) · Apache 2.0 (ONNX export) |
 | **Transcribe** (Bangla) | [Bangla Zipformer](https://huggingface.co/SayedShaun/bangla-zipformer-onnx/tree/5442ca3d447572aaa5ef6913684d8f24d6d916cc), INT8 transducer | sherpa-onnx, CPU | encoder, decoder, joiner, tokens | ~74 MB | CC BY-SA 4.0 |
 | All other tools | None | Kotlin DSP | – | – | – |
 
 ### Which model runs when
 
 - **Enhance speech** in Studio mode uses Resemble Enhance (Fast mode runs the DPDFNet noise-reduction model instead). Audio is converted to 44.1 kHz mono and processed in one-second chunks with 50% overlap through five networks: a **denoiser**, an **encoder**, a **flow-matching step** (8 midpoint steps, 16 evaluations; upstream uses 16 steps), a **decoder** and a **vocoder** that produces the waveform. Long recordings go through in 20-second windows joined with a crossfade.
-- **Transcribe** uses the model chosen in **Settings → Transcription → Transcription model**. **Automatic** (the default) picks one:
-  - The language you choose decides first: **Bangla** uses the dedicated Bangla Zipformer (20-second sections, beam search) and **Urdu** uses Whisper Tiny, which scored better than Omnilingual on Urdu in our benchmark.
-  - With **Auto**, Whisper Tiny detects the language from the first 30 seconds. Bangla goes to Bangla Zipformer, Urdu to Whisper Tiny, and Parakeet's 25 European languages (including English) to **Parakeet v3**, which adds punctuation and capital letters. In our test (FLEURS, 25 clips per language, CPU) it made 2.5 to 4 times fewer errors than Omnilingual on English, French, Spanish and German (word error 2 to 8%) and ran about 1.7 times faster.
-  - Every other language goes to **Omnilingual ASR 300M** (over 1,600 languages, no punctuation). If it finds no speech, Whisper Tiny retries with automatic language detection.
-
-  You can also pick **Parakeet v3**, **Omnilingual ASR**, **Whisper Tiny** or **Bangla Zipformer** to use one model for every recording. Each model downloads the first time it is used.
+- **Transcribe** uses the model you choose in **Settings → Transcription → Transcription model**; nothing is detected or guessed for you:
+  - **Parakeet v3** (the default): English and 24 other European languages, with punctuation and capital letters. In our test (FLEURS, 25 clips per language, CPU) it made 2.5 to 4 times fewer errors than Omnilingual on English, French, Spanish and German (word error 2 to 8%) and ran about 1.7 times faster.
+  - **Omnilingual ASR 300M**: over 1,600 languages, no punctuation. If it finds no speech, Whisper Tiny retries.
+  - **Whisper Tiny**: about 100 languages, small and fast but less accurate. It is the only model you give a language to, from a list of about 60. It scored better than Omnilingual on Urdu in our benchmark.
+  - **Bangla Zipformer**: Bangla only (20-second sections, beam search).
 
 ### Download, verification and storage
 

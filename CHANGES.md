@@ -571,3 +571,13 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 ### Verified
 - Emulator (x86_64, 4 GB): Studio Enhance, 11 s clip, 8 steps, ~9 min after the 570 MB download; Parakeet transcribes the result word for word. Supertonic English female created speech. Home and Tools screens checked.
+
+## 2026-11-18: UI polish and explicit transcription model (still in 0.3.0)
+
+### Changed
+- Action button moved inside the Options card on every tool; the long text under buttons is gone. Long press shows the description in a small window over a blurred screen (`HintHost`, `HintTip`).
+- Transcribe: no automatic language detection. The user picks the model (Parakeet default, Omnilingual, Whisper, Bangla); only Whisper takes a language, from about 60. `TranscriptionModel.AUTO` and `SpeechLanguage.AUTO` stay only so old history decodes. `LanguageDetector` removed.
+- Home screen kept as in the first 0.3.0 build (a compact-row redesign was tried and reverted).
+
+### Verified
+- `make check`, `make ci`; Studio Enhance on a Moto g96 (arm64) finished an 11 s clip in under 3 minutes at 8 steps; hint window checked on the phone.

@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.audiops.app.TranscriptionModel
+import com.audiops.app.selectableTranscriptionModels
 import com.audiops.shared.resources.Res
 import com.audiops.shared.resources.action_cancel
 import com.audiops.shared.resources.settings_transcription_model
@@ -38,7 +39,7 @@ fun TranscriptionModelDialog(selected: TranscriptionModel, onSelect: (Transcript
         title = { Text(stringResource(Res.string.settings_transcription_model)) },
         text = {
             Column(Modifier.selectableGroup().verticalScroll(rememberScrollState())) {
-                TranscriptionModel.entries.forEach { model ->
+                selectableTranscriptionModels.forEach { model ->
                     Row(
                         Modifier
                             .fillMaxWidth()
