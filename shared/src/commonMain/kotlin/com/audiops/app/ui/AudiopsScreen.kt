@@ -32,11 +32,14 @@ import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
@@ -47,6 +50,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,6 +59,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -73,8 +78,7 @@ import com.audiops.shared.resources.app_name
 import com.audiops.shared.resources.badge_android_only
 import com.audiops.shared.resources.banner_processing
 import com.audiops.shared.resources.home_footer
-import com.audiops.shared.resources.home_hero_body
-import com.audiops.shared.resources.home_hero_title
+import com.audiops.shared.resources.home_subtitle
 import com.audiops.shared.resources.tab_activity
 import com.audiops.shared.resources.tab_settings
 import com.audiops.shared.resources.tab_tools
@@ -286,7 +290,7 @@ private fun TabIcon(item: TabItem, activeJobs: Int) {
     }
 }
 
-/** The Tools tab: hero, live processing banner, and tools grouped by category. */
+/** The Tools tab: title bar (with a link to Activity while jobs run), the recording, and tools grouped by category. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ToolsTab(
@@ -300,8 +304,20 @@ private fun ToolsTab(
     val pickRecording = rememberAudioPicker(onChoose)
     val recorder = rememberRecorder(onChoose, onRecordFailed)
     KeepScreenOn(recorder.state.recording)
-    // No title bar: the banner at the top already says what the app is.
-    Scaffold { padding ->
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            LargeFlexibleTopAppBar(
+                title = { Text(stringResource(Res.string.app_name)) },
+                subtitle = { Text(stringResource(Res.string.home_subtitle), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                actions = {
+                    if (state.activeJobs.isNotEmpty()) ProcessingAction(state.activeJobs.size, onShowActivity)
+                },
+                scrollBehavior = scrollBehavior,
+            )
+        },
+    ) { padding ->
         // Each category fills its rows: tiles stretch to share the width, so wide windows
         // (tablets) have no empty cells at the end of a row.
         BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -311,22 +327,11 @@ private fun ToolsTab(
                 contentPadding = PaddingValues(
                     start = 16.dp,
                     end = 16.dp,
-                    top = padding.calculateTopPadding() + 8.dp,
+                    top = padding.calculateTopPadding(),
                     bottom = 24.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(TileGap),
             ) {
-                item(key = "banner") {
-                    val running = state.activeJobs.firstOrNull()
-                    if (running != null) {
-                        ProcessingBanner(running, state.activeJobs.size, onShowActivity)
-                    } else {
-                        HeroBanner(
-                            title = stringResource(Res.string.home_hero_title),
-                            body = stringResource(Res.string.home_hero_body),
-                        )
-                    }
-                }
                 item(key = "recording") {
                     InputCard(
                         input = state.input,
@@ -429,40 +434,22 @@ private fun ToolTile(tool: Tool, available: Boolean, onClick: () -> Unit, modifi
     }
 }
 
-/** Shown on the Tools tab while jobs run, so progress is visible without leaving. */
+/** Top-bar link to Activity while jobs run, so progress is one tap away from the Tools tab. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ProcessingBanner(job: Job, count: Int, onClick: () -> Unit) {
-    val colors = MaterialTheme.colorScheme
-    Card(
+private fun ProcessingAction(count: Int, onClick: () -> Unit) {
+    FilledTonalButton(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLargeIncreased,
-        colors = CardDefaults.cardColors(containerColor = colors.primaryContainer, contentColor = colors.onPrimaryContainer),
+        shapes = ButtonDefaults.shapes(),
+        contentPadding = ButtonDefaults.SmallContentPadding,
+        modifier = Modifier.padding(end = 8.dp).heightIn(min = 40.dp),
     ) {
-        Column(Modifier.padding(20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    stringResource(Res.string.banner_processing, count),
-                    style = MaterialTheme.typography.titleMediumEmphasized,
-                    modifier = Modifier.weight(1f),
-                )
-                Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = stringResource(Res.string.tab_activity))
-            }
-            Spacer(Modifier.height(4.dp))
-            Text(
-                "${stringResource(job.tool.title)} · ${job.inputName}",
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(12.dp))
-            WorkStatus(
-                status = job.progressText(),
-                progress = job.progress?.fraction,
-                downloading = job.progress?.stage == Stage.DOWNLOADING_MODEL,
-                seed = job.id,
-            )
-        }
+        Text(stringResource(Res.string.banner_processing, count))
+        Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+        Icon(
+            Icons.AutoMirrored.Rounded.ArrowForward,
+            contentDescription = stringResource(Res.string.tab_activity),
+            modifier = Modifier.size(ButtonDefaults.SmallIconSize),
+        )
     }
 }

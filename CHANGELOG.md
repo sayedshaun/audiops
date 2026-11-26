@@ -13,6 +13,9 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+### Changed
+- **Simpler Tools tab.** The large animated card at the top is gone. The tab now has a title bar like Activity and Settings, which shrinks as you scroll. While something is processing, a "Processing" button in the bar takes you to Activity.
+
 ## [0.3.1] - 2026-11-18
 
 ### Fixed

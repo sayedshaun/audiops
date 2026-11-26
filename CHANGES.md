@@ -614,3 +614,8 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 ### Changed
 - CHANGELOG: Unreleased became 0.3.1 (colourful splash icon, Transcribe history names the model, Piper Ukrainian removed, Android only). versionCode 3001.
+
+## 2026-11-26: Tools tab title bar (`feature/tools-top-bar`)
+
+### Changed
+- Removed the Tools tab's top card (`HeroBanner` with its animated `Waveform`, and `ProcessingBanner`, which replaced it while jobs ran). The tab now uses a `LargeFlexibleTopAppBar` (app name + `home_subtitle`, exit-until-collapsed) like Activity and Settings; while jobs are active, a small `FilledTonalButton` ("Processing N →") in its actions opens Activity. Deleted the unused `HeroBanner`, `Waveform`, the hero preview and the `home_hero_title` string (`home_hero_body` renamed `home_subtitle`). Checked on the emulator in light and dark; the Processing button was not exercised with a live job.
