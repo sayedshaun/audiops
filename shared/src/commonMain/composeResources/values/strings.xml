@@ -12,6 +12,7 @@
 
     <!-- Tools tab -->
     <string name="home_subtitle">Every tool runs on this device. Nothing is uploaded.</string>
+    <string name="home_recent">Recently used</string>
     <string name="home_footer">AI models download once, then run on this device. Other tools need no download.</string>
     <string name="banner_processing">Processing %1$d</string>
     <string name="category_ai">AI</string>

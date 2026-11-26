@@ -624,3 +624,11 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 ### Changed
 - With no recording and no recording in progress, the Tools tab shows `InputActions` (filled Choose file + tonal Record, `PrimaryButtonHeight`) under the title bar instead of the empty `InputCard`; `AnimatedContent` cross-fades to `InputCard` once a recording exists or recording starts. `InputCard` hides its "No recording selected" header while the first recording is being made, so only the recording panel shows. Checked on the emulator: empty state in light and dark, recording, and the card after stopping.
+
+## 2026-11-26: compact tool tiles and Recently used (`feature/tools-top-bar`)
+
+### Changed
+- `ToolTile` is a 76 dp row (44 dp `ShapedIcon` + `titleSmallEmphasized` name, `shapes.large`); the description is left to the tool screen's subtitle. `TileMinWidth` 160 dp. Rows are drawn by `ToolRow`, headings by `SectionLabel` (now `heading()` semantics).
+- New `AudiopsState.recentTools(limit)` (distinct tools of the newest jobs, from history, so nothing new is persisted); the Tools tab shows one row of them under "Recently used" (`home_recent`) when there are any. `ModelTest.recentToolsAreNewestFirstWithoutRepeats` covers it.
+- Verified the Processing button with a real Studio enhancement on the emulator: it appears in the title bar and opens Activity.
+- Considered a category jump bar; with compact tiles the list fits in about two phone screens, so it was not added.

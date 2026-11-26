@@ -43,6 +43,13 @@ data class AudiopsState(
 ) {
     val activeJobs: List<Job> get() = jobs.filter { it.status.active }
 
+    /** Tools of the most recent jobs, newest first, each once; at most [limit]. */
+    fun recentTools(limit: Int): List<Tool> = jobs
+        .sortedByDescending { it.createdAt }
+        .map { it.tool }
+        .distinct()
+        .take(limit)
+
     /** The most recent job of [tool] on the current input (any input for text to speech), if any. */
     fun latestJob(tool: Tool): Job? = jobs
         .filter { it.tool == tool && (tool == Tool.SPEAK || it.inputId == input?.id) }

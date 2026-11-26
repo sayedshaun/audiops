@@ -139,6 +139,17 @@ class ModelTest {
         assertFalse(JobStatus.CANCELLED.active)
     }
 
+    @Test fun recentToolsAreNewestFirstWithoutRepeats() {
+        val analyze = job(JobSpec.Analyze, id = "a", tool = Tool.ANALYZE).copy(createdAt = 1)
+        val trim = analyze.copy(id = "b", tool = Tool.TRIM, createdAt = 2)
+        val analyzeAgain = analyze.copy(id = "c", createdAt = 3)
+        val fade = analyze.copy(id = "d", tool = Tool.FADE, createdAt = 4, status = JobStatus.RUNNING)
+        val state = AudiopsState(jobs = listOf(fade, trim, analyze, analyzeAgain))
+        assertEquals(listOf(Tool.FADE, Tool.ANALYZE, Tool.TRIM), state.recentTools(limit = 3))
+        assertEquals(listOf(Tool.FADE, Tool.ANALYZE), state.recentTools(limit = 2))
+        assertEquals(emptyList<Tool>(), AudiopsState().recentTools(limit = 2))
+    }
+
     @Test fun latestJobMatchesToolAndCurrentInput() {
         val older = job(JobSpec.Analyze, id = "a", tool = Tool.ANALYZE).copy(createdAt = 1)
         val newer = older.copy(id = "b", createdAt = 2)

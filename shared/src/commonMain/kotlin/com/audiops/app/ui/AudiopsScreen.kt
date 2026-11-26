@@ -63,6 +63,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -83,6 +85,7 @@ import com.audiops.shared.resources.app_name
 import com.audiops.shared.resources.badge_android_only
 import com.audiops.shared.resources.banner_processing
 import com.audiops.shared.resources.home_footer
+import com.audiops.shared.resources.home_recent
 import com.audiops.shared.resources.home_subtitle
 import com.audiops.shared.resources.tab_activity
 import com.audiops.shared.resources.tab_settings
@@ -360,30 +363,15 @@ private fun ToolsTab(
                         }
                     }
                 }
+                val recent = state.recentTools(limit = columns)
+                if (recent.isNotEmpty()) {
+                    item(key = "title-recent") { SectionLabel(stringResource(Res.string.home_recent)) }
+                    item(key = "recent") { ToolRow(recent, columns, unsupported, onOpen) }
+                }
                 ToolCategory.entries.forEach { category ->
-                    item(key = "title-${category.name}") {
-                        Text(
-                            stringResource(category.title),
-                            style = MaterialTheme.typography.titleMediumEmphasized,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 2.dp),
-                        )
-                    }
+                    item(key = "title-${category.name}") { SectionLabel(stringResource(category.title)) }
                     Tool.entries.filter { it.category == category }.chunked(columns).forEach { row ->
-                        item(key = row.joinToString { it.name }) {
-                            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(TileGap)) {
-                                row.forEach { tool ->
-                                    ToolTile(
-                                        tool,
-                                        available = tool !in unsupported,
-                                        onClick = { onOpen(tool) },
-                                        modifier = Modifier.weight(1f).fillMaxHeight(),
-                                    )
-                                }
-                                // An incomplete last row keeps every tile the same width.
-                                repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
-                            }
-                        }
+                        item(key = row.joinToString { it.name }) { ToolRow(row, columns, unsupported, onOpen) }
                     }
                 }
                 item(key = "footer") {
@@ -399,9 +387,38 @@ private fun ToolsTab(
     }
 }
 
-private val TileMinWidth = 168.dp
+private val TileMinWidth = 160.dp
+private val TileHeight = 76.dp
 private val TileGap = 10.dp
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun SectionLabel(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.titleMediumEmphasized,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 2.dp).semantics { heading() },
+    )
+}
+
+/** One row of tiles. Tiles share the width, and an incomplete row keeps every tile the same width. */
+@Composable
+private fun ToolRow(tools: List<Tool>, columns: Int, unsupported: Set<Tool>, onOpen: (Tool) -> Unit) {
+    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(TileGap)) {
+        tools.forEach { tool ->
+            ToolTile(
+                tool,
+                available = tool !in unsupported,
+                onClick = { onOpen(tool) },
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+            )
+        }
+        repeat(columns - tools.size) { Spacer(Modifier.weight(1f)) }
+    }
+}
+
+/** A compact tile: the tool's shape and its name. The tool screen repeats the name with its description. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ToolTile(tool: Tool, available: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -410,8 +427,8 @@ private fun ToolTile(tool: Tool, available: Boolean, onClick: () -> Unit, modifi
     Card(
         onClick = onClick,
         enabled = available,
-        modifier = modifier.heightIn(min = 164.dp),
-        shape = MaterialTheme.shapes.extraLarge,
+        modifier = modifier.heightIn(min = TileHeight),
+        shape = MaterialTheme.shapes.large,
         // Unavailable tools recede (lower-emphasis container) instead of turning lighter.
         colors = CardDefaults.cardColors(
             containerColor = colors.surfaceContainer,
@@ -419,34 +436,24 @@ private fun ToolTile(tool: Tool, available: Boolean, onClick: () -> Unit, modifi
             disabledContentColor = colors.onSurfaceVariant,
         ),
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                ShapedIcon(icon = tool.icon, shape = tool.shape.toShape(), container = container, content = content, size = 52.dp)
+        Row(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            ShapedIcon(icon = tool.icon, shape = tool.shape.toShape(), container = container, content = content, size = 44.dp)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    stringResource(tool.title),
+                    style = MaterialTheme.typography.titleSmallEmphasized,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 if (!available) {
-                    Spacer(Modifier.weight(1f))
-                    Surface(color = colors.surfaceContainerHighest, shape = CircleShape) {
-                        Text(
-                            stringResource(Res.string.badge_android_only),
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = colors.onSurfaceVariant,
-                        )
-                    }
+                    Text(
+                        stringResource(Res.string.badge_android_only),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.onSurfaceVariant,
+                    )
                 }
             }
-            Text(
-                stringResource(tool.title),
-                style = MaterialTheme.typography.titleMediumEmphasized,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                stringResource(tool.description),
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.onSurfaceVariant,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-            )
         }
     }
 }
