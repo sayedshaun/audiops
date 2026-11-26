@@ -372,34 +372,38 @@ internal fun InputCard(
         colors = CardDefaults.cardColors(containerColor = colors.surfaceContainer),
     ) {
         Column(Modifier.padding(20.dp)) {
-            Row(Modifier.semantics(mergeDescendants = true) { }, verticalAlignment = Alignment.CenterVertically) {
-                ShapedIcon(
-                    icon = Icons.Rounded.AudioFile,
-                    shape = androidx.compose.material3.MaterialShapes.Cookie9Sided.toShape(),
-                    container = colors.primaryContainer,
-                    content = colors.onPrimaryContainer,
-                    size = 48.dp,
-                )
-                Spacer(Modifier.width(16.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        input?.name ?: stringResource(Res.string.recording_none),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
+            // The first recording of a session has no file yet: the recording panel alone says what is happening.
+            val firstRecording = input == null && recorder?.state?.recording == true
+            if (!firstRecording) {
+                Row(Modifier.semantics(mergeDescendants = true) { }, verticalAlignment = Alignment.CenterVertically) {
+                    ShapedIcon(
+                        icon = Icons.Rounded.AudioFile,
+                        shape = androidx.compose.material3.MaterialShapes.Cookie9Sided.toShape(),
+                        container = colors.primaryContainer,
+                        content = colors.onPrimaryContainer,
+                        size = 48.dp,
                     )
-                    Text(
-                        when {
-                            input == null && onChoose == null -> stringResource(Res.string.recording_pick_on_tools)
-                            input == null -> stringResource(Res.string.recording_pick_hint)
-                            waveform != null -> formatDuration(waveform.durationMs)
-                            loading -> stringResource(Res.string.recording_reading)
-                            else -> stringResource(Res.string.recording_ready)
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.onSurfaceVariant,
-                    )
+                    Spacer(Modifier.width(16.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            input?.name ?: stringResource(Res.string.recording_none),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            when {
+                                input == null && onChoose == null -> stringResource(Res.string.recording_pick_on_tools)
+                                input == null -> stringResource(Res.string.recording_pick_hint)
+                                waveform != null -> formatDuration(waveform.durationMs)
+                                loading -> stringResource(Res.string.recording_reading)
+                                else -> stringResource(Res.string.recording_ready)
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.onSurfaceVariant,
+                        )
+                    }
                 }
             }
             if (input != null) {
@@ -444,7 +448,7 @@ internal fun InputCard(
                 }
                 return@Column
             }
-            Spacer(Modifier.height(16.dp))
+            if (!firstRecording) Spacer(Modifier.height(16.dp))
             val recording = recorder.state
             if (recording.recording) {
                 RecordingPanel(recording, onStop = recorder::toggle)

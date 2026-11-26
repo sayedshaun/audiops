@@ -27,11 +27,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.AudioFile
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -74,6 +77,8 @@ import com.audiops.app.ToolCategory
 import com.audiops.app.TranscriptionModel
 import com.audiops.app.UserSettings
 import com.audiops.shared.resources.Res
+import com.audiops.shared.resources.action_choose
+import com.audiops.shared.resources.action_record
 import com.audiops.shared.resources.app_name
 import com.audiops.shared.resources.badge_android_only
 import com.audiops.shared.resources.banner_processing
@@ -333,15 +338,27 @@ private fun ToolsTab(
                 verticalArrangement = Arrangement.spacedBy(TileGap),
             ) {
                 item(key = "recording") {
-                    InputCard(
-                        input = state.input,
-                        waveform = state.waveform,
-                        loading = state.waveformLoading,
-                        problem = state.inputProblem,
-                        selection = 0f..1f,
-                        onChoose = pickRecording,
-                        recorder = recorder,
-                    )
+                    // With nothing chosen, the header's own buttons start the flow; the card appears once there is a recording.
+                    val effects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+                    AnimatedContent(
+                        targetState = state.input == null && !recorder.state.recording,
+                        transitionSpec = { fadeIn(effects) togetherWith fadeOut(effects) },
+                        label = "recording",
+                    ) { empty ->
+                        if (empty) {
+                            InputActions(onChoose = pickRecording, recorder = recorder)
+                        } else {
+                            InputCard(
+                                input = state.input,
+                                waveform = state.waveform,
+                                loading = state.waveformLoading,
+                                problem = state.inputProblem,
+                                selection = 0f..1f,
+                                onChoose = pickRecording,
+                                recorder = recorder,
+                            )
+                        }
+                    }
                 }
                 ToolCategory.entries.forEach { category ->
                     item(key = "title-${category.name}") {
@@ -430,6 +447,34 @@ private fun ToolTile(tool: Tool, available: Boolean, onClick: () -> Unit, modifi
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
             )
+        }
+    }
+}
+
+/** Choose file and Record, shown under the title while no recording is chosen. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun InputActions(onChoose: () -> Unit, recorder: Recorder) {
+    Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(
+            onClick = onChoose,
+            shapes = ButtonDefaults.shapes(),
+            modifier = Modifier.weight(1f).heightIn(min = PrimaryButtonHeight),
+        ) {
+            Icon(Icons.Rounded.AudioFile, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+            Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+            Text(stringResource(Res.string.action_choose), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        if (recorder.available) {
+            FilledTonalButton(
+                onClick = recorder::toggle,
+                shapes = ButtonDefaults.shapes(),
+                modifier = Modifier.weight(1f).heightIn(min = PrimaryButtonHeight),
+            ) {
+                Icon(Icons.Rounded.Mic, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                Text(stringResource(Res.string.action_record), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
     }
 }

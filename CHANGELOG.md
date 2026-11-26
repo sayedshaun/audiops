@@ -15,6 +15,7 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ### Changed
 - **Simpler Tools tab.** The large animated card at the top is gone. The tab now has a title bar like Activity and Settings, which shrinks as you scroll. While something is processing, a "Processing" button in the bar takes you to Activity.
+- **Start faster.** With no recording chosen, Choose file and Record sit right under the title instead of in a card. The recording card appears once you have a recording.
 
 ## [0.3.1] - 2026-11-18
 

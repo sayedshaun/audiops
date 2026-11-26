@@ -619,3 +619,8 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 ### Changed
 - Removed the Tools tab's top card (`HeroBanner` with its animated `Waveform`, and `ProcessingBanner`, which replaced it while jobs ran). The tab now uses a `LargeFlexibleTopAppBar` (app name + `home_subtitle`, exit-until-collapsed) like Activity and Settings; while jobs are active, a small `FilledTonalButton` ("Processing N →") in its actions opens Activity. Deleted the unused `HeroBanner`, `Waveform`, the hero preview and the `home_hero_title` string (`home_hero_body` renamed `home_subtitle`). Checked on the emulator in light and dark; the Processing button was not exercised with a live job.
+
+## 2026-11-26: Choose file and Record under the Tools title (`feature/tools-top-bar`)
+
+### Changed
+- With no recording and no recording in progress, the Tools tab shows `InputActions` (filled Choose file + tonal Record, `PrimaryButtonHeight`) under the title bar instead of the empty `InputCard`; `AnimatedContent` cross-fades to `InputCard` once a recording exists or recording starts. `InputCard` hides its "No recording selected" header while the first recording is being made, so only the recording panel shows. Checked on the emulator: empty state in light and dark, recording, and the card after stopping.
