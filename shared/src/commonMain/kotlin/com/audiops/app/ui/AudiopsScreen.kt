@@ -7,7 +7,9 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -72,6 +74,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.audiops.app.AudiopsState
 import com.audiops.app.AudiopsViewModel
 import com.audiops.app.Job
+import com.audiops.app.MeetingDocument
+import com.audiops.app.MeetingState
 import com.audiops.app.Stage
 import com.audiops.app.Tab
 import com.audiops.app.Tool
@@ -87,6 +91,7 @@ import com.audiops.shared.resources.banner_processing
 import com.audiops.shared.resources.home_footer
 import com.audiops.shared.resources.home_recent
 import com.audiops.shared.resources.home_subtitle
+import com.audiops.shared.resources.meeting_live
 import com.audiops.shared.resources.tab_activity
 import com.audiops.shared.resources.tab_settings
 import com.audiops.shared.resources.tab_tools
@@ -104,6 +109,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val modelStorage by viewModel.modelStorage.collectAsStateWithLifecycle()
     val outputStorage by viewModel.outputStorage.collectAsStateWithLifecycle()
+    val meeting by viewModel.meetingState.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
 
     LaunchedEffect(viewModel) {
@@ -127,7 +133,31 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
         },
         label = "tool",
     ) { tool ->
-        if (tool == Tool.SPEAK) {
+        if (tool == Tool.MEETING) {
+            MeetingScreen(
+                state = meeting,
+                model = settings?.transcriptionModel?.takeIf { it != TranscriptionModel.AUTO } ?: TranscriptionModel.PARAKEET,
+                latestJob = state.latestJob(tool),
+                snackbar = snackbar,
+                actions = MeetingActions(
+                    onBack = { viewModel.back() },
+                    onStart = viewModel::startMeeting,
+                    onStop = viewModel::stopMeeting,
+                    onDiscard = viewModel::discardMeeting,
+                    onDismissError = viewModel::acknowledgeMeeting,
+                    onMicrophoneDenied = { viewModel.recordFailed(null) },
+                    jobCard = JobCardActions(
+                        viewModel::cancel,
+                        viewModel::saveOutput,
+                        viewModel.saveFormats,
+                        viewModel::saveAudio,
+                        viewModel::saveSubtitles,
+                        viewModel::notifyCopied,
+                        viewModel::readText,
+                    ),
+                ),
+            )
+        } else if (tool == Tool.SPEAK) {
             SpeakScreen(
                 latestJob = state.latestJob(tool),
                 snackbar = snackbar,
@@ -182,6 +212,8 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                 when (tab) {
                     Tab.TOOLS -> ToolsTab(
                         state = state,
+                        meeting = meeting,
+                        onShowMeeting = { viewModel.open(Tool.MEETING) },
                         unsupported = viewModel.unsupportedTools,
                         onOpen = viewModel::open,
                         onShowActivity = { viewModel.selectTab(Tab.ACTIVITY) },
@@ -303,6 +335,8 @@ private fun TabIcon(item: TabItem, activeJobs: Int) {
 @Composable
 private fun ToolsTab(
     state: AudiopsState,
+    meeting: MeetingState,
+    onShowMeeting: () -> Unit,
     unsupported: Set<Tool>,
     onOpen: (Tool) -> Unit,
     onShowActivity: () -> Unit,
@@ -320,6 +354,7 @@ private fun ToolsTab(
                 title = { Text(stringResource(Res.string.app_name)) },
                 subtitle = { Text(stringResource(Res.string.home_subtitle), maxLines = 2, overflow = TextOverflow.Ellipsis) },
                 actions = {
+                    if (meeting is MeetingState.Live) MeetingAction(meeting.elapsedMs, onShowMeeting)
                     if (state.activeJobs.isNotEmpty()) ProcessingAction(state.activeJobs.size, onShowActivity)
                 },
                 scrollBehavior = scrollBehavior,
@@ -483,6 +518,24 @@ private fun InputActions(onChoose: () -> Unit, recorder: Recorder) {
                 Text(stringResource(Res.string.action_record), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
+    }
+}
+
+/** Top-bar link back to a live meeting: a red dot and the running time. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun MeetingAction(elapsedMs: Long, onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    FilledTonalButton(
+        onClick = onClick,
+        shapes = ButtonDefaults.shapes(),
+        contentPadding = ButtonDefaults.SmallContentPadding,
+        colors = ButtonDefaults.filledTonalButtonColors(containerColor = colors.errorContainer, contentColor = colors.onErrorContainer),
+        modifier = Modifier.padding(end = 8.dp).heightIn(min = 40.dp),
+    ) {
+        Box(Modifier.size(8.dp).background(colors.error, CircleShape))
+        Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+        Text("${stringResource(Res.string.meeting_live)} ${MeetingDocument.clock(elapsedMs)}")
     }
 }
 

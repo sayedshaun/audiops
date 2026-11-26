@@ -38,6 +38,7 @@ class ModelTest {
             JobSpec.Enhance(EnhanceMode.FAST),
             JobSpec.Separate,
             JobSpec.Analyze,
+            JobSpec.Meeting(TranscriptionModel.PARAKEET, speakers = 3, durationMs = 61_000),
             JobSpec.Transcribe(SpeechLanguage.BANGLA),
             JobSpec.Transcribe(SpeechLanguage.AUTO, TranscriptionModel.PARAKEET),
             JobSpec.Speak("Hello there.", "pocket-alba", 1.25f),

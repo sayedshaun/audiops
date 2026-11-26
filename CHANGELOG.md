@@ -13,6 +13,12 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+### Added
+- **Live meeting.** Put the phone on the table and Audiops transcribes the meeting as people speak, telling the speakers apart (Speaker 1, Speaker 2…). Words appear while someone talks, and the screen can be off. When you stop, the speakers are sorted out once more over the whole meeting, and the transcript, subtitles and recording are saved to Activity. Everything runs on the phone; it uses the transcription model chosen in Settings and downloads two small models (about 30 MB) the first time.
+
+### Fixed
+- **AI tools start faster.** Downloaded models were checked byte by byte every time a tool started (minutes for the 640 MB Parakeet model on a slow phone). They are now checked once and again only if the file changes.
+
 ### Changed
 - **Simpler Tools tab.** The large animated card at the top is gone. The tab now has a title bar like Activity and Settings, which shrinks as you scroll. While something is processing, a "Processing" button in the bar takes you to Activity.
 - **Start faster.** With no recording chosen, Choose file and Record sit right under the title instead of in a card. The recording card appears once you have a recording.

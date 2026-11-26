@@ -125,6 +125,7 @@ import com.audiops.shared.resources.language_vietnamese
 import com.audiops.shared.resources.loudness_broadcast
 import com.audiops.shared.resources.loudness_podcast
 import com.audiops.shared.resources.loudness_streaming
+import com.audiops.shared.resources.meeting_speakers
 import com.audiops.shared.resources.message_cancelled
 import com.audiops.shared.resources.message_copied
 import com.audiops.shared.resources.message_history_cleared
@@ -139,6 +140,8 @@ import com.audiops.shared.resources.model_dpdfnet
 import com.audiops.shared.resources.model_dpdfnet_purpose
 import com.audiops.shared.resources.model_enhance
 import com.audiops.shared.resources.model_enhance_purpose
+import com.audiops.shared.resources.model_meeting
+import com.audiops.shared.resources.model_meeting_purpose
 import com.audiops.shared.resources.model_omnilingual
 import com.audiops.shared.resources.model_omnilingual_purpose
 import com.audiops.shared.resources.model_parakeet
@@ -201,6 +204,8 @@ import com.audiops.shared.resources.tool_equalizer_description
 import com.audiops.shared.resources.tool_equalizer_title
 import com.audiops.shared.resources.tool_fade_description
 import com.audiops.shared.resources.tool_fade_title
+import com.audiops.shared.resources.tool_meeting_description
+import com.audiops.shared.resources.tool_meeting_title
 import com.audiops.shared.resources.tool_presets_description
 import com.audiops.shared.resources.tool_presets_title
 import com.audiops.shared.resources.tool_separate_description
@@ -263,6 +268,7 @@ import com.audiops.shared.resources.tts_language_uk
 import com.audiops.shared.resources.tts_language_vi
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -343,6 +349,7 @@ val AiModel.title: StringResource
         AiModel.PIPER -> Res.string.model_piper
         AiModel.SUPERTONIC -> Res.string.model_supertonic
         AiModel.SCNET -> Res.string.model_scnet
+        AiModel.MEETING -> Res.string.model_meeting
     }
 
 /** What the model is used for. */
@@ -358,6 +365,7 @@ val AiModel.purpose: StringResource
         AiModel.PIPER -> Res.string.model_piper_purpose
         AiModel.SUPERTONIC -> Res.string.model_supertonic_purpose
         AiModel.SCNET -> Res.string.model_scnet_purpose
+        AiModel.MEETING -> Res.string.model_meeting_purpose
     }
 
 val TranscriptionModel.label: StringResource
@@ -481,6 +489,7 @@ val Tool.title: StringResource
         Tool.TRANSCRIBE -> Res.string.tool_transcribe_title
         Tool.SPEAK -> Res.string.tool_speak_title
         Tool.SEPARATE -> Res.string.tool_separate_title
+        Tool.MEETING -> Res.string.tool_meeting_title
         Tool.PRESETS -> Res.string.tool_presets_title
         Tool.DENOISE -> Res.string.tool_denoise_title
         Tool.SILENCE -> Res.string.tool_silence_title
@@ -499,6 +508,7 @@ val Tool.description: StringResource
         Tool.TRANSCRIBE -> Res.string.tool_transcribe_description
         Tool.SPEAK -> Res.string.tool_speak_description
         Tool.SEPARATE -> Res.string.tool_separate_description
+        Tool.MEETING -> Res.string.tool_meeting_description
         Tool.PRESETS -> Res.string.tool_presets_description
         Tool.DENOISE -> Res.string.tool_denoise_description
         Tool.SILENCE -> Res.string.tool_silence_description
@@ -628,6 +638,12 @@ fun JobSpec.summary(): String? = when (this) {
         .ifEmpty { null }
 
     is JobSpec.Process -> operations.mapNotNull { it.summary() }.joinToString(" · ").ifEmpty { null }
+
+    is JobSpec.Meeting -> listOf(
+        formatDuration(durationMs),
+        pluralStringResource(Res.plurals.meeting_speakers, speakers, speakers),
+        stringResource(model.label),
+    ).joinToString(" · ")
 }
 
 @Composable

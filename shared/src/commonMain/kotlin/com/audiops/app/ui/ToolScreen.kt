@@ -114,6 +114,7 @@ import com.audiops.shared.resources.denoise_hint
 import com.audiops.shared.resources.level_light
 import com.audiops.shared.resources.level_medium
 import com.audiops.shared.resources.level_strong
+import com.audiops.shared.resources.meeting_recording_title
 import com.audiops.shared.resources.option_fade_in
 import com.audiops.shared.resources.option_fade_out
 import com.audiops.shared.resources.option_gain
@@ -503,6 +504,9 @@ data class ToolOptions(
         // Text to speech has its own screen (SpeakScreen) and never builds a spec here.
         Tool.SPEAK -> error("Text to speech uses SpeakScreen")
 
+        // Live meetings have their own screen (MeetingScreen) and are recorded, not queued.
+        Tool.MEETING -> error("Live meetings use MeetingScreen")
+
         Tool.SEPARATE -> JobSpec.Separate
 
         Tool.TRANSCRIBE -> JobSpec.Transcribe(if (model.usesLanguage) language else SpeechLanguage.AUTO, model)
@@ -755,7 +759,7 @@ private fun ToolOptionsEditor(
             }
         }
 
-        Tool.ANALYZE, Tool.SPEAK, Tool.SEPARATE -> Unit
+        Tool.ANALYZE, Tool.SPEAK, Tool.SEPARATE, Tool.MEETING -> Unit
     }
 }
 
@@ -881,6 +885,7 @@ fun JobCard(job: Job, actions: JobCardActions, modifier: Modifier = Modifier, pe
         JobStatus.DONE -> when {
             job.report != null -> ReportCard(job.report)
             job.spec is JobSpec.Transcribe -> TranscriptCard(job, actions)
+            job.spec is JobSpec.Meeting -> MeetingResultCard(job, actions)
             job.spec is JobSpec.Separate && job.stemPaths != null -> StemsCard(job, actions)
             job.outputPath != null -> AudioResultCard(job, actions)
             else -> Unit
@@ -946,6 +951,52 @@ private fun StemsCard(job: Job, actions: JobCardActions) {
     }
 }
 
+/** A finished meeting: its transcript (with speakers), then the recording to play and save. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun MeetingResultCard(job: Job, actions: JobCardActions) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        TranscriptCard(job, actions)
+        val audio = job.audioPath ?: return@Column
+        val recording = job.copy(outputPath = audio)
+        val saveWav = rememberFileSaver(SaveFormat.WAV.mimeType) { actions.onSave(recording, it) }
+        val saveM4a = rememberFileSaver(SaveFormat.M4A.mimeType) { actions.onSaveAudio(recording, SaveFormat.M4A, it) }
+        val saveOpus = rememberFileSaver(SaveFormat.OPUS.mimeType) { actions.onSaveAudio(recording, SaveFormat.OPUS, it) }
+        ResultCard(title = stringResource(Res.string.meeting_recording_title), body = job.spec.summary().orEmpty()) {
+            PlayerBar(audio)
+            Spacer(Modifier.height(12.dp))
+            SaveButton(actions.saveFormats) { format ->
+                val name = derivedFileName(job.inputName, "recording", format.extension)
+                when (format) {
+                    SaveFormat.WAV -> saveWav(name)
+                    SaveFormat.M4A -> saveM4a(name)
+                    SaveFormat.OPUS -> saveOpus(name)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * A meeting transcript ([com.audiops.app.MeetingDocument.text]): each turn's first line, the speaker
+ * and time, stands out above what they said.
+ */
+@Composable
+private fun MeetingTranscriptText(text: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        text.split("\n\n").filter { it.isNotBlank() }.forEach { turn ->
+            Column {
+                Text(
+                    turn.substringBefore('\n'),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(turn.substringAfter('\n', ""), style = MaterialTheme.typography.bodyLarge)
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun TranscriptCard(job: Job, actions: JobCardActions) {
@@ -964,7 +1015,15 @@ private fun TranscriptCard(job: Job, actions: JobCardActions) {
         Column(Modifier.padding(20.dp)) {
             Text(stringResource(Res.string.transcript_title), style = MaterialTheme.typography.titleLargeEmphasized)
             Spacer(Modifier.height(8.dp))
-            SelectionContainer { Text(text.orEmpty(), style = MaterialTheme.typography.bodyLarge) }
+            SelectionContainer {
+                if (job.spec is JobSpec.Meeting) {
+                    MeetingTranscriptText(
+                        text.orEmpty(),
+                    )
+                } else {
+                    Text(text.orEmpty(), style = MaterialTheme.typography.bodyLarge)
+                }
+            }
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
                 FilledTonalButton(

@@ -46,6 +46,22 @@ class ModelFilesTest {
         assertTrue("other models kept", other.exists())
     }
 
+    @Test fun verifiedFilesAreRecordedAndCheckedAgainWhenTheyChange() {
+        val model = write("parakeet-tdt-v3/rev/encoder.onnx", "weights")
+        val digests = mapOf("encoder.onnx" to ModelFiles.sha256(model))
+        ModelFiles.ensure(root, "parakeet-tdt-v3/rev", "https://invalid.example", digests, ProcessingListener.None)
+        assertTrue("verification recorded", File(model.parentFile, ".encoder.onnx.verified").isFile)
+        // Unchanged: accepted from the record, still no download.
+        ModelFiles.ensure(root, "parakeet-tdt-v3/rev", "https://invalid.example", digests, ProcessingListener.None)
+        // Changed on disk: hashed again, found wrong, and fetched again (which fails here).
+        model.writeText("corrupt")
+        model.setLastModified(model.lastModified() + 5_000)
+        val failed = runCatching {
+            ModelFiles.ensure(root, "parakeet-tdt-v3/rev", "https://invalid.example", digests, ProcessingListener.None)
+        }
+        assertTrue("a changed file is not trusted", failed.isFailure)
+    }
+
     @Test fun unchangedFilesMoveFromTheOldRevisionInsteadOfDownloading() {
         val old = write("resemble-enhance/old/encoder.tflite", "same weights")
         val digest = ModelFiles.sha256(old)

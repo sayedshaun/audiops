@@ -57,6 +57,35 @@
     <string name="tool_convert_description">Change the sample rate of a WAV file.</string>
     <string name="tool_analyze_title">Analyze</string>
     <string name="tool_analyze_description">Loudness, peaks, clipping and silence.</string>
+    <string name="tool_meeting_title">Live meeting</string>
+    <string name="tool_meeting_description">Transcribe a meeting as it happens, with speakers.</string>
+    <string name="meeting_intro_title">Ready when you are</string>
+    <string name="meeting_intro_body">Put the phone in the middle of the table. Audiops writes down what is said and who said it, as it happens. Nothing leaves this device.</string>
+    <string name="meeting_model">Transcribed with %1$s</string>
+    <string name="meeting_model_hint">Change the model in Settings → Transcription.</string>
+    <string name="meeting_screen_off">The screen can be turned off. Listening continues until you stop.</string>
+    <string name="action_meeting_start">Start meeting</string>
+    <string name="action_meeting_new">New meeting</string>
+    <string name="action_meeting_stop">Stop and save</string>
+    <string name="action_meeting_discard">Discard</string>
+    <string name="meeting_discard_title">Discard this meeting?</string>
+    <string name="meeting_discard_body">The recording and everything transcribed so far will be deleted.</string>
+    <string name="meeting_live">Live</string>
+    <string name="meeting_listening">Listening…</string>
+    <string name="meeting_listening_hint">Words appear here as people speak.</string>
+    <string name="meeting_preparing">Getting ready…</string>
+    <string name="meeting_finishing">Sorting out who said what…</string>
+    <string name="meeting_speaker">Speaker %1$d</string>
+    <string name="meeting_name">Meeting %1$s</string>
+    <string name="meeting_failed">The meeting stopped: %1$s</string>
+    <string name="meeting_last">Last meeting</string>
+    <string name="meeting_recording_title">Recording</string>
+    <string name="meeting_jump_latest">Latest</string>
+    <string name="meeting_elapsed">Recording time %1$s</string>
+    <plurals name="meeting_speakers">
+        <item quantity="one">%1$d speaker</item>
+        <item quantity="other">%1$d speakers</item>
+    </plurals>
 
     <!-- Tool screen -->
     <string name="step_recording">Recording</string>
@@ -87,6 +116,8 @@
     <string name="stem_other">Other instruments</string>
     <string name="model_scnet">SCNet music separation</string>
     <string name="model_scnet_purpose">Separate music into vocals, drums, bass and other</string>
+    <string name="model_meeting">Voice detection and speakers</string>
+    <string name="model_meeting_purpose">Live meeting: finds speech and tells voices apart</string>
     <string name="action_save_format">Save %1$s</string>
     <string name="message_input_ready">“%1$s” is ready. Choose a tool.</string>
     <string name="error_import">Could not open the shared audio: %1$s</string>
@@ -316,6 +347,9 @@
     <string name="notification_channel_finished">Finished jobs</string>
     <string name="notification_channel_finished_description">Tells you when a job finishes while Audiops is in the background.</string>
     <string name="notification_waiting">%1$d more waiting</string>
+    <string name="notification_meeting_title">Meeting in progress</string>
+    <string name="notification_meeting_text">%1$s · %2$s</string>
+    <string name="notification_meeting_stop">Stop and save</string>
     <string name="notification_cancel_all">Cancel all</string>
 
     <!-- Messages and errors -->
@@ -413,6 +447,10 @@
     <string name="license_dpdfnet_summary">Apache License 2.0 · Ceva (ONNX export: k2-fsa sherpa-onnx)</string>
     <string name="license_scnet">SCNet music separation</string>
     <string name="license_scnet_summary">MIT License · starrytong (trained on MUSDB18-HQ; ONNX export: audiojs)</string>
+    <string name="license_silero">Silero VAD</string>
+    <string name="license_silero_summary">MIT License · Silero Team</string>
+    <string name="license_speaker">CAM++ speaker embeddings</string>
+    <string name="license_speaker_summary">Apache License 2.0 · Alibaba 3D-Speaker (ONNX export: k2-fsa)</string>
     <string name="license_pocket">PocketTTS voices</string>
     <string name="license_pocket_summary">Creative Commons Attribution 4.0 · Kyutai (LiteRT bundles: litert-community)</string>
     <string name="license_supertonic">Supertonic 3 voices</string>

@@ -17,6 +17,7 @@ object ModelFiles {
         AiModel.POCKET_TTS to listOf("pocket-tts"),
         AiModel.PIPER to listOf("piper-voices", "espeak-ng-data"),
         AiModel.SUPERTONIC to listOf("supertonic-3"),
+        AiModel.MEETING to listOf("silero-vad", "speaker-embedding"),
     )
 
     /** Bytes used by each downloaded model, in [AiModel] order; models without files are absent. */
@@ -42,8 +43,9 @@ object ModelFiles {
         for ((name, digest) in digests) {
             index++
             val file = File(directory, name)
-            if (file.isFile && sha256(file) == digest) continue
+            if (file.isFile && verified(file, digest)) continue
             file.delete()
+            marker(file).delete()
             if (reuseFromOtherRevision(directory, name, digest, file)) continue
             file.parentFile?.mkdirs()
             listener.onModelDownload(index, digests.size)
@@ -51,7 +53,7 @@ object ModelFiles {
             HubModels.download("$baseUrl/$name", file) { fraction ->
                 listener.onModelDownloadProgress(fileIndex, digests.size, fraction)
             }
-            if (sha256(file) != digest) {
+            if (!verified(file, digest)) {
                 file.delete()
                 error("Model file verification failed: $name")
             }
@@ -61,6 +63,22 @@ object ModelFiles {
         }
         return directory
     }
+
+    /**
+     * Whether [file] has [digest]. Hashing a large model takes long on a phone (Parakeet: 640 MB),
+     * so a verified file is recorded next to it with its size and modification time, and is hashed
+     * again only when either changes.
+     */
+    private fun verified(file: File, digest: String): Boolean {
+        val marker = marker(file)
+        val stamp = "$digest ${file.length()} ${file.lastModified()}"
+        if (marker.isFile && runCatching { marker.readText() }.getOrNull() == stamp) return true
+        if (sha256(file) != digest) return false
+        runCatching { marker.writeText(stamp) }
+        return true
+    }
+
+    private fun marker(file: File) = File(file.parentFile, ".${file.name}.verified")
 
     /**
      * When a model moves to a new revision, files that did not change are moved over from

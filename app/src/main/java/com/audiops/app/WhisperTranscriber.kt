@@ -23,11 +23,14 @@ internal object WhisperTranscriber {
     fun files(context: Context, listener: ProcessingListener): File =
         ModelFiles.ensure(context.noBackupFilesDir, "whisper-tiny/$REVISION", BASE_URL, digests, listener)
 
-    /** [language] is a Whisper language code, or empty for automatic detection. */
-    fun transcribe(context: Context, audio: File, language: String, listener: ProcessingListener): Transcript {
+    /**
+     * Loads the model (downloading it once) as a recognizer for any number of utterances. Release it after use.
+     * [language] is a Whisper language code, or empty for automatic detection.
+     */
+    fun recognizer(context: Context, language: String, listener: ProcessingListener): OfflineRecognizer {
         val directory = files(context, listener)
         fun path(name: String) = File(directory, name).absolutePath
-        val recognizer = OfflineRecognizer(
+        return OfflineRecognizer(
             config = OfflineRecognizerConfig(
                 featConfig = FeatureConfig(sampleRate = 16_000, featureDim = 80),
                 modelConfig = OfflineModelConfig(
@@ -45,6 +48,10 @@ internal object WhisperTranscriber {
                 decodingMethod = "greedy_search",
             ),
         )
+    }
+
+    fun transcribe(context: Context, audio: File, language: String, listener: ProcessingListener): Transcript {
+        val recognizer = recognizer(context, language, listener)
         try {
             return transcribeSections(audio, recognizer, SECTION_SECONDS, listener)
         } finally {

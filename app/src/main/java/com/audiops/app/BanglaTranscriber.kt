@@ -23,10 +23,11 @@ internal object BanglaTranscriber {
         "tokens.txt" to "8edb5b3ef2587207c86cc3966f3f729ec3845250d3b040e5ba916ce935fcae2b",
     )
 
-    fun transcribe(context: Context, audio: File, listener: ProcessingListener): Transcript {
+    /** Loads the model (downloading it once) as a recognizer for any number of utterances. Release it after use. */
+    fun recognizer(context: Context, listener: ProcessingListener): OfflineRecognizer {
         val directory = ModelFiles.ensure(context.noBackupFilesDir, "bangla-zipformer/$REVISION", BASE_URL, digests, listener)
         fun path(name: String) = File(directory, name).absolutePath
-        val recognizer = OfflineRecognizer(
+        return OfflineRecognizer(
             config = OfflineRecognizerConfig(
                 featConfig = FeatureConfig(sampleRate = 16_000, featureDim = 80),
                 modelConfig = OfflineModelConfig(
@@ -43,6 +44,10 @@ internal object BanglaTranscriber {
                 maxActivePaths = 4,
             ),
         )
+    }
+
+    fun transcribe(context: Context, audio: File, listener: ProcessingListener): Transcript {
+        val recognizer = recognizer(context, listener)
         try {
             return transcribeSections(audio, recognizer, SECTION_SECONDS, listener)
         } finally {

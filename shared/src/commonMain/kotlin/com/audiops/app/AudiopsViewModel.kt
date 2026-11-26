@@ -50,9 +50,9 @@ data class AudiopsState(
         .distinct()
         .take(limit)
 
-    /** The most recent job of [tool] on the current input (any input for text to speech), if any. */
+    /** The most recent job of [tool] on the current input (any input for text to speech and meetings), if any. */
     fun latestJob(tool: Tool): Job? = jobs
-        .filter { it.tool == tool && (tool == Tool.SPEAK || it.inputId == input?.id) }
+        .filter { it.tool == tool && (tool == Tool.SPEAK || tool == Tool.MEETING || it.inputId == input?.id) }
         .maxByOrNull { it.createdAt }
 }
 
@@ -66,6 +66,7 @@ class AudiopsViewModel(
     private val engine: AudioEngine,
     private val settingsRepository: SettingsRepository,
     private val history: HistoryRepository,
+    private val meeting: LiveMeeting = LiveMeeting.Unavailable,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -97,7 +98,11 @@ class AudiopsViewModel(
         if (!engine.supportsTranscribe) add(Tool.TRANSCRIBE)
         if (!engine.supportsSpeak) add(Tool.SPEAK)
         if (!engine.supportsSeparate) add(Tool.SEPARATE)
+        if (!meeting.available) add(Tool.MEETING)
     }
+
+    /** The live meeting, if one is starting, running or finishing. */
+    val meetingState: StateFlow<MeetingState> = meeting.state
 
     /** Bytes per downloaded model; null while measuring. */
     private val _modelStorage = MutableStateFlow<Map<AiModel, Long>?>(null)
@@ -125,6 +130,14 @@ class AudiopsViewModel(
             }
         }
         viewModelScope.launch { for (id in queue) runQueued(id) }
+        viewModelScope.launch {
+            meeting.state.collect { state ->
+                if (state is MeetingState.Finished) {
+                    recordMeeting(state.result)
+                    meeting.acknowledge()
+                }
+            }
+        }
         if (_state.value.input != null) loadWaveform()
         refreshStorage()
     }
@@ -177,7 +190,8 @@ class AudiopsViewModel(
 
     /** Opens the tool for a finished job's input again (Activity → "Open in tool"). */
     fun reopen(job: Job) {
-        if (job.spec !is JobSpec.Speak && _state.value.input?.id != job.inputId) chooseInput(job.inputId, job.inputName)
+        val hasInput = job.spec !is JobSpec.Speak && job.spec !is JobSpec.Meeting
+        if (hasInput && _state.value.input?.id != job.inputId) chooseInput(job.inputId, job.inputName)
         open(job.tool)
     }
 
@@ -357,6 +371,8 @@ class AudiopsViewModel(
         try {
             val done = runOnWorker {
                 when (val spec = job.spec) {
+                    is JobSpec.Meeting -> error("Live meetings are recorded, not queued")
+
                     is JobSpec.Enhance -> job.copy(
                         outputPath = when (spec.mode) {
                             // Fast: the AI noise-reduction model at full strength; Studio: Resemble Enhance.
@@ -418,6 +434,52 @@ class AudiopsViewModel(
 
     private fun update(id: String, transform: (Job) -> Job) {
         _state.update { s -> s.copy(jobs = s.jobs.map { if (it.id == id) transform(it) else it }) }
+    }
+
+    // Live meetings
+
+    /**
+     * Starts a live meeting with the transcription model chosen in Settings. [name] names the
+     * meeting in history; [speakerName] names speakers (1-based) in the saved transcript.
+     */
+    fun startMeeting(name: String, speakerName: (Int) -> String) {
+        val model = settings.value?.transcriptionModel?.takeIf { it != TranscriptionModel.AUTO } ?: TranscriptionModel.PARAKEET
+        val language = if (model == TranscriptionModel.WHISPER) _state.value.language.code else ""
+        meeting.start(model, language, name, speakerName)
+    }
+
+    fun stopMeeting() = meeting.stop()
+
+    fun discardMeeting() {
+        meeting.discard()
+        _messages.trySend(UiMessage.Cancelled)
+    }
+
+    /** Dismisses a failed meeting. */
+    fun acknowledgeMeeting() = meeting.acknowledge()
+
+    private fun recordMeeting(result: MeetingResult) {
+        val job = Job(
+            id = "${result.startedAt}-${Random.nextInt(1_000_000)}",
+            tool = Tool.MEETING,
+            inputId = result.audioPath,
+            inputName = result.name,
+            spec = JobSpec.Meeting(result.model, result.speakers, result.durationMs),
+            status = JobStatus.DONE,
+            createdAt = result.startedAt,
+            finishedAt = currentTimeMillis(),
+            outputPath = result.transcriptPath,
+            subtitlesPath = result.subtitlesPath,
+            audioPath = result.audioPath,
+            preview = result.preview.take(PREVIEW_LENGTH),
+        )
+        _state.update { s ->
+            val active = s.jobs.filter { it.status.active }
+            s.copy(jobs = active + job + s.jobs.filter { !it.status.active })
+        }
+        persist()
+        refreshStorage()
+        _messages.trySend(UiMessage.JobFinished(Tool.MEETING))
     }
 
     /** Applies [transform] and moves the job from the active list into history. */

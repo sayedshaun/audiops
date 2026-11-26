@@ -31,10 +31,11 @@ internal object ParakeetTranscriber {
         "lt", "lv", "mt", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "uk",
     )
 
-    fun transcribe(context: Context, audio: File, listener: ProcessingListener): Transcript {
+    /** Loads the model (downloading it once) as a recognizer for any number of utterances. Release it after use. */
+    fun recognizer(context: Context, listener: ProcessingListener): OfflineRecognizer {
         val directory = ModelFiles.ensure(context.noBackupFilesDir, "parakeet-tdt-v3/$REVISION", BASE_URL, digests, listener)
         fun path(name: String) = File(directory, name).absolutePath
-        val recognizer = OfflineRecognizer(
+        return OfflineRecognizer(
             config = OfflineRecognizerConfig(
                 featConfig = FeatureConfig(sampleRate = 16_000, featureDim = 80),
                 modelConfig = OfflineModelConfig(
@@ -51,6 +52,10 @@ internal object ParakeetTranscriber {
                 decodingMethod = "greedy_search",
             ),
         )
+    }
+
+    fun transcribe(context: Context, audio: File, listener: ProcessingListener): Transcript {
+        val recognizer = recognizer(context, listener)
         try {
             return transcribeSections(audio, recognizer, SECTION_SECONDS, listener)
         } finally {
