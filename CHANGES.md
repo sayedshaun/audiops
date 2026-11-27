@@ -653,3 +653,9 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 ### Changed
 - CHANGELOG: Unreleased became 0.4.0 (Live meeting; Tools tab title bar, start buttons, compact tiles and Recently used; faster model checks). versionCode 4000 (from the tag).
 - R8 release build (0.4.0, signed with the debug key) checked on the emulator: live meeting starts, counts with the real microphone and reports no speech when silent; Discard confirms; text to speech (Supertonic); M4A export (AAC 44.1 kHz mono, checked with ffprobe); Parakeet transcription of the English test clip.
+
+## 2026-11-27: transcription named by language (`fix/language-labels`)
+
+### Changed
+- `TranscriptionModel.label` now names what each option listens for (`transcription_choice_*`: English and European languages, Many other languages, A language you choose, Bangla); model names (`model_*`) remain only in Settings → Downloaded models and the licence list. Settings rows: "Languages" and "Language you choose" (was "Transcription model", "Whisper language"). Hints no longer name Whisper Tiny or DPDFNet. Transcribe and Live meeting say "Listens for …"; a Whisper job's Activity summary shows only the chosen language.
+- Not checked on the emulator: another session was using it. Build and unit tests pass.
