@@ -169,12 +169,10 @@ import com.audiops.shared.resources.settings_section_about
 import com.audiops.shared.resources.settings_section_appearance
 import com.audiops.shared.resources.settings_section_processing
 import com.audiops.shared.resources.settings_section_storage
-import com.audiops.shared.resources.settings_section_transcription
 import com.audiops.shared.resources.settings_source_code
 import com.audiops.shared.resources.settings_source_code_summary
 import com.audiops.shared.resources.settings_theme
 import com.audiops.shared.resources.settings_title
-import com.audiops.shared.resources.settings_transcription_model
 import com.audiops.shared.resources.settings_version
 import com.audiops.shared.resources.theme_dark
 import com.audiops.shared.resources.theme_light
@@ -348,8 +346,6 @@ private fun SettingsMain(
     onOpen: (SettingsPage) -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
-    var showModelDialog by rememberSaveable { mutableStateOf(false) }
     var showClearDialog by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
@@ -424,32 +420,7 @@ private fun SettingsMain(
                 )
             }
 
-            // Phone-only sections: transcription defaults and keeping the screen awake.
-            if (showTranscription) {
-                item { SectionHeader(stringResource(Res.string.settings_section_transcription)) }
-                item {
-                    SettingsGroup(
-                        { shape ->
-                            SettingsRow(
-                                icon = Icons.Rounded.RecordVoiceOver,
-                                title = stringResource(Res.string.settings_transcription_model),
-                                summary = stringResource(settings.transcriptionModel.label),
-                                shape = shape,
-                                onClick = { showModelDialog = true },
-                            )
-                        },
-                        { shape ->
-                            SettingsRow(
-                                icon = Icons.Rounded.Translate,
-                                title = stringResource(Res.string.settings_default_language),
-                                summary = stringResource(settings.defaultLanguage.label),
-                                shape = shape,
-                                onClick = { showLanguageDialog = true },
-                            )
-                        },
-                    )
-                }
-            }
+            // Language and model choices live on the Transcribe and Live meeting screens.
             item { SectionHeader(stringResource(Res.string.settings_section_processing)) }
             item {
                 SettingsGroup({ shape ->
@@ -535,29 +506,6 @@ private fun SettingsMain(
                 )
             }
         }
-    }
-
-    if (showLanguageDialog) {
-        LanguageDialog(
-            title = stringResource(Res.string.settings_default_language),
-            selected = settings.defaultLanguage,
-            onSelect = {
-                actions.onDefaultLanguage(it)
-                showLanguageDialog = false
-            },
-            onDismiss = { showLanguageDialog = false },
-        )
-    }
-
-    if (showModelDialog) {
-        TranscriptionModelDialog(
-            selected = settings.transcriptionModel,
-            onSelect = {
-                actions.onTranscriptionModel(it)
-                showModelDialog = false
-            },
-            onDismiss = { showModelDialog = false },
-        )
     }
 
     if (showClearDialog) {

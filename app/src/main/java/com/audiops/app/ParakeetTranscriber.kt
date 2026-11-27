@@ -25,12 +25,6 @@ internal object ParakeetTranscriber {
         "tokens.txt" to "d58544679ea4bc6ac563d1f545eb7d474bd6cfa467f0a6e2c1dc1c7d37e3c35d",
     )
 
-    /** Whisper language codes of the languages Parakeet v3 was trained on. */
-    val languages = setOf(
-        "bg", "cs", "da", "de", "el", "en", "es", "et", "fi", "fr", "hr", "hu", "it",
-        "lt", "lv", "mt", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "uk",
-    )
-
     /** Loads the model (downloading it once) as a recognizer for any number of utterances. Release it after use. */
     fun recognizer(context: Context, listener: ProcessingListener): OfflineRecognizer {
         val directory = ModelFiles.ensure(context.noBackupFilesDir, "parakeet-tdt-v3/$REVISION", BASE_URL, digests, listener)

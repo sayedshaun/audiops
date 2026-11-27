@@ -664,3 +664,12 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 ### Changed
 - CHANGELOG: Unreleased became 0.4.1 (transcription named by language). versionCode 4001 (from the tag).
+
+## 2026-11-27: Language and Model sections on language tools (`feature/language-model-sections`)
+
+### Changed
+- Transcribe: 1 Language (`LanguageField`), 2 Model (`TranscriptionModelChoice`, connected radio group, Recommended badge), 3 Recording, then Transcribe. Live meeting: Language, Model, then Start (intro card). Text to speech: Language, Voice (with speed), Text, then Create speech.
+- `Model.kt`: `punctuatedModelLanguages`, `TranscriptionModel.supports`, `recommendedTranscriptionModel` (Bangla → Bangla, 25 European → Parakeet, Urdu → Whisper, else Omnilingual), `transcriptionModelsFor`. `AudiopsViewModel.setLanguage` saves the language and switches to the recommended model when the chosen one cannot handle it; live meetings use the language too. `JobSpec.Transcribe` always records the language; `JobSpec.Meeting` gained `language` (defaults to AUTO for 0.4.0 history). Activity summaries show the language.
+- Removed Settings → Transcription (model and language rows), `TranscriptionModelDialog` and their strings; `ParakeetTranscriber.languages` moved to `punctuatedModelLanguages`.
+- Tests: `ModelTest.eachLanguageOffersItsModelsWithTheRecommendedOneFirst`, meeting round trip with language, ViewModel meeting test records the language.
+- Checked on the emulator (light): Transcribe (English → three models; Bangla → Bangla model recommended, punctuated model hidden; back to English → punctuated model chosen again), Live meeting sections shared with Transcribe, Text to speech order. Dark mode not seen (the emulator stayed light).

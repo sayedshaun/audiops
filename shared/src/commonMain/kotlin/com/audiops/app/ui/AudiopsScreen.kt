@@ -136,7 +136,8 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
         if (tool == Tool.MEETING) {
             MeetingScreen(
                 state = meeting,
-                model = settings?.transcriptionModel?.takeIf { it != TranscriptionModel.AUTO } ?: TranscriptionModel.PARAKEET,
+                language = state.language,
+                model = effectiveTranscriptionModel(state.language, settings?.transcriptionModel ?: TranscriptionModel.AUTO),
                 latestJob = state.latestJob(tool),
                 snackbar = snackbar,
                 actions = MeetingActions(
@@ -146,6 +147,8 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                     onDiscard = viewModel::discardMeeting,
                     onDismissError = viewModel::acknowledgeMeeting,
                     onMicrophoneDenied = { viewModel.recordFailed(null) },
+                    onLanguage = viewModel::setLanguage,
+                    onTranscriptionModel = viewModel::setTranscriptionModel,
                     jobCard = JobCardActions(
                         viewModel::cancel,
                         viewModel::saveOutput,
@@ -165,6 +168,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                     onBack = { viewModel.back() },
                     onChoose = viewModel::chooseInput,
                     onLanguage = viewModel::setLanguage,
+                    onTranscriptionModel = viewModel::setTranscriptionModel,
                     onStart = { spec -> viewModel.start(tool, spec) },
                     onCancel = viewModel::cancel,
                     onSave = viewModel::saveOutput,
@@ -192,6 +196,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                     onBack = { viewModel.back() },
                     onChoose = viewModel::chooseInput,
                     onLanguage = viewModel::setLanguage,
+                    onTranscriptionModel = viewModel::setTranscriptionModel,
                     onStart = { spec -> viewModel.start(tool, spec) },
                     onCancel = viewModel::cancel,
                     onSave = viewModel::saveOutput,

@@ -38,7 +38,8 @@ class ModelTest {
             JobSpec.Enhance(EnhanceMode.FAST),
             JobSpec.Separate,
             JobSpec.Analyze,
-            JobSpec.Meeting(TranscriptionModel.PARAKEET, speakers = 3, durationMs = 61_000),
+            JobSpec.Meeting(TranscriptionModel.PARAKEET, speakers = 3, durationMs = 61_000, language = SpeechLanguage.GERMAN),
+            JobSpec.Meeting(TranscriptionModel.WHISPER, speakers = 1, durationMs = 5_000),
             JobSpec.Transcribe(SpeechLanguage.BANGLA),
             JobSpec.Transcribe(SpeechLanguage.AUTO, TranscriptionModel.PARAKEET),
             JobSpec.Speak("Hello there.", "pocket-alba", 1.25f),
@@ -138,6 +139,26 @@ class ModelTest {
     @Test fun onlyQueuedAndRunningJobsAreActive() {
         assertEquals(setOf(JobStatus.QUEUED, JobStatus.RUNNING), JobStatus.entries.filter { it.active }.toSet())
         assertFalse(JobStatus.CANCELLED.active)
+    }
+
+    @Test fun eachLanguageOffersItsModelsWithTheRecommendedOneFirst() {
+        assertEquals(
+            listOf(TranscriptionModel.PARAKEET, TranscriptionModel.OMNILINGUAL, TranscriptionModel.WHISPER),
+            transcriptionModelsFor(SpeechLanguage.ENGLISH),
+        )
+        assertEquals(
+            listOf(TranscriptionModel.BANGLA, TranscriptionModel.OMNILINGUAL, TranscriptionModel.WHISPER),
+            transcriptionModelsFor(SpeechLanguage.BANGLA),
+        )
+        assertEquals(listOf(TranscriptionModel.WHISPER, TranscriptionModel.OMNILINGUAL), transcriptionModelsFor(SpeechLanguage.URDU))
+        assertEquals(listOf(TranscriptionModel.OMNILINGUAL, TranscriptionModel.WHISPER), transcriptionModelsFor(SpeechLanguage.HINDI))
+        assertEquals(25, punctuatedModelLanguages.size)
+        // Every offered language has at least two models, and the recommended one supports it.
+        transcriptionLanguages.forEach { language ->
+            val models = transcriptionModelsFor(language)
+            assertTrue(language.name, models.size >= 2 && models.all { it.supports(language) })
+        }
+        assertFalse(TranscriptionModel.PARAKEET.supports(SpeechLanguage.BANGLA))
     }
 
     @Test fun recentToolsAreNewestFirstWithoutRepeats() {

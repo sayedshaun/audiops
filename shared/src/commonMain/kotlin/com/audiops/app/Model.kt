@@ -119,6 +119,37 @@ enum class TranscriptionModel { AUTO, PARAKEET, OMNILINGUAL, WHISPER, BANGLA }
 /** The models a user can pick. [TranscriptionModel.AUTO] only exists for history saved by earlier versions. */
 val selectableTranscriptionModels = TranscriptionModel.entries - TranscriptionModel.AUTO
 
+/** Language codes of the 25 European languages the punctuated model (Parakeet v3) was trained on. */
+val punctuatedModelLanguages = setOf(
+    "bg", "cs", "da", "de", "el", "en", "es", "et", "fi", "fr", "hr", "hu", "it",
+    "lt", "lv", "mt", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "uk",
+)
+
+/** Whether this model can transcribe [language]. The many-language and small models cover every offered language. */
+fun TranscriptionModel.supports(language: SpeechLanguage): Boolean = when (this) {
+    TranscriptionModel.PARAKEET -> language.code in punctuatedModelLanguages
+    TranscriptionModel.BANGLA -> language == SpeechLanguage.BANGLA
+    TranscriptionModel.AUTO, TranscriptionModel.OMNILINGUAL, TranscriptionModel.WHISPER -> true
+}
+
+/**
+ * The best model for [language]: the Bangla model for Bangla, the punctuated model for its European
+ * languages, the small model for Urdu (the many-language model writes Urdu in Devanagari), and the
+ * many-language model for everything else.
+ */
+fun recommendedTranscriptionModel(language: SpeechLanguage): TranscriptionModel = when {
+    language == SpeechLanguage.BANGLA -> TranscriptionModel.BANGLA
+    language.code in punctuatedModelLanguages -> TranscriptionModel.PARAKEET
+    language == SpeechLanguage.URDU -> TranscriptionModel.WHISPER
+    else -> TranscriptionModel.OMNILINGUAL
+}
+
+/** The models offered for [language], the recommended one first. */
+fun transcriptionModelsFor(language: SpeechLanguage): List<TranscriptionModel> {
+    val recommended = recommendedTranscriptionModel(language)
+    return listOf(recommended) + selectableTranscriptionModels.filter { it != recommended && it.supports(language) }
+}
+
 /** Downloadable AI models, listed and deleted one by one in Settings → Downloaded models. */
 enum class AiModel { ENHANCE, NOISE, SCNET, PARAKEET, OMNILINGUAL, WHISPER, BANGLA, POCKET_TTS, PIPER, SUPERTONIC, MEETING }
 
@@ -264,10 +295,18 @@ sealed interface JobSpec {
     @SerialName("analyze")
     data object Analyze : JobSpec
 
-    /** A live meeting transcription: [speakers] told apart over [durationMs], transcribed with [model]. */
+    /**
+     * A live meeting transcription: [speakers] told apart over [durationMs], transcribed in [language]
+     * with [model]. Meetings saved by 0.4.0 have no language ([SpeechLanguage.AUTO]).
+     */
     @Serializable
     @SerialName("meeting")
-    data class Meeting(val model: TranscriptionModel, val speakers: Int, val durationMs: Long) : JobSpec
+    data class Meeting(
+        val model: TranscriptionModel,
+        val speakers: Int,
+        val durationMs: Long,
+        val language: SpeechLanguage = SpeechLanguage.AUTO,
+    ) : JobSpec
 }
 
 @Serializable

@@ -195,9 +195,22 @@ class AudiopsViewModel(
         open(job.tool)
     }
 
+    /**
+     * Sets the spoken language for transcription and live meetings, and remembers it. When the chosen
+     * model cannot transcribe it, the recommended model for the language is chosen instead.
+     */
     fun setLanguage(language: SpeechLanguage) {
         savedState[KEY_LANGUAGE] = language.name
         _state.update { it.copy(language = language) }
+        viewModelScope.launch {
+            settingsRepository.setDefaultLanguage(language)
+            val model = settings.value?.transcriptionModel
+            if (model == null ||
+                !model.supports(language)
+            ) {
+                settingsRepository.setTranscriptionModel(recommendedTranscriptionModel(language))
+            }
+        }
     }
 
     private fun loadWaveform() {
@@ -443,10 +456,15 @@ class AudiopsViewModel(
      * meeting in history; [speakerName] names speakers (1-based) in the saved transcript.
      */
     fun startMeeting(name: String, speakerName: (Int) -> String) {
-        val model = settings.value?.transcriptionModel?.takeIf { it != TranscriptionModel.AUTO } ?: TranscriptionModel.PARAKEET
-        val language = if (model == TranscriptionModel.WHISPER) _state.value.language.code else ""
-        meeting.start(model, language, name, speakerName)
+        val language = _state.value.language
+        val model = settings.value?.transcriptionModel?.takeIf { it != TranscriptionModel.AUTO && it.supports(language) }
+            ?: recommendedTranscriptionModel(language)
+        meetingLanguage = language
+        meeting.start(model, language.code, name, speakerName)
     }
+
+    /** The language of the meeting that is running, for its history entry. */
+    private var meetingLanguage = SpeechLanguage.AUTO
 
     fun stopMeeting() = meeting.stop()
 
@@ -464,7 +482,7 @@ class AudiopsViewModel(
             tool = Tool.MEETING,
             inputId = result.audioPath,
             inputName = result.name,
-            spec = JobSpec.Meeting(result.model, result.speakers, result.durationMs),
+            spec = JobSpec.Meeting(result.model, result.speakers, result.durationMs, meetingLanguage),
             status = JobStatus.DONE,
             createdAt = result.startedAt,
             finishedAt = currentTimeMillis(),

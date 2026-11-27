@@ -68,6 +68,7 @@ import com.audiops.shared.resources.speak_text_count
 import com.audiops.shared.resources.speak_text_label
 import com.audiops.shared.resources.speak_voice
 import com.audiops.shared.resources.speak_voice_summary
+import com.audiops.shared.resources.step_language
 import com.audiops.shared.resources.step_text
 import com.audiops.shared.resources.step_voice
 import kotlinx.coroutines.delay
@@ -105,32 +106,25 @@ fun SpeakScreen(latestJob: Job?, snackbar: SnackbarHostState, actions: ToolActio
         onBack = actions.onBack,
         snackbar = snackbar,
     ) {
-        StepTitle(1, stringResource(Res.string.step_text))
-        Spacer(Modifier.height(12.dp))
-        OutlinedTextField(
-            value = text,
-            onValueChange = { text = it.take(MAX_TEXT_LENGTH) },
-            label = { Text(stringResource(Res.string.speak_text_label)) },
-            supportingText = { Text(stringResource(Res.string.speak_text_count, text.length, MAX_TEXT_LENGTH)) },
-            minLines = 5,
-            maxLines = 12,
-            shape = MaterialTheme.shapes.large,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        Spacer(Modifier.height(20.dp))
-        StepTitle(2, stringResource(Res.string.step_voice))
+        // What is spoken first, then who speaks it, then the text.
+        var languageDialog by rememberSaveable { mutableStateOf(false) }
+        var voiceDialog by rememberSaveable { mutableStateOf(false) }
+        val voicesForLanguage = ttsVoices.filter { it.language == voice.language }
+        StepTitle(1, stringResource(Res.string.step_language))
         Spacer(Modifier.height(12.dp))
         OptionsCard {
-            var languageDialog by rememberSaveable { mutableStateOf(false) }
-            var voiceDialog by rememberSaveable { mutableStateOf(false) }
-            val voicesForLanguage = ttsVoices.filter { it.language == voice.language }
             PickerField(
                 icon = Icons.Rounded.Translate,
                 label = stringResource(Res.string.speak_language),
                 value = stringResource(ttsLanguageLabel(voice.language)),
                 onClick = { languageDialog = true },
             )
+        }
+
+        Spacer(Modifier.height(20.dp))
+        StepTitle(2, stringResource(Res.string.step_voice))
+        Spacer(Modifier.height(12.dp))
+        OptionsCard {
             if (voicesForLanguage.size > 1) {
                 PickerField(
                     icon = Icons.Rounded.Person,
@@ -181,17 +175,32 @@ fun SpeakScreen(latestJob: Job?, snackbar: SnackbarHostState, actions: ToolActio
                     onDismiss = { voiceDialog = false },
                 )
             }
-            Button(
-                onClick = { actions.onStart(JobSpec.Speak(text.trim(), voice.id, speed)) },
-                enabled = text.isNotBlank(),
-                shapes = ButtonDefaults.shapes(),
-                contentPadding = PrimaryButtonPadding,
-                modifier = Modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
-            ) {
-                Icon(tool.icon, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(tool.action), style = MaterialTheme.typography.titleMedium)
-            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+        StepTitle(3, stringResource(Res.string.step_text))
+        Spacer(Modifier.height(12.dp))
+        OutlinedTextField(
+            value = text,
+            onValueChange = { text = it.take(MAX_TEXT_LENGTH) },
+            label = { Text(stringResource(Res.string.speak_text_label)) },
+            supportingText = { Text(stringResource(Res.string.speak_text_count, text.length, MAX_TEXT_LENGTH)) },
+            minLines = 5,
+            maxLines = 12,
+            shape = MaterialTheme.shapes.large,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(12.dp))
+        Button(
+            onClick = { actions.onStart(JobSpec.Speak(text.trim(), voice.id, speed)) },
+            enabled = text.isNotBlank(),
+            shapes = ButtonDefaults.shapes(),
+            contentPadding = PrimaryButtonPadding,
+            modifier = Modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
+        ) {
+            Icon(tool.icon, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(tool.action), style = MaterialTheme.typography.titleMedium)
         }
 
         AnimatedVisibility(visible = latestJob != null, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {

@@ -149,8 +149,6 @@ import com.audiops.shared.resources.step_language
 import com.audiops.shared.resources.step_model
 import com.audiops.shared.resources.step_options
 import com.audiops.shared.resources.step_recording
-import com.audiops.shared.resources.transcribe_model_used
-import com.audiops.shared.resources.transcribe_whisper_hint
 import com.audiops.shared.resources.transcript_title
 import com.audiops.shared.resources.unit_dbfs
 import com.audiops.shared.resources.unit_lufs
@@ -181,6 +179,7 @@ data class ToolActions(
     val onBack: () -> Unit,
     val onChoose: (id: String, name: String) -> Unit,
     val onLanguage: (SpeechLanguage) -> Unit,
+    val onTranscriptionModel: (TranscriptionModel) -> Unit = {},
     val onStart: (JobSpec) -> Unit,
     val onCancel: (jobId: String) -> Unit,
     val onSave: (Job, destination: String?) -> Unit,
@@ -217,7 +216,19 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
         onBack = actions.onBack,
         snackbar = snackbar,
     ) {
-        StepTitle(1, stringResource(Res.string.step_recording))
+        // Language tools start with what is spoken, then the model for it.
+        val languageSteps = if (tool == Tool.TRANSCRIBE) 2 else 0
+        if (tool == Tool.TRANSCRIBE) {
+            StepTitle(1, stringResource(Res.string.step_language))
+            Spacer(Modifier.height(12.dp))
+            LanguageField(selected = state.language, onSelect = actions.onLanguage)
+            Spacer(Modifier.height(28.dp))
+            StepTitle(2, stringResource(Res.string.step_model))
+            Spacer(Modifier.height(12.dp))
+            TranscriptionModelChoice(state.language, state.transcriptionModel, actions.onTranscriptionModel)
+            Spacer(Modifier.height(28.dp))
+        }
+        StepTitle(languageSteps + 1, stringResource(Res.string.step_recording))
         Spacer(Modifier.height(12.dp))
         InputCard(
             input = state.input,
@@ -246,12 +257,7 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
         }
         if (tool.hasOptions) {
             Spacer(Modifier.height(28.dp))
-            val stepTitle = when {
-                tool != Tool.TRANSCRIBE -> Res.string.step_options
-                state.transcriptionModel.usesLanguage -> Res.string.step_language
-                else -> Res.string.step_model
-            }
-            StepTitle(2, stringResource(stepTitle))
+            StepTitle(languageSteps + 2, stringResource(Res.string.step_options))
             Spacer(Modifier.height(12.dp))
             OptionsCard {
                 ToolOptionsEditor(
@@ -296,7 +302,7 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
     }
 }
 
-private val Tool.hasOptions: Boolean get() = this != Tool.ANALYZE && this != Tool.SEPARATE
+private val Tool.hasOptions: Boolean get() = this != Tool.ANALYZE && this != Tool.SEPARATE && this != Tool.TRANSCRIBE
 
 @Composable
 internal fun OptionsCard(content: @Composable () -> Unit) {
@@ -509,7 +515,7 @@ data class ToolOptions(
 
         Tool.SEPARATE -> JobSpec.Separate
 
-        Tool.TRANSCRIBE -> JobSpec.Transcribe(if (model.usesLanguage) language else SpeechLanguage.AUTO, model)
+        Tool.TRANSCRIBE -> JobSpec.Transcribe(language, effectiveTranscriptionModel(language, model))
 
         Tool.ANALYZE -> JobSpec.Analyze
 
@@ -577,17 +583,6 @@ private fun ToolOptionsEditor(
     onChange: (ToolOptions) -> Unit,
 ) {
     when (tool) {
-        Tool.TRANSCRIBE -> {
-            if (transcriptionModel.usesLanguage) {
-                LanguageField(selected = language, onSelect = onLanguage)
-            }
-            when (transcriptionModel) {
-                TranscriptionModel.WHISPER -> Hint(stringResource(Res.string.transcribe_whisper_hint))
-                else -> Hint(stringResource(transcriptionModel.summary))
-            }
-            Hint(stringResource(Res.string.transcribe_model_used, stringResource(transcriptionModel.label)))
-        }
-
         Tool.DENOISE -> {
             OptionLabel(stringResource(Res.string.option_strength))
             ConnectedChoice(
@@ -759,7 +754,7 @@ private fun ToolOptionsEditor(
             }
         }
 
-        Tool.ANALYZE, Tool.SPEAK, Tool.SEPARATE, Tool.MEETING -> Unit
+        Tool.ANALYZE, Tool.SPEAK, Tool.SEPARATE, Tool.MEETING, Tool.TRANSCRIBE -> Unit
     }
 }
 

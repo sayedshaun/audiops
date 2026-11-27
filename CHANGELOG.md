@@ -13,6 +13,9 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+### Changed
+- **Language first.** Transcribe and Live meeting now open with the language spoken, then the model for it: only models that handle that language are shown, the recommended one first and marked. Text to speech asks for the language, then the voice, then the text. These choices moved out of Settings.
+
 ## [0.4.1] - 2026-11-27
 
 ### Changed

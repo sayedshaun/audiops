@@ -226,7 +226,7 @@ class AudiopsViewModelTest {
         vm.stopMeeting()
         val job = vm.awaitJobs(1, JobStatus.DONE).single()
         assertEquals(Tool.MEETING, job.tool)
-        assertEquals(JobSpec.Meeting(TranscriptionModel.PARAKEET, 2, 90_000), job.spec)
+        assertEquals(JobSpec.Meeting(TranscriptionModel.PARAKEET, 2, 90_000, SpeechLanguage.ENGLISH), job.spec)
         assertEquals(listOf("/out/meeting.txt", "/out/meeting.srt", "/out/meeting.wav"), job.files)
         assertEquals(job, vm.state.value.latestJob(Tool.MEETING))
         eventually { meeting.acknowledged == 1 && meeting.state.value == MeetingState.Idle }
