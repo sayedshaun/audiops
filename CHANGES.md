@@ -647,3 +647,9 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 ### Verified
 - Emulator (debug file source, 46 s clip of 4 speakers in 4 languages): live partials, turns and speaker count, Tools Live button, notification with Stop and save, finished transcript with all 8 utterances labelled correctly (1 2 1 3 2 4 3 1), saved to Activity. Not yet tried with a real microphone or on a phone; battery use over a long meeting is unmeasured.
+
+## 2026-11-27: release 0.4.0 prepared (`release/0.4.0`)
+
+### Changed
+- CHANGELOG: Unreleased became 0.4.0 (Live meeting; Tools tab title bar, start buttons, compact tiles and Recently used; faster model checks). versionCode 4000 (from the tag).
+- R8 release build (0.4.0, signed with the debug key) checked on the emulator: live meeting starts, counts with the real microphone and reports no speech when silent; Discard confirms; text to speech (Supertonic); M4A export (AAC 44.1 kHz mono, checked with ffprobe); Parakeet transcription of the English test clip.
