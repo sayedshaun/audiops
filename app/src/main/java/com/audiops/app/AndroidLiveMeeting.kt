@@ -225,6 +225,7 @@ class AndroidLiveMeeting(context: Context) : LiveMeeting {
                 WavWriter(file, MEETING_RATE).use { writer ->
                     val block = FloatArray(MEETING_RATE / 10)
                     val speech = SpeechTail()
+                    val padding = UtterancePadding()
                     var samples = 0L
                     while (!stopRequested.get()) {
                         val read = source.read(block)
@@ -233,7 +234,7 @@ class AndroidLiveMeeting(context: Context) : LiveMeeting {
                         val chunk = block.copyOf(read)
                         writer.append(chunk)
                         vad.acceptWaveform(chunk)
-                        if (drain(vad)) speech.reset()
+                        if (drain(vad, chunk, padding)) speech.reset()
                         if (vad.isSpeechDetected()) {
                             speech.append(chunk)?.let { partialRequest.set(PartialRequest(epoch, it)) }
                         } else if (speech.active) {
@@ -249,22 +250,26 @@ class AndroidLiveMeeting(context: Context) : LiveMeeting {
                         publish()
                     }
                     vad.flush()
-                    drain(vad)
+                    drain(vad, null, padding)
                 }
             }
         }
 
-        /** Hands finished utterances to the worker; true when there were any. */
-        private fun drain(vad: Vad): Boolean {
-            var any = false
+        /**
+         * Hands finished utterances to the worker, widened by [padding] once the audio after them has
+         * arrived; [chunk] is the audio just read, or null at the end. True when the VAD ended any.
+         */
+        private fun drain(vad: Vad, chunk: FloatArray?, padding: UtterancePadding): Boolean {
+            val found = mutableListOf<Utterance>()
             while (!vad.empty()) {
                 val segment = vad.front()
-                segments.put(Segment(segment.start.toLong(), segment.samples))
+                found += Utterance(segment.start.toLong(), segment.samples)
                 vad.pop()
-                any = true
             }
-            if (any) endUtterance()
-            return any
+            val ready = if (chunk != null) padding.add(chunk, found) else padding.flush(found)
+            ready.forEach { segments.put(Segment(it.startSample, it.samples)) }
+            if (found.isNotEmpty()) endUtterance()
+            return found.isNotEmpty()
         }
 
         /** The utterance in progress ended: its partial text is about to be replaced by the final line. */

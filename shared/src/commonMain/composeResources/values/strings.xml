@@ -131,8 +131,10 @@
     <string name="model_scnet">SCNet music separation</string>
     <string name="model_scnet_purpose">Separate music into vocals, drums, bass and other</string>
     <string name="model_meeting">Voice detection and speakers</string>
-    <string name="model_meeting_purpose">Live meeting: finds speech and tells voices apart</string>
-    <string name="model_sounds">Sound recognition (Zipformer, AudioSet)</string>
+    <string name="model_meeting_purpose">Finds speech and tells voices apart: Live meeting, speaker labels and sentences</string>
+    <string name="model_kokoro">Kokoro voices</string>
+    <string name="model_kokoro_purpose">Text to speech: natural English voices (US and UK)</string>
+    <string name="model_sounds">Zipformer sound recognition</string>
     <string name="model_sounds_purpose">Tells what a recording sounds like and suggests a tool</string>
     <string name="action_save_format">Save %1$s</string>
     <string name="message_input_ready">“%1$s” is ready. Choose a tool.</string>
@@ -479,6 +481,8 @@
     <string name="license_silero">Silero VAD</string>
     <string name="license_silero_summary">MIT License · Silero Team</string>
     <string name="license_speaker">CAM++ speaker embeddings</string>
+    <string name="license_kokoro">Kokoro voices</string>
+    <string name="license_kokoro_summary">Apache License 2.0 · hexgrad (int8 export and lexicons: k2-fsa sherpa-onnx)</string>
     <string name="license_sounds">Zipformer sound recognition</string>
     <string name="license_sounds_summary">Apache License 2.0 · k2-fsa icefall · AudioSet class names: CC BY 4.0, Google</string>
     <string name="license_speaker_summary">Apache License 2.0 · Alibaba 3D-Speaker (ONNX export: k2-fsa)</string>

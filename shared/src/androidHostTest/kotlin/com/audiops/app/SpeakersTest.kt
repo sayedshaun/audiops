@@ -107,10 +107,26 @@ class SpeakersTest {
         // 25.5 s at 16 kHz, give or take the resampler's edge.
         assertTrue(abs(detector.received - 25.5 * MEETING_RATE) < 16)
         assertEquals(26, lines.size)
-        assertEquals(MeetingLine(1000, 2000, 0, "part 2"), lines[1])
+        // Each utterance is widened by 0.3 s before and 0.2 s after.
+        assertEquals(MeetingLine(700, 2200, 0, "part 2"), lines[1])
         val plain = SpeechTranscription.plain(SpeechSentences.punctuate(lines.take(2), "en", 12_000), "en")
         assertEquals("Part 1. Part 2.", plain.text)
-        assertEquals(listOf(Cue(0, 1000, "Part 1."), Cue(1000, 2000, "Part 2.")), plain.cues)
+        assertEquals(listOf(Cue(0, 1200, "Part 1."), Cue(1200, 2200, "Part 2.")), plain.cues)
+    }
+
+    @Test fun utterancesAreWidenedWithTheAudioAroundThem() {
+        val padding = UtterancePadding(lead = 3, tail = 2)
+        val audio = FloatArray(40) { it.toFloat() }
+        // An utterance at 10..19 is reported once the audio up to 20 has been read; its tail arrives with the next block.
+        assertEquals(emptyList<Utterance>(), padding.add(audio.copyOfRange(0, 20), listOf(Utterance(10, audio.copyOfRange(10, 20)))))
+        val ready = padding.add(audio.copyOfRange(20, 30), emptyList())
+        assertEquals(listOf(7L), ready.map { it.startSample })
+        assertEquals((7..21).map { it.toFloat() }, ready.single().samples.toList())
+        // At the end, an utterance gets whatever tail there is; one at the very start gets no lead.
+        val last = padding.flush(listOf(Utterance(29, audio.copyOfRange(29, 30))))
+        assertEquals((26..29).map { it.toFloat() }, last.single().samples.toList())
+        val first = UtterancePadding(lead = 3, tail = 2).flush(emptyList())
+        assertEquals(emptyList<Utterance>(), first)
     }
 
     @Test fun eachSpeakersVoiceIsTheMeanOfTheirUtterances() {

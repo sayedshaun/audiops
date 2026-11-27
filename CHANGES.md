@@ -705,3 +705,25 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - Licence: `licenses/ICEFALL-AUDIO-TAGGING-APACHE-2.0.txt` (icefall licence, with the AudioSet CC BY 4.0 attribution), notices, NOTICE and the licence list.
 - Tests: `SoundTagsTest` (classification with real model scores, averaging, windows), ViewModel identification test.
 - Not checked on the emulator (another session is using it).
+
+## 2026-11-27: Kokoro English voices (`feature/kokoro-voices`)
+
+### Added
+- `TtsEngine.KOKORO`: Kokoro v1.0 int8 (hexgrad, Apache 2.0) from `csukuangfj/kokoro-int8-multi-lang-v1_0` at `57adb37f` (model, voices.bin, tokens and the US and UK lexicons, every file SHA-256 pinned, ~155 MB in `kokoro/<revision>`). Ten voices: en-US Heart, Bella, Nicole, Michael, Fenrir, Puck; en-GB Emma, Isabella, George, Fable; speaker ids from the model's `speaker_names` metadata (`kokoroSpeaker`). `SpeechSynthesizer.kokoro` passes the variety's lexicon and the bundled espeak-ng data; with no `lang` set, sherpa-onnx 1.13.8 looks words up in the lexicon and spells missing ones with espeak-ng (checked in `kokoro-multi-lang-lexicon.cc` at v1.13.8).
+- Measured on a laptop CPU (Ryzen 5 4650U, 4 threads, host sherpa-onnx 2.0.3): the int8 model needs about 1.5 s per second of speech, fp32 (325 MB) about 0.6 s. int8 was kept for the download size; ARM phones run int8 kernels well, but this still needs timing on a phone.
+- Settings → Downloaded models (`AiModel.KOKORO`), licence list, `licenses/KOKORO-APACHE-2.0.txt`, notices, NOTICE. `TtsTest` checks the Kokoro voices and their speaker ids.
+
+## 2026-11-27: utterance padding and emulator checks (`feature/kokoro-voices`)
+
+### Fixed
+- `VadDetector` fed sherpa-onnx's VAD 10 s blocks at once and lost most utterances (one of eight came through on the emulator); it now feeds 0.1 s blocks, as a live meeting does.
+- Silero VAD starts an utterance a few hundred ms late. Parakeet coped, but Omnilingual turned the clipped English utterances of the test clip into Arabic-script text (reproduced on the host with the same segments). `UtterancePadding` (jvmShared) widens every utterance by 0.3 s before and 0.2 s after from the surrounding audio, for file transcription and live meetings; `Cues.sequential` keeps subtitles from overlapping. Tests: `SpeakersTest.utterancesAreWidenedWithTheAudioAroundThem`.
+- Settings → Downloaded models: "Zipformer sound recognition"; the voice detection model's purpose now names speaker labels and sentences too.
+
+### Checked on the emulator (debug, then the R8 release build signed with the debug key)
+- Tools tab: "Sounds like speech" with Transcribe for the 4-voice test clip (also tagged "Speech synthesizer", which it is).
+- Transcribe with speakers (Parakeet): all eight utterances, four speakers right; Name speakers rewrote the transcript; a new transcript of the same clip named Ana and Ben by itself; Forget removed Ben (the next transcript said Speaker 2 again).
+- Transcribe with the many-language model: correct text in English, German, Spanish and French, one capitalised sentence per utterance.
+- Live meeting (test file, many-language model): correct text, sentences, Ana and Ben named.
+- Kokoro: Heart (US) and Emma (UK) synthesize; the Heart output transcribes back to the typed text ("Audiops", not in the lexicon, spelled by espeak-ng). 5.4 s of speech took about 34 s on the x86_64 emulator including loading; a phone needs timing.
+- Dark theme: Settings → Remembered voices, Downloaded models, the suggestion card. `make ci` passes.

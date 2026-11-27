@@ -19,6 +19,7 @@ object ModelFiles {
         AiModel.SUPERTONIC to listOf("supertonic-3"),
         AiModel.MEETING to listOf("silero-vad", "speaker-embedding"),
         AiModel.SOUNDS to listOf("audio-tagging"),
+        AiModel.KOKORO to listOf("kokoro"),
     )
 
     /** Bytes used by each downloaded model, in [AiModel] order; models without files are absent. */

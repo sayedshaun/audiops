@@ -1,7 +1,10 @@
 package com.audiops.app
 
-/** Text-to-speech engines. PocketTTS runs through MediaPipe; Piper and Supertonic through sherpa-onnx (Piper with espeak-ng). */
-enum class TtsEngine { POCKET, PIPER, SUPERTONIC }
+/**
+ * Text-to-speech engines. PocketTTS runs through MediaPipe; Piper, Supertonic and Kokoro through
+ * sherpa-onnx (Piper and Kokoro with espeak-ng).
+ */
+enum class TtsEngine { POCKET, PIPER, SUPERTONIC, KOKORO }
 
 /**
  * One downloadable voice. [language] is a BCP 47 tag; [files] maps each file in the Hugging Face
@@ -91,7 +94,45 @@ private val supertonicVoices: List<TtsVoice> = SUPERTONIC_LANGUAGES.flatMap { (c
     }
 }
 
+private const val KOKORO_REPO = "csukuangfj/kokoro-int8-multi-lang-v1_0"
+private const val KOKORO_REVISION = "57adb37fc0e8d4bd430cfc1b8f8c2294945b9af2"
+
+/**
+ * Kokoro v1.0 int8 files for English (sherpa-onnx layout, one set for every Kokoro voice): file to
+ * SHA-256. Each English variety has its own pronunciation lexicon; words missing from it go to espeak-ng.
+ */
+private val KOKORO_FILES = mapOf(
+    "model.int8.onnx" to "75635ea3b85a32d00094dcdd61a258aba87c160f7c264c304a7b3ae9d734195e",
+    "voices.bin" to "1c5a5b983d3d50d8586d437a51f3faa2da7919ce76a013c081e65671a3447c29",
+    "tokens.txt" to "6ebb6bb288f20f3ae8d004d3c2ca27697da27c037d75e81a60e2a6a663f95425",
+    "lexicon-us-en.txt" to "7daaab53a181be9885b853a8582bf1838186317e5dadacbcef9c426d6fa0da14",
+    "lexicon-gb-en.txt" to "c4cbb37316f62210dff52718a7afcaae24f50c032cc75ab47ae67b831d1049e7",
+)
+
+/** Kokoro v1.0's voice table (speaker id = position), from the model's `speaker_names`; only the English voices offered are listed. */
+private val KOKORO_SPEAKERS = mapOf(
+    "af_bella" to 2, "af_heart" to 3, "af_nicole" to 6, "am_fenrir" to 14, "am_michael" to 16, "am_puck" to 18,
+    "bf_emma" to 21, "bf_isabella" to 22, "bm_fable" to 25, "bm_george" to 26,
+)
+
+/** Speaker id of a Kokoro voice (`kokoro-<speaker>`). */
+fun kokoroSpeaker(voice: TtsVoice): Int = checkNotNull(KOKORO_SPEAKERS[voice.id.removePrefix("kokoro-")]) { voice.id }
+
+private fun kokoro(speaker: String, language: String, name: String): TtsVoice = TtsVoice(
+    "kokoro-$speaker", language, name, TtsEngine.KOKORO, "Apache 2.0", 155, KOKORO_REPO, KOKORO_REVISION, KOKORO_FILES,
+)
+
 private val otherVoices: List<TtsVoice> = listOf(
+    kokoro("af_heart", "en-US", "Heart"),
+    kokoro("af_bella", "en-US", "Bella"),
+    kokoro("af_nicole", "en-US", "Nicole"),
+    kokoro("am_michael", "en-US", "Michael"),
+    kokoro("am_fenrir", "en-US", "Fenrir"),
+    kokoro("am_puck", "en-US", "Puck"),
+    kokoro("bf_emma", "en-GB", "Emma"),
+    kokoro("bf_isabella", "en-GB", "Isabella"),
+    kokoro("bm_george", "en-GB", "George"),
+    kokoro("bm_fable", "en-GB", "Fable"),
     pocket("alba", "en-US", "Alba", "pocket_tts_en_int8.litertlm"),
     pocket("marius", "en-US", "Marius", "pocket_tts_en_int8.litertlm"),
     pocket("javert", "en-US", "Javert", "pocket_tts_en_int8.litertlm"),
@@ -270,8 +311,8 @@ private val otherVoices: List<TtsVoice> = listOf(
 
 /**
  * Every voice offered, grouped by language in display order. In each language Supertonic 3
- * (OpenRAIL-M, 31 languages) comes first and is the default; PocketTTS (Kyutai, CC BY 4.0) and Piper
- * voices (CC0, public domain or CC BY 4.0) follow where they exist. Voices with unclear licences are left out.
+ * (OpenRAIL-M, 31 languages) comes first and is the default; Kokoro (Apache 2.0, English), PocketTTS
+ * (Kyutai, CC BY 4.0) and Piper voices (CC0, public domain or CC BY 4.0) follow where they exist. Voices with unclear licences are left out.
  */
 val ttsVoices: List<TtsVoice> = run {
     val languages = (otherVoices.map { it.language } + SUPERTONIC_LANGUAGES.map { it.second }).distinct()

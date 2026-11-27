@@ -30,14 +30,30 @@ internal fun embedUtterance(extractor: SpeakerEmbeddingExtractor, samples: Float
 
 /** Silero VAD as a [SpeechDetector]. */
 internal class VadDetector(private val vad: Vad) : SpeechDetector {
+    /**
+     * Feeds the VAD in small blocks, as the microphone does in a live meeting, collecting finished
+     * utterances after each: given a long block at once, it keeps only part of the speech in it.
+     */
     override fun accept(samples: FloatArray): List<Utterance> {
-        if (samples.isNotEmpty()) vad.acceptWaveform(samples)
-        return drain()
+        val found = mutableListOf<Utterance>()
+        var from = 0
+        while (from < samples.size) {
+            val to = minOf(from + BLOCK, samples.size)
+            vad.acceptWaveform(samples.copyOfRange(from, to))
+            found += drain()
+            from = to
+        }
+        return found
     }
 
     override fun flush(): List<Utterance> {
         vad.flush()
         return drain()
+    }
+
+    private companion object {
+        /** 0.1 s, the block size of a live meeting's capture. */
+        const val BLOCK = MEETING_RATE / 10
     }
 
     private fun drain(): List<Utterance> {

@@ -19,8 +19,8 @@ interface SpeechDetector {
 
 /**
  * Transcribes a recording utterance by utterance, the way a live meeting does: a voice activity
- * detector cuts it at pauses, and [MeetingTranscriber] transcribes each utterance and, when it has
- * an embedder, tells the speakers apart. Cutting at pauses means no word is split between two
+ * detector cuts it at pauses ([UtterancePadding] widens each cut a little), and [MeetingTranscriber]
+ * transcribes each utterance and, when it has an embedder, tells the speakers apart. Cutting at pauses means no word is split between two
  * sections, and every utterance can become a sentence ([SpeechSentences]).
  */
 object SpeechTranscription {
@@ -35,13 +35,15 @@ object SpeechTranscription {
         val down = ProcessorChain(
             listOf(FilterChain.antiAlias(PIPELINE_RATE, MEETING_RATE), Resampler(PIPELINE_RATE.toDouble() / MEETING_RATE)),
         )
+        val padding = UtterancePadding()
+        fun feed(samples: FloatArray) = padding.add(samples, detector.accept(samples)).forEach { add(transcriber, it) }
         var index = 0
         AudioChunks.forEachChunk(audio, SECTION_SECONDS) { chunk ->
             listener.onSection(++index, sections)
-            detector.accept(down.process(chunk)).forEach { add(transcriber, it) }
+            feed(down.process(chunk))
         }
-        detector.accept(down.flush()).forEach { add(transcriber, it) }
-        detector.flush().forEach { add(transcriber, it) }
+        feed(down.flush())
+        padding.flush(detector.flush()).forEach { add(transcriber, it) }
         return transcriber.finish()
     }
 
@@ -53,6 +55,6 @@ object SpeechTranscription {
     /** Plain text and subtitles, one subtitle per utterance (split when long), without speakers. */
     fun plain(lines: List<MeetingLine>, language: String): Transcript = Transcript(
         SpeechSentences.join(lines, language),
-        lines.flatMap { Cues.forSection(it.startMs, it.endMs - it.startMs, it.text, emptyList(), emptyList()) },
+        Cues.sequential(lines.flatMap { Cues.forSection(it.startMs, it.endMs - it.startMs, it.text, emptyList(), emptyList()) }),
     )
 }

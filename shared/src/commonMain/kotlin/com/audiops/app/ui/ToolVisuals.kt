@@ -84,5 +84,5 @@ val AiModel.icon: ImageVector
         AiModel.SCNET -> Tool.SEPARATE.icon
         AiModel.MEETING -> Tool.MEETING.icon
         AiModel.SOUNDS -> Tool.ANALYZE.icon
-        AiModel.POCKET_TTS, AiModel.PIPER, AiModel.SUPERTONIC -> Tool.SPEAK.icon
+        AiModel.POCKET_TTS, AiModel.PIPER, AiModel.SUPERTONIC, AiModel.KOKORO -> Tool.SPEAK.icon
     }

@@ -34,4 +34,5 @@ Downloaded on first use (Android):
 - Bangla Zipformer by SayedShaun (CC BY-SA 4.0)
 - Silero VAD v5 by Silero Team (MIT), for Live meeting
 - CAM++ speaker embeddings by Alibaba 3D-Speaker (Apache 2.0); ONNX export by k2-fsa sherpa-onnx, for Live meeting and speaker labels
+- Kokoro v1.0 English voices by hexgrad (Apache 2.0); int8 export, voice table and lexicons by k2-fsa sherpa-onnx
 - Zipformer audio tagging (small) by k2-fsa icefall (Apache 2.0), to tell what a recording sounds like; sound class names from the AudioSet ontology by Google (CC BY 4.0)

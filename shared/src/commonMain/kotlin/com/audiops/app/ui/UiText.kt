@@ -142,6 +142,8 @@ import com.audiops.shared.resources.model_dpdfnet
 import com.audiops.shared.resources.model_dpdfnet_purpose
 import com.audiops.shared.resources.model_enhance
 import com.audiops.shared.resources.model_enhance_purpose
+import com.audiops.shared.resources.model_kokoro
+import com.audiops.shared.resources.model_kokoro_purpose
 import com.audiops.shared.resources.model_meeting
 import com.audiops.shared.resources.model_meeting_purpose
 import com.audiops.shared.resources.model_omnilingual
@@ -355,6 +357,7 @@ val AiModel.title: StringResource
         AiModel.SCNET -> Res.string.model_scnet
         AiModel.MEETING -> Res.string.model_meeting
         AiModel.SOUNDS -> Res.string.model_sounds
+        AiModel.KOKORO -> Res.string.model_kokoro
     }
 
 /** What the model is used for. */
@@ -372,6 +375,7 @@ val AiModel.purpose: StringResource
         AiModel.SCNET -> Res.string.model_scnet_purpose
         AiModel.MEETING -> Res.string.model_meeting_purpose
         AiModel.SOUNDS -> Res.string.model_sounds_purpose
+        AiModel.KOKORO -> Res.string.model_kokoro_purpose
     }
 
 /** What a transcription option listens for. Model names appear only under Settings → Downloaded models. */

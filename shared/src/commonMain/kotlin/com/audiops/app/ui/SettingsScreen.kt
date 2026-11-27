@@ -111,6 +111,8 @@ import com.audiops.shared.resources.license_dsp
 import com.audiops.shared.resources.license_dsp_summary
 import com.audiops.shared.resources.license_espeak
 import com.audiops.shared.resources.license_espeak_summary
+import com.audiops.shared.resources.license_kokoro
+import com.audiops.shared.resources.license_kokoro_summary
 import com.audiops.shared.resources.license_litert
 import com.audiops.shared.resources.license_litert_summary
 import com.audiops.shared.resources.license_mediapipe
@@ -233,6 +235,12 @@ private val licenses = listOf(
         Res.string.license_speaker,
         Res.string.license_speaker_summary,
         "https://github.com/modelscope/3D-Speaker",
+        androidOnly = true,
+    ),
+    LicenseEntry(
+        Res.string.license_kokoro,
+        Res.string.license_kokoro_summary,
+        "https://huggingface.co/hexgrad/Kokoro-82M",
         androidOnly = true,
     ),
     LicenseEntry(

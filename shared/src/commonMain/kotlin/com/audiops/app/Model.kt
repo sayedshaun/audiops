@@ -158,7 +158,7 @@ fun transcriptionModelsFor(language: SpeechLanguage): List<TranscriptionModel> {
 }
 
 /** Downloadable AI models, listed and deleted one by one in Settings → Downloaded models. */
-enum class AiModel { ENHANCE, NOISE, SCNET, PARAKEET, OMNILINGUAL, WHISPER, BANGLA, POCKET_TTS, PIPER, SUPERTONIC, MEETING, SOUNDS }
+enum class AiModel { ENHANCE, NOISE, SCNET, PARAKEET, OMNILINGUAL, WHISPER, BANGLA, POCKET_TTS, PIPER, SUPERTONIC, MEETING, SOUNDS, KOKORO }
 
 /**
  * One-tap chains of the existing tools for common kinds of recording. Each preset is a fixed list
