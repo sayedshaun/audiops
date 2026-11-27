@@ -222,6 +222,10 @@ import com.audiops.shared.resources.tool_trim_description
 import com.audiops.shared.resources.tool_trim_title
 import com.audiops.shared.resources.tool_volume_description
 import com.audiops.shared.resources.tool_volume_title
+import com.audiops.shared.resources.transcription_choice_bangla
+import com.audiops.shared.resources.transcription_choice_omnilingual
+import com.audiops.shared.resources.transcription_choice_parakeet
+import com.audiops.shared.resources.transcription_choice_whisper
 import com.audiops.shared.resources.transcription_model_auto
 import com.audiops.shared.resources.transcription_model_auto_summary
 import com.audiops.shared.resources.transcription_model_bangla_summary
@@ -368,13 +372,14 @@ val AiModel.purpose: StringResource
         AiModel.MEETING -> Res.string.model_meeting_purpose
     }
 
+/** What a transcription option listens for. Model names appear only under Settings → Downloaded models. */
 val TranscriptionModel.label: StringResource
     get() = when (this) {
         TranscriptionModel.AUTO -> Res.string.transcription_model_auto
-        TranscriptionModel.PARAKEET -> Res.string.model_parakeet
-        TranscriptionModel.OMNILINGUAL -> Res.string.model_omnilingual
-        TranscriptionModel.WHISPER -> Res.string.model_whisper
-        TranscriptionModel.BANGLA -> Res.string.model_bangla
+        TranscriptionModel.PARAKEET -> Res.string.transcription_choice_parakeet
+        TranscriptionModel.OMNILINGUAL -> Res.string.transcription_choice_omnilingual
+        TranscriptionModel.WHISPER -> Res.string.transcription_choice_whisper
+        TranscriptionModel.BANGLA -> Res.string.transcription_choice_bangla
     }
 
 val TranscriptionModel.summary: StringResource
@@ -627,11 +632,12 @@ fun JobSpec.summary(): String? = when (this) {
 
     is JobSpec.Enhance -> stringResource(mode.title)
 
-    // The model that ran, plus the language only for Whisper (the one model that is given a language).
-    is JobSpec.Transcribe -> listOfNotNull(
-        stringResource(model.label),
-        if (model.usesLanguage && language != SpeechLanguage.AUTO) stringResource(language.label) else null,
-    ).joinToString(" · ")
+    // The languages the transcription listened for; with a chosen language, that language.
+    is JobSpec.Transcribe -> if (model.usesLanguage && language != SpeechLanguage.AUTO) {
+        stringResource(language.label)
+    } else {
+        stringResource(model.label)
+    }
 
     is JobSpec.Speak -> listOfNotNull(ttsVoice(voice)?.name, ttsVoice(voice)?.let { stringResource(ttsLanguageLabel(it.language)) })
         .joinToString(" · ")

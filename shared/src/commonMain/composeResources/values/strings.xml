@@ -61,8 +61,8 @@
     <string name="tool_meeting_description">Transcribe a meeting as it happens, with speakers.</string>
     <string name="meeting_intro_title">Ready when you are</string>
     <string name="meeting_intro_body">Put the phone in the middle of the table. Audiops writes down what is said and who said it, as it happens. Nothing leaves this device.</string>
-    <string name="meeting_model">Transcribed with %1$s</string>
-    <string name="meeting_model_hint">Change the model in Settings → Transcription.</string>
+    <string name="meeting_model">Listens for %1$s</string>
+    <string name="meeting_model_hint">Change the languages in Settings → Transcription.</string>
     <string name="meeting_screen_off">The screen can be turned off. Listening continues until you stop.</string>
     <string name="action_meeting_start">Start meeting</string>
     <string name="action_meeting_new">New meeting</string>
@@ -198,8 +198,8 @@
     <string name="enhance_mode_fast_description">Removes noise and hiss with a small AI model. Takes seconds.</string>
     <string name="enhance_mode_studio">Studio</string>
     <string name="enhance_mode_studio_description">Restores the voice to a cleaner, fuller sound with a large AI model. Takes several minutes, even for short recordings.</string>
-    <string name="transcribe_whisper_hint">Whisper Tiny is small and fast but less accurate. Pick the language it should listen for.</string>
-    <string name="transcribe_model_used">Model: %1$s. Change it in Settings → Transcription.</string>
+    <string name="transcribe_whisper_hint">Pick the language it should listen for. This option is small and fast but less accurate.</string>
+    <string name="transcribe_model_used">Listens for %1$s. Change it in Settings → Transcription.</string>
     <string name="step_model">Model</string>
     <string name="language_field">Language</string>
     <string name="language_auto">Auto</string>
@@ -267,7 +267,7 @@
     <string name="level_light">Light</string>
     <string name="level_medium">Medium</string>
     <string name="level_strong">Strong</string>
-    <string name="denoise_hint">This uses DPDFNet, an AI speech enhancer that runs on this device (the first run downloads about 11 MB). Light keeps more of the original sound; Strong removes the most noise.</string>
+    <string name="denoise_hint">This uses an AI speech enhancer that runs on this device (the first run downloads about 11 MB). Light keeps more of the original sound; Strong removes the most noise.</string>
     <string name="option_silence_threshold">Silence below %1$s dB</string>
     <string name="option_min_pause">Shorten pauses longer than %1$s s</string>
     <string name="option_trim_range">%1$s – %2$s (%3$s)</string>
@@ -383,8 +383,12 @@
     <string name="settings_pure_black">Pure black dark theme</string>
     <string name="settings_pure_black_summary">Black backgrounds in the dark theme. Saves power on OLED screens.</string>
     <string name="settings_section_transcription">Transcription</string>
-    <string name="settings_default_language">Whisper language</string>
-    <string name="settings_transcription_model">Transcription model</string>
+    <string name="settings_default_language">Language you choose</string>
+    <string name="settings_transcription_model">Languages</string>
+    <string name="transcription_choice_parakeet">English and European languages</string>
+    <string name="transcription_choice_omnilingual">Many other languages</string>
+    <string name="transcription_choice_whisper">A language you choose</string>
+    <string name="transcription_choice_bangla">Bangla</string>
     <string name="transcription_model_auto">Automatic</string>
     <string name="transcription_model_auto_summary">Recommended. Detects the language and picks the best model for it.</string>
     <string name="transcription_model_parakeet_summary">English and 24 other European languages, with punctuation. Most accurate for them. About 640 MB.</string>

@@ -13,6 +13,11 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-27
+
+### Changed
+- **Transcription is named by language.** The transcription choices are now "English and European languages", "Many other languages", "A language you choose" and "Bangla", and Transcribe, Live meeting and Activity use these names. Model names now appear only under Settings → Downloaded models (and in the open-source licences).
+
 ## [0.4.0] - 2026-11-27
 
 ### Added
