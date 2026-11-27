@@ -79,6 +79,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.audiops.app.AudioInput
@@ -145,6 +146,7 @@ import com.audiops.shared.resources.report_loudness
 import com.audiops.shared.resources.report_peak
 import com.audiops.shared.resources.report_rms
 import com.audiops.shared.resources.report_silence
+import com.audiops.shared.resources.report_sounds
 import com.audiops.shared.resources.report_title
 import com.audiops.shared.resources.result_ready_body
 import com.audiops.shared.resources.result_ready_title
@@ -1165,7 +1167,7 @@ private fun ReportCard(report: AudioReport) {
         Res.string.report_clipping to report.clippedSamples.toString(),
         Res.string.report_silence to "${(report.silenceRatio * 100).roundToInt()}%",
         Res.string.report_dc to decimal(report.dcOffset * 100, 2) + "%",
-    )
+    ) + listOfNotNull(report.sounds.takeIf { it.isNotEmpty() }?.let { Res.string.report_sounds to it.joinToString(" · ") })
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLargeIncreased,
@@ -1176,7 +1178,12 @@ private fun ReportCard(report: AudioReport) {
             rows.forEach { (label, value) ->
                 Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) { }) {
                     Text(stringResource(label), modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(value, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        value,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.padding(start = 16.dp).weight(1f, fill = false),
+                    )
                 }
             }
             Hint(stringResource(Res.string.report_hint))

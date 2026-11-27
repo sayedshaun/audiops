@@ -15,6 +15,7 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ### Added
 - **Speaker labels for files.** Transcribe has a "Tell speakers apart" switch: the transcript starts each turn with Speaker 1, Speaker 2… and the time, like a live meeting.
+- **Suggestions from the sound.** After you choose or record a file, the Tools tab says what it sounds like (speech, speech with background noise, music) with its main sounds, and offers the tool worth trying: Transcribe, Enhance speech or Separate music. Analyze lists the main sounds too. This uses a small sound-recognition model (about 27 MB, downloaded once in the background).
 - **Name the speakers.** On a transcript or meeting with speakers, tap **Name speakers** to give each voice a name; the transcript and subtitles are rewritten with the names. Audiops can remember the named voices (on the phone only) and names those people by itself in later transcripts and meetings. Remembered voices are listed in Settings, where each can be forgotten.
 
 ### Changed

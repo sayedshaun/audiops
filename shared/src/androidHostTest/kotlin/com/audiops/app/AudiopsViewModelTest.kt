@@ -61,6 +61,12 @@ private class FakeEngine(
 
     @Volatile var speakersFile: String? = null
 
+    @Volatile var soundProfile: SoundProfile? = null
+
+    override val supportsIdentify: Boolean get() = soundProfile != null
+
+    override fun identify(source: String, listener: ProcessingListener): SoundProfile = soundProfile!!
+
     override fun speakersFile(transcriptPath: String): String? = speakersFile
 
     val namedSpeakers: MutableList<Pair<List<String?>, Boolean>> = Collections.synchronizedList(mutableListOf())
@@ -346,6 +352,15 @@ class AudiopsViewModelTest {
         vm.forgetVoice("Ana")
         while (vm.state.value.rememberedVoices.isNotEmpty() && System.currentTimeMillis() < deadline) Thread.sleep(20)
         assertEquals(emptyList<String>(), vm.state.value.rememberedVoices)
+    }
+
+    @Test fun aChosenRecordingIsIdentifiedForASuggestion() {
+        val profile = SoundProfile(SoundKind.NOISY_SPEECH, listOf("Speech", "Wind"))
+        val vm = viewModel(FakeEngine().apply { soundProfile = profile })
+        vm.chooseInput("content://a", "a.wav")
+        val deadline = System.currentTimeMillis() + 5_000
+        while (vm.state.value.sounds == null && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        assertEquals(profile, vm.state.value.sounds)
     }
 
     @Test fun audioIsSavedInTheChosenFormat() {

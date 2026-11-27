@@ -18,6 +18,12 @@ interface AudioEngine {
     /** Whether this platform can run text to speech. */
     val supportsSpeak: Boolean
 
+    /** Whether this platform can tell what a recording sounds like ([identify]). */
+    val supportsIdentify: Boolean get() = false
+
+    /** The sounds heard in [source] (downloads the small sound model once). */
+    fun identify(source: String, listener: ProcessingListener): SoundProfile = throw UnsupportedOnPlatformException()
+
     /** Whether this platform can separate music into stems. */
     val supportsSeparate: Boolean get() = false
 

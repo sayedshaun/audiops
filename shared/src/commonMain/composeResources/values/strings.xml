@@ -132,6 +132,8 @@
     <string name="model_scnet_purpose">Separate music into vocals, drums, bass and other</string>
     <string name="model_meeting">Voice detection and speakers</string>
     <string name="model_meeting_purpose">Live meeting: finds speech and tells voices apart</string>
+    <string name="model_sounds">Sound recognition (Zipformer, AudioSet)</string>
+    <string name="model_sounds_purpose">Tells what a recording sounds like and suggests a tool</string>
     <string name="action_save_format">Save %1$s</string>
     <string name="message_input_ready">“%1$s” is ready. Choose a tool.</string>
     <string name="error_import">Could not open the shared audio: %1$s</string>
@@ -328,6 +330,11 @@
     <string name="report_clipping">Clipped samples</string>
     <string name="report_silence">Silence</string>
     <string name="report_dc">DC offset</string>
+    <string name="report_sounds">Main sounds</string>
+    <string name="sounds_speech">Sounds like speech</string>
+    <string name="sounds_noisy_speech">Speech with background noise</string>
+    <string name="sounds_music">Sounds like music</string>
+    <string name="sounds_other">What it sounds like</string>
     <string name="report_hint">Podcasts usually target −16 LUFS and streaming −14 LUFS. Clipped samples above zero mean the recording distorted.</string>
     <string name="unit_lufs">%1$s LUFS</string>
     <string name="unit_dbfs">%1$s dBFS</string>
@@ -472,6 +479,8 @@
     <string name="license_silero">Silero VAD</string>
     <string name="license_silero_summary">MIT License · Silero Team</string>
     <string name="license_speaker">CAM++ speaker embeddings</string>
+    <string name="license_sounds">Zipformer sound recognition</string>
+    <string name="license_sounds_summary">Apache License 2.0 · k2-fsa icefall · AudioSet class names: CC BY 4.0, Google</string>
     <string name="license_speaker_summary">Apache License 2.0 · Alibaba 3D-Speaker (ONNX export: k2-fsa)</string>
     <string name="license_pocket">PocketTTS voices</string>
     <string name="license_pocket_summary">Creative Commons Attribution 4.0 · Kyutai (LiteRT bundles: litert-community)</string>

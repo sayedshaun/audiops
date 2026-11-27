@@ -18,6 +18,7 @@ object ModelFiles {
         AiModel.PIPER to listOf("piper-voices", "espeak-ng-data"),
         AiModel.SUPERTONIC to listOf("supertonic-3"),
         AiModel.MEETING to listOf("silero-vad", "speaker-embedding"),
+        AiModel.SOUNDS to listOf("audio-tagging"),
     )
 
     /** Bytes used by each downloaded model, in [AiModel] order; models without files are absent. */

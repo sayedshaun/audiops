@@ -158,7 +158,7 @@ fun transcriptionModelsFor(language: SpeechLanguage): List<TranscriptionModel> {
 }
 
 /** Downloadable AI models, listed and deleted one by one in Settings → Downloaded models. */
-enum class AiModel { ENHANCE, NOISE, SCNET, PARAKEET, OMNILINGUAL, WHISPER, BANGLA, POCKET_TTS, PIPER, SUPERTONIC, MEETING }
+enum class AiModel { ENHANCE, NOISE, SCNET, PARAKEET, OMNILINGUAL, WHISPER, BANGLA, POCKET_TTS, PIPER, SUPERTONIC, MEETING, SOUNDS }
 
 /**
  * One-tap chains of the existing tools for common kinds of recording. Each preset is a fixed list
@@ -272,6 +272,25 @@ sealed interface AudioOperation {
     data class Resample(val sampleRate: Int) : AudioOperation
 }
 
+/** What a recording mostly is, judged from the sounds in it. */
+enum class SoundKind { SPEECH, NOISY_SPEECH, MUSIC, OTHER }
+
+/**
+ * The sounds heard in a recording: what it mostly is ([kind]) and the main sounds ([tags], AudioSet
+ * class names in English, strongest first).
+ */
+@Serializable
+data class SoundProfile(val kind: SoundKind, val tags: List<String>)
+
+/** The tool most worth trying for this kind of recording, or null when there is no clear one. */
+val SoundKind.suggestedTool: Tool?
+    get() = when (this) {
+        SoundKind.SPEECH -> Tool.TRANSCRIBE
+        SoundKind.NOISY_SPEECH -> Tool.ENHANCE
+        SoundKind.MUSIC -> Tool.SEPARATE
+        SoundKind.OTHER -> null
+    }
+
 /** What a job does. */
 @Serializable
 sealed interface JobSpec {
@@ -350,6 +369,8 @@ data class AudioReport(
     val dcOffset: Float,
     /** Share of 10 ms frames below -50 dBFS, 0..1. */
     val silenceRatio: Float,
+    /** The main sounds heard (AudioSet class names), strongest first; empty where sounds are not identified. */
+    val sounds: List<String> = emptyList(),
 )
 
 /** Where a running job is. Not persisted. [subFraction] is progress within item [index]. */

@@ -40,6 +40,8 @@ data class AudiopsState(
     val language: SpeechLanguage = SpeechLanguage.ENGLISH,
     /** Active jobs first (in queue order), then history, newest first. */
     val jobs: List<Job> = emptyList(),
+    /** What the current recording sounds like, once known (worked out in the background). */
+    val sounds: SoundProfile? = null,
     /** Names of the voices remembered on this device, A to Z. */
     val rememberedVoices: List<String> = emptyList(),
 ) {
@@ -219,11 +221,12 @@ class AudiopsViewModel(
     private fun loadWaveform() {
         val input = _state.value.input ?: return
         waveformJob?.cancel()
-        _state.update { it.copy(waveform = null, waveformLoading = true, inputProblem = null) }
+        _state.update { it.copy(waveform = null, waveformLoading = true, inputProblem = null, sounds = null) }
         waveformJob = viewModelScope.launch {
             try {
                 val waveform = runOnWorker { engine.waveform(input.id, WAVEFORM_BARS) }
                 _state.update { if (it.input?.id == input.id) it.copy(waveform = waveform, waveformLoading = false) else it }
+                identifySounds(input)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
@@ -232,6 +235,23 @@ class AudiopsViewModel(
                 _state.update { if (it.input?.id == input.id) it.copy(inputProblem = problem, waveformLoading = false) else it }
             }
         }
+    }
+
+    /**
+     * Works out what [input] sounds like, to suggest a tool. Quietly gives up (no suggestion) when the
+     * platform cannot, the sound model cannot be downloaded, or the recording changes meanwhile.
+     */
+    private suspend fun identifySounds(input: AudioInput) {
+        if (!engine.supportsIdentify) return
+        val profile = try {
+            runOnWorker { engine.identify(input.id, ProcessingListener.None) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            if (!e.isRecoverable()) throw e
+            return
+        }
+        _state.update { if (it.input?.id == input.id) it.copy(sounds = profile) else it }
     }
 
     // Jobs

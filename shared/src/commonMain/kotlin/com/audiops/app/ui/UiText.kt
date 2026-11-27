@@ -154,6 +154,8 @@ import com.audiops.shared.resources.model_pocket_tts
 import com.audiops.shared.resources.model_pocket_tts_purpose
 import com.audiops.shared.resources.model_scnet
 import com.audiops.shared.resources.model_scnet_purpose
+import com.audiops.shared.resources.model_sounds
+import com.audiops.shared.resources.model_sounds_purpose
 import com.audiops.shared.resources.model_supertonic
 import com.audiops.shared.resources.model_supertonic_purpose
 import com.audiops.shared.resources.model_whisper
@@ -352,6 +354,7 @@ val AiModel.title: StringResource
         AiModel.SUPERTONIC -> Res.string.model_supertonic
         AiModel.SCNET -> Res.string.model_scnet
         AiModel.MEETING -> Res.string.model_meeting
+        AiModel.SOUNDS -> Res.string.model_sounds
     }
 
 /** What the model is used for. */
@@ -368,6 +371,7 @@ val AiModel.purpose: StringResource
         AiModel.SUPERTONIC -> Res.string.model_supertonic_purpose
         AiModel.SCNET -> Res.string.model_scnet_purpose
         AiModel.MEETING -> Res.string.model_meeting_purpose
+        AiModel.SOUNDS -> Res.string.model_sounds_purpose
     }
 
 /** What a transcription option listens for. Model names appear only under Settings → Downloaded models. */

@@ -133,6 +133,8 @@ import com.audiops.shared.resources.license_sherpa
 import com.audiops.shared.resources.license_sherpa_summary
 import com.audiops.shared.resources.license_silero
 import com.audiops.shared.resources.license_silero_summary
+import com.audiops.shared.resources.license_sounds
+import com.audiops.shared.resources.license_sounds_summary
 import com.audiops.shared.resources.license_speaker
 import com.audiops.shared.resources.license_speaker_summary
 import com.audiops.shared.resources.license_supertonic
@@ -231,6 +233,12 @@ private val licenses = listOf(
         Res.string.license_speaker,
         Res.string.license_speaker_summary,
         "https://github.com/modelscope/3D-Speaker",
+        androidOnly = true,
+    ),
+    LicenseEntry(
+        Res.string.license_sounds,
+        Res.string.license_sounds_summary,
+        "https://github.com/k2-fsa/icefall/pull/1421",
         androidOnly = true,
     ),
     LicenseEntry(

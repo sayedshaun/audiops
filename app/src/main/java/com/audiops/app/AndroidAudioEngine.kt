@@ -24,6 +24,19 @@ class AndroidAudioEngine(context: Context) :
     override val supportsTranscribe: Boolean = true
     override val supportsSpeak: Boolean = true
     override val supportsSeparate: Boolean = true
+    override val supportsIdentify: Boolean = true
+
+    override fun identify(source: String, listener: ProcessingListener): SoundProfile =
+        withDecoded(source) { pcm -> SoundTagger.identify(context, pcm, listener) }
+
+    /** Adds the main sounds to the measurements, when the sound model can be had (it is small; offline, they are left out). */
+    override fun analyze(source: String, listener: ProcessingListener): AudioReport {
+        val report = super.analyze(source, listener)
+        val sounds = runCatching { identify(source, ProcessingListener.None).tags }
+            .onFailure { if (it is java.util.concurrent.CancellationException || it is InterruptedException) throw it }
+            .getOrDefault(emptyList())
+        return report.copy(sounds = sounds)
+    }
 
     override fun decode(source: String): File = AudioDecoder.decode(context, source.toUri(), workDir)
 
