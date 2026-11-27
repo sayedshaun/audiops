@@ -13,6 +13,9 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+### Fixed
+- **Title bar colour when scrolling.** On Tools, Activity and Settings the status bar area now takes the same colour as the title bar when you scroll.
+
 ### Changed
 - **Language first.** Transcribe and Live meeting now open with the language spoken, then the model for it: only models that handle that language are shown, the recommended one first and marked. Text to speech asks for the language, then the voice, then the text. These choices moved out of Settings.
 

@@ -680,3 +680,8 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - New `Selector.kt`: `SelectorCard` (shaped icon, small label over an emphasised value, optional supporting line, tonal unfold chevron; read-only without `onClick`) and `SelectionSheet` (modal bottom sheet with a shaped-icon header, a pill search field for lists over 8, pill rows with the choice in `secondaryContainer` and a check, opens at the current choice; "Nothing matches." when filtered empty).
 - `LanguageField` uses them (searchable list of spoken languages); `LanguageDialog` removed. Text to speech: Language and Voice are `SelectorCard`s (voice card shows licence and size), speed in its own card; the private `PickerField`/`ChoiceDialog` removed. `speak_voice_summary` no longer repeats the voice name.
 - Checked on the emulator (light): language card, sheet with search ("eng" → English), selection, Text to speech cards.
+
+## 2026-11-27: title bar reaches behind the status bar on the tabs (`feature/language-model-sections`)
+
+### Fixed
+- On Tools, Activity and Settings the scrolled (tinted) title bar stopped below the status bar, which kept the page colour. The navigation `Scaffold` in `Shell` applied the status bar inset as content padding; it now uses `contentWindowInsets = WindowInsets(0, 0, 0, 0)`, so each tab's `LargeFlexibleTopAppBar` draws behind the status bar like the tool screens do. Checked on the emulator: status bar strip and collapsed bar are the same colour (RGB 237, 237, 246).

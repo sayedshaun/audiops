@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -286,6 +287,9 @@ private fun Shell(tab: Tab, activeJobs: Int, snackbar: SnackbarHostState, onTab:
         val wide = maxWidth >= 600.dp
         Scaffold(
             snackbarHost = { SnackbarHost(snackbar) },
+            // The status bar inset is left to each tab's title bar, which then draws behind the
+            // status bar in its own (scroll-dependent) colour; the navigation bars handle the rest.
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             bottomBar = {
                 if (!wide) {
                     ShortNavigationBar {
