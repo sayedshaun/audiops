@@ -673,3 +673,10 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - Removed Settings → Transcription (model and language rows), `TranscriptionModelDialog` and their strings; `ParakeetTranscriber.languages` moved to `punctuatedModelLanguages`.
 - Tests: `ModelTest.eachLanguageOffersItsModelsWithTheRecommendedOneFirst`, meeting round trip with language, ViewModel meeting test records the language.
 - Checked on the emulator (light): Transcribe (English → three models; Bangla → Bangla model recommended, punctuated model hidden; back to English → punctuated model chosen again), Live meeting sections shared with Transcribe, Text to speech order. Dark mode not seen (the emulator stayed light).
+
+## 2026-11-27: modern language and voice selectors (`feature/language-model-sections`)
+
+### Changed
+- New `Selector.kt`: `SelectorCard` (shaped icon, small label over an emphasised value, optional supporting line, tonal unfold chevron; read-only without `onClick`) and `SelectionSheet` (modal bottom sheet with a shaped-icon header, a pill search field for lists over 8, pill rows with the choice in `secondaryContainer` and a check, opens at the current choice; "Nothing matches." when filtered empty).
+- `LanguageField` uses them (searchable list of spoken languages); `LanguageDialog` removed. Text to speech: Language and Voice are `SelectorCard`s (voice card shows licence and size), speed in its own card; the private `PickerField`/`ChoiceDialog` removed. `speak_voice_summary` no longer repeats the voice name.
+- Checked on the emulator (light): language card, sheet with search ("eng" → English), selection, Text to speech cards.

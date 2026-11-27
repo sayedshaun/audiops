@@ -137,7 +137,7 @@
     <string name="speak_language">Language</string>
     <string name="speak_voice">Voice</string>
     <string name="speak_speed">Speed · %1$s×</string>
-    <string name="speak_voice_summary">%1$s · %2$s · about %3$d MB</string>
+    <string name="speak_voice_summary">%1$s · about %2$d MB</string>
     <string name="speak_non_commercial">Non-commercial licence</string>
     <string name="tts_language_en_us">English (US)</string>
     <string name="tts_language_fr_fr">French</string>
@@ -392,6 +392,9 @@
     <string name="model_choice_omnilingual_summary">Recognises over 1,600 languages, without punctuation. About 370 MB.</string>
     <string name="model_choice_whisper">Small and fast</string>
     <string name="model_choice_whisper_summary">About 100 languages. Smallest download, least accurate. About 100 MB.</string>
+    <string name="search_hint">Search</string>
+    <string name="search_none">Nothing matches.</string>
+    <string name="action_clear_search">Clear search</string>
     <string name="model_choice_recommended">Recommended</string>
     <string name="transcription_model_auto">Automatic</string>
     <string name="settings_section_processing">Processing</string>
