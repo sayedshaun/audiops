@@ -42,6 +42,7 @@ class ModelTest {
             JobSpec.Meeting(TranscriptionModel.WHISPER, speakers = 1, durationMs = 5_000),
             JobSpec.Transcribe(SpeechLanguage.BANGLA),
             JobSpec.Transcribe(SpeechLanguage.AUTO, TranscriptionModel.PARAKEET),
+            JobSpec.Transcribe(SpeechLanguage.HINDI, TranscriptionModel.OMNILINGUAL, speakers = true),
             JobSpec.Speak("Hello there.", "pocket-alba", 1.25f),
             JobSpec.Process(operations),
         )

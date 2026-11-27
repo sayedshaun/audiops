@@ -31,10 +31,39 @@ interface AudioEngine {
     fun enhance(source: String, listener: ProcessingListener): String
 
     /**
-     * Speech to text with [model]. [language] is a Whisper code (`bn`, `ur`) or empty for automatic
-     * detection. Returns the path of a UTF-8 text file in app storage.
+     * Speech to text with [model]. [language] is a language code (`bn`, `ur`), or empty for history
+     * from before languages were chosen. With [speakers], the transcript names who speaks
+     * ([speakerName] names speaker 1, 2…, unless a remembered voice is recognised) and a speakers
+     * file is written next to it ([speakersFile]). Returns the path of a UTF-8 text file in app storage.
      */
-    fun transcribe(source: String, language: String, model: TranscriptionModel, listener: ProcessingListener): String
+    fun transcribe(
+        source: String,
+        language: String,
+        model: TranscriptionModel,
+        speakers: Boolean,
+        speakerName: (Int) -> String,
+        listener: ProcessingListener,
+    ): String
+
+    /** The speakers file next to the transcript at [transcriptPath], or null when it has no speakers. */
+    fun speakersFile(transcriptPath: String): String? = null
+
+    /** The speakers of the transcript at [transcriptPath], in order (speaker 1 first); empty without speakers. */
+    fun speakers(transcriptPath: String): List<SpeakerInfo> = emptyList()
+
+    /**
+     * Names the speakers of the transcript at [transcriptPath] ([names] in speaker order; null or blank
+     * keeps "Speaker N" from [speakerName]) and rewrites the transcript and subtitles. With [remember],
+     * named voices are kept on the device so later transcripts name those speakers by themselves.
+     */
+    fun nameSpeakers(transcriptPath: String, names: List<String?>, remember: Boolean, speakerName: (Int) -> String): Unit =
+        throw UnsupportedOnPlatformException()
+
+    /** Names of the voices remembered on this device. */
+    fun rememberedVoices(): List<String> = emptyList()
+
+    /** Forgets a remembered voice. */
+    fun forgetVoice(name: String) {}
 
     /** Formats [saveAudio] can write on this platform (WAV is always first). */
     val saveFormats: List<SaveFormat> get() = listOf(SaveFormat.WAV)

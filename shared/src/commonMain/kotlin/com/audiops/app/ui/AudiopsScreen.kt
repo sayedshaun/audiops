@@ -60,6 +60,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -93,6 +94,7 @@ import com.audiops.shared.resources.home_footer
 import com.audiops.shared.resources.home_recent
 import com.audiops.shared.resources.home_subtitle
 import com.audiops.shared.resources.meeting_live
+import com.audiops.shared.resources.meeting_speaker
 import com.audiops.shared.resources.tab_activity
 import com.audiops.shared.resources.tab_settings
 import com.audiops.shared.resources.tab_tools
@@ -111,6 +113,9 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
     val modelStorage by viewModel.modelStorage.collectAsStateWithLifecycle()
     val outputStorage by viewModel.outputStorage.collectAsStateWithLifecycle()
     val meeting by viewModel.meetingState.collectAsStateWithLifecycle()
+    // Saved transcripts name speakers in the app's language.
+    val speakerTemplate = stringResource(Res.string.meeting_speaker, SPEAKER_NUMBER)
+    SideEffect { viewModel.speakerName = { number -> speakerTemplate.replace(SPEAKER_NUMBER, number.toString()) } }
     val snackbar = remember { SnackbarHostState() }
 
     LaunchedEffect(viewModel) {
@@ -158,6 +163,8 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                         viewModel::saveSubtitles,
                         viewModel::notifyCopied,
                         viewModel::readText,
+                        viewModel::speakers,
+                        viewModel::nameSpeakers,
                     ),
                 ),
             )
@@ -178,6 +185,8 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                     onSaveSubtitles = viewModel::saveSubtitles,
                     onCopied = viewModel::notifyCopied,
                     readText = viewModel::readText,
+                    speakers = viewModel::speakers,
+                    onNameSpeakers = viewModel::nameSpeakers,
                 ),
             )
         } else if (tool != null) {
@@ -206,6 +215,8 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                     onSaveSubtitles = viewModel::saveSubtitles,
                     onCopied = viewModel::notifyCopied,
                     readText = viewModel::readText,
+                    speakers = viewModel::speakers,
+                    onNameSpeakers = viewModel::nameSpeakers,
                 ),
             )
         } else {
@@ -240,6 +251,8 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                             onSaveSubtitles = viewModel::saveSubtitles,
                             onCopied = viewModel::notifyCopied,
                             readText = viewModel::readText,
+                            speakers = viewModel::speakers,
+                            onNameSpeakers = viewModel::nameSpeakers,
                         ),
                     )
 
@@ -250,6 +263,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                         outputStorage = outputStorage,
                         busy = state.activeJobs.isNotEmpty(),
                         showTranscription = Tool.TRANSCRIBE !in viewModel.unsupportedTools,
+                        voices = state.rememberedVoices,
                         actions = SettingsActions(
                             onThemeMode = viewModel::setThemeMode,
                             onDynamicColor = viewModel::setDynamicColor,
@@ -258,6 +272,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                             onDefaultLanguage = viewModel::setDefaultLanguage,
                             onTranscriptionModel = viewModel::setTranscriptionModel,
                             onDeleteModel = viewModel::deleteModel,
+                            onForgetVoice = viewModel::forgetVoice,
                             onClearHistory = viewModel::clearHistory,
                         ),
                     )
@@ -567,3 +582,6 @@ private fun ProcessingAction(count: Int, onClick: () -> Unit) {
         )
     }
 }
+
+/** Stands in for the number in the localized "Speaker N" text. */
+private const val SPEAKER_NUMBER = "{n}"

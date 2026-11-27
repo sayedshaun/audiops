@@ -125,6 +125,13 @@ val punctuatedModelLanguages = setOf(
     "lt", "lv", "mt", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "uk",
 )
 
+/**
+ * Whether the model writes punctuation and capitals itself. The others get sentence breaks at
+ * pauses instead (`SpeechSentences`).
+ */
+val TranscriptionModel.punctuates: Boolean
+    get() = this != TranscriptionModel.OMNILINGUAL && this != TranscriptionModel.BANGLA
+
 /** Whether this model can transcribe [language]. The many-language and small models cover every offered language. */
 fun TranscriptionModel.supports(language: SpeechLanguage): Boolean = when (this) {
     TranscriptionModel.PARAKEET -> language.code in punctuatedModelLanguages
@@ -275,7 +282,12 @@ sealed interface JobSpec {
 
     @Serializable
     @SerialName("transcribe")
-    data class Transcribe(val language: SpeechLanguage, val model: TranscriptionModel = TranscriptionModel.AUTO) : JobSpec
+    data class Transcribe(
+        val language: SpeechLanguage,
+        val model: TranscriptionModel = TranscriptionModel.AUTO,
+        /** Whether the transcript tells speakers apart. */
+        val speakers: Boolean = false,
+    ) : JobSpec
 
     /** Text to speech: [voice] is a [TtsVoice.id]; [speed] 1 = normal. */
     @Serializable
@@ -372,14 +384,21 @@ data class Job(
     val subtitlesPath: String? = null,
     /** The recording of a live meeting (WAV); null for every other job. */
     val audioPath: String? = null,
+    /** The speakers file of a transcript with speakers, for naming them; null otherwise. */
+    val speakersPath: String? = null,
+    /** Increases each time the transcript is rewritten (speakers named), so it is read again. */
+    val revision: Int = 0,
     val report: AudioReport? = null,
     val failure: FailureKind? = null,
     val failureDetail: String? = null,
     @Transient val progress: JobProgress? = null,
 )
 
-/** Every file a job left in app storage: its output, the stems of a separation, its subtitles and a meeting's recording. */
-val Job.files: List<String> get() = (listOfNotNull(outputPath, subtitlesPath, audioPath) + stemPaths.orEmpty()).distinct()
+/**
+ * Every file a job left in app storage: its output, the stems of a separation, its subtitles, its
+ * speakers file and a meeting's recording.
+ */
+val Job.files: List<String> get() = (listOfNotNull(outputPath, subtitlesPath, audioPath, speakersPath) + stemPaths.orEmpty()).distinct()
 
 /** The files music separation writes, in this order. */
 enum class SeparatedStem(val fileSuffix: String) {
@@ -413,4 +432,6 @@ sealed interface UiMessage {
     data class InputReady(val name: String) : UiMessage
     data class ImportFailed(val detail: String?) : UiMessage
     data class RecordFailed(val detail: String?) : UiMessage
+    data object SpeakersNamed : UiMessage
+    data object SpeakersNotNamed : UiMessage
 }

@@ -13,6 +13,13 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+### Added
+- **Speaker labels for files.** Transcribe has a "Tell speakers apart" switch: the transcript starts each turn with Speaker 1, Speaker 2… and the time, like a live meeting.
+- **Name the speakers.** On a transcript or meeting with speakers, tap **Name speakers** to give each voice a name; the transcript and subtitles are rewritten with the names. Audiops can remember the named voices (on the phone only) and names those people by itself in later transcripts and meetings. Remembered voices are listed in Settings, where each can be forgotten.
+
+### Changed
+- **Sentences for every language.** Languages transcribed with the many-language or Bangla model (which write no punctuation) now get a sentence at each pause, with a capital letter and the language's full stop (। for Bangla and Hindi, 。 for Chinese and Japanese), and a new paragraph after a long pause. These recordings are now cut at pauses instead of every 20 seconds, so no word is split in two.
+
 ### Fixed
 - **Title bar colour when scrolling.** On Tools, Activity and Settings the status bar area now takes the same colour as the title bar when you scroll.
 

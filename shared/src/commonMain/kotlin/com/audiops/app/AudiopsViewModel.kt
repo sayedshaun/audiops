@@ -40,6 +40,8 @@ data class AudiopsState(
     val language: SpeechLanguage = SpeechLanguage.ENGLISH,
     /** Active jobs first (in queue order), then history, newest first. */
     val jobs: List<Job> = emptyList(),
+    /** Names of the voices remembered on this device, A to Z. */
+    val rememberedVoices: List<String> = emptyList(),
 ) {
     val activeJobs: List<Job> get() = jobs.filter { it.status.active }
 
@@ -140,6 +142,7 @@ class AudiopsViewModel(
         }
         if (_state.value.input != null) loadWaveform()
         refreshStorage()
+        refreshVoices()
     }
 
     // Navigation
@@ -396,13 +399,18 @@ class AudiopsViewModel(
                     )
 
                     is JobSpec.Transcribe -> {
-                        val path = engine.transcribe(job.inputId, spec.language.code, spec.model, listener)
+                        val path = engine.transcribe(job.inputId, spec.language.code, spec.model, spec.speakers, speakerName, listener)
                         val text = engine.readText(path)
                         if (text.isBlank()) {
                             engine.deleteFile(path)
                             job.copy(status = JobStatus.FAILED, failure = FailureKind.NO_SPEECH)
                         } else {
-                            job.copy(outputPath = path, preview = text.take(PREVIEW_LENGTH), subtitlesPath = engine.subtitlesFor(path))
+                            job.copy(
+                                outputPath = path,
+                                preview = text.take(PREVIEW_LENGTH),
+                                subtitlesPath = engine.subtitlesFor(path),
+                                speakersPath = engine.speakersFile(path),
+                            )
                         }
                     }
 
@@ -473,6 +481,59 @@ class AudiopsViewModel(
         _messages.trySend(UiMessage.Cancelled)
     }
 
+    /**
+     * Names speakers ("Speaker 1", "Speaker 2"…) in saved transcripts. The UI sets it from its
+     * localized text; transcripts already saved keep the words they were written with.
+     */
+    var speakerName: (Int) -> String = { "Speaker $it" }
+
+    /** The speakers of a transcript with speakers, for naming them. */
+    suspend fun speakers(job: Job): List<SpeakerInfo> {
+        val path = job.outputPath ?: return emptyList()
+        if (job.speakersPath == null) return emptyList()
+        return runCatching { runOnWorker { engine.speakers(path) } }.getOrDefault(emptyList())
+    }
+
+    /**
+     * Names the speakers of [jobId]'s transcript ([names] in speaker order; blank keeps "Speaker N")
+     * and, with [remember], keeps the named voices so later transcripts are named by themselves.
+     */
+    fun nameSpeakers(jobId: String, names: List<String?>, remember: Boolean) {
+        val job = _state.value.jobs.firstOrNull { it.id == jobId } ?: return
+        val path = job.outputPath ?: return
+        val name = speakerName
+        viewModelScope.launch {
+            val text = runCatching {
+                runOnWorker {
+                    engine.nameSpeakers(path, names, remember, name)
+                    engine.readText(path)
+                }
+            }.getOrElse {
+                _messages.trySend(UiMessage.SpeakersNotNamed)
+                return@launch
+            }
+            update(jobId) { it.copy(preview = text.take(PREVIEW_LENGTH), revision = it.revision + 1) }
+            persist()
+            refreshVoices()
+            _messages.trySend(UiMessage.SpeakersNamed)
+        }
+    }
+
+    /** Forgets a remembered voice. */
+    fun forgetVoice(name: String) {
+        viewModelScope.launch {
+            runCatching { runOnWorker { engine.forgetVoice(name) } }
+            refreshVoices()
+        }
+    }
+
+    private fun refreshVoices() {
+        viewModelScope.launch {
+            val names = runCatching { runOnWorker { engine.rememberedVoices() } }.getOrDefault(emptyList())
+            _state.update { it.copy(rememberedVoices = names) }
+        }
+    }
+
     /** Dismisses a failed meeting. */
     fun acknowledgeMeeting() = meeting.acknowledge()
 
@@ -489,6 +550,7 @@ class AudiopsViewModel(
             outputPath = result.transcriptPath,
             subtitlesPath = result.subtitlesPath,
             audioPath = result.audioPath,
+            speakersPath = result.speakersPath,
             preview = result.preview.take(PREVIEW_LENGTH),
         )
         _state.update { s ->

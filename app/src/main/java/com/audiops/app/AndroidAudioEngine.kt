@@ -41,8 +41,31 @@ class AndroidAudioEngine(context: Context) :
         outputs.map { it.absolutePath }
     }
 
-    override fun transcribe(source: String, language: String, model: TranscriptionModel, listener: ProcessingListener): String =
-        withDecoded(source) { pcm -> storeTranscript(AudioPipelines.transcribe(context, pcm, language, model, listener)) }
+    /**
+     * Models that punctuate transcribe in fixed sections, as before. With speakers, or with a model
+     * that writes no punctuation, the recording is cut at pauses instead: each utterance gets a
+     * speaker, or becomes a sentence.
+     */
+    override fun transcribe(
+        source: String,
+        language: String,
+        model: TranscriptionModel,
+        speakers: Boolean,
+        speakerName: (Int) -> String,
+        listener: ProcessingListener,
+    ): String = withDecoded(source) { pcm ->
+        if (!speakers && model.punctuates) {
+            storeTranscript(AudioPipelines.transcribe(context, pcm, language, model, listener))
+        } else {
+            val (lines, speakerVoices) = AudioPipelines.transcribeUtterances(context, pcm, language, model, speakers, listener)
+            val finished = if (model.punctuates) lines else SpeechSentences.punctuate(lines, language, MeetingModels.MAX_SPEECH_MS)
+            if (speakers) {
+                storeSpeakerTranscript(SpeakerTranscript.of(finished, speakerVoices, voices), speakerName)
+            } else {
+                storeTranscript(SpeechTranscription.plain(finished, language))
+            }
+        }
+    }
 
     override val saveFormats: List<SaveFormat> = AudioEncoder.formats
 

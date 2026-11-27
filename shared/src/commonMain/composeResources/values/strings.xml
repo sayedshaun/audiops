@@ -81,6 +81,21 @@
     <string name="meeting_recording_title">Recording</string>
     <string name="meeting_jump_latest">Latest</string>
     <string name="meeting_elapsed">Recording time %1$s</string>
+    <string name="speakers_option">Tell speakers apart</string>
+    <string name="speakers_option_hint">Starts each turn with Speaker 1, Speaker 2… You can name them afterwards.</string>
+    <string name="action_name_speakers">Name speakers</string>
+    <string name="speakers_sheet_title">Who is speaking?</string>
+    <string name="speakers_sheet_body">Give each voice a name. The transcript and subtitles are rewritten with the names.</string>
+    <string name="speakers_name_label">Name</string>
+    <string name="speakers_remember">Recognise these voices next time</string>
+    <string name="speakers_remember_hint">Audiops keeps a voice print of each named speaker on this device only, and names them in later transcripts. Forget them any time in Settings.</string>
+    <string name="speakers_voice_too_short">Spoke too briefly to recognise later</string>
+    <string name="action_save_names">Save names</string>
+    <string name="message_speakers_named">Speakers named</string>
+    <string name="error_speakers_named">Could not name the speakers.</string>
+    <string name="settings_section_voices">Remembered voices</string>
+    <string name="settings_voices_hint">Speakers you named. Audiops recognises their voices and names them in new transcripts and meetings. Voice prints never leave this device.</string>
+    <string name="action_forget_voice">Forget %1$s</string>
     <plurals name="meeting_speakers">
         <item quantity="one">%1$d speaker</item>
         <item quantity="other">%1$d speakers</item>
@@ -324,6 +339,7 @@
     <string name="summary_strength">Strength %1$d%</string>
     <string name="summary_silence">Below %1$s dB</string>
     <string name="summary_rate">%1$s kHz</string>
+    <string name="summary_speakers">Speakers</string>
 
     <!-- Activity -->
     <string name="activity_subtitle">Queue and history</string>

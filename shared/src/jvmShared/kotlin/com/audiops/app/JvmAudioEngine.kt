@@ -14,8 +14,14 @@ import com.audiops.app.dsp.analyze as analyzePcm
  * @param workDir temporary files (decoded audio, pipeline stages); safe to clear.
  * @param outputDir processed files kept for the Activity tab.
  * @param modelRoot downloaded models.
+ * @param voices voices the user has named (see [VoiceBook]).
  */
-abstract class JvmAudioEngine(protected val workDir: File, protected val outputDir: File, protected val modelRoot: File) : AudioEngine {
+abstract class JvmAudioEngine(
+    protected val workDir: File,
+    protected val outputDir: File,
+    protected val modelRoot: File,
+    protected val voices: VoiceBook = VoiceBook(File(outputDir.parentFile, VOICES_FILE)),
+) : AudioEngine {
 
     /** Decodes [source] to a new mono 44.1 kHz PCM16 file inside [workDir]. */
     protected abstract fun decode(source: String): File
@@ -81,7 +87,46 @@ abstract class JvmAudioEngine(protected val workDir: File, protected val outputD
         return file.absolutePath
     }
 
+    /**
+     * Stores a transcript with speakers: the text, subtitles and the speakers file they are made from
+     * (so they can be named later). Returns the text path.
+     */
+    protected fun storeSpeakerTranscript(speakers: SpeakerTranscript, speakerName: (Int) -> String): String {
+        val path = storeTranscript(speakers.transcript(speakerName))
+        speakers.write(SpeakerTranscript.fileFor(path))
+        return path
+    }
+
     private fun subtitleFile(transcriptPath: String) = File(transcriptPath.removeSuffix(".txt") + ".srt")
+
+    override fun speakersFile(transcriptPath: String): String? =
+        SpeakerTranscript.fileFor(transcriptPath).takeIf { it.isFile }?.absolutePath
+
+    override fun speakers(transcriptPath: String): List<SpeakerInfo> {
+        val file = SpeakerTranscript.fileFor(transcriptPath)
+        return if (file.isFile) SpeakerTranscript.read(file).info() else emptyList()
+    }
+
+    override fun nameSpeakers(transcriptPath: String, names: List<String?>, remember: Boolean, speakerName: (Int) -> String) {
+        val file = SpeakerTranscript.fileFor(transcriptPath)
+        val old = SpeakerTranscript.read(file)
+        val clean = List(old.speakers) { names.getOrNull(it)?.trim()?.takeIf(String::isNotEmpty) }
+        val named = old.copy(names = clean)
+        if (remember) {
+            clean.forEachIndexed { speaker, name ->
+                val voice = named.voices[speaker]
+                if (name != null && voice != null && name != old.names.getOrNull(speaker)) voices.remember(name, voice.toFloatArray())
+            }
+        }
+        val transcript = named.transcript(speakerName)
+        File(transcriptPath).writeText(transcript.text, Charsets.UTF_8)
+        subtitleFile(transcriptPath).writeText(Subtitles.srt(transcript.cues), Charsets.UTF_8)
+        named.write(file)
+    }
+
+    override fun rememberedVoices(): List<String> = voices.names()
+
+    override fun forgetVoice(name: String) = voices.forget(name)
 
     override fun subtitlesFor(transcriptPath: String): String? = subtitleFile(transcriptPath).takeIf { it.isFile }?.absolutePath
 
@@ -105,7 +150,10 @@ abstract class JvmAudioEngine(protected val workDir: File, protected val outputD
 
     override fun deleteFile(path: String) {
         File(path).delete()
-        if (path.endsWith(".txt")) subtitleFile(path).delete()
+        if (path.endsWith(".txt")) {
+            subtitleFile(path).delete()
+            SpeakerTranscript.fileFor(path).delete()
+        }
     }
 
     override fun modelStorage(): Map<AiModel, Long> = ModelFiles.storage(modelRoot)
@@ -116,5 +164,8 @@ abstract class JvmAudioEngine(protected val workDir: File, protected val outputD
 
     private companion object {
         const val MAX_CACHED = 3
+
+        /** Remembered voices, in the app's files folder (next to [outputDir]). */
+        const val VOICES_FILE = "voices.json"
     }
 }

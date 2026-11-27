@@ -52,6 +52,7 @@ import com.audiops.shared.resources.error_out_of_memory
 import com.audiops.shared.resources.error_processing_failed
 import com.audiops.shared.resources.error_record
 import com.audiops.shared.resources.error_save
+import com.audiops.shared.resources.error_speakers_named
 import com.audiops.shared.resources.error_unknown
 import com.audiops.shared.resources.error_unreadable
 import com.audiops.shared.resources.error_unsupported_format
@@ -134,6 +135,7 @@ import com.audiops.shared.resources.message_job_failed
 import com.audiops.shared.resources.message_job_finished
 import com.audiops.shared.resources.message_models_deleted
 import com.audiops.shared.resources.message_saved
+import com.audiops.shared.resources.message_speakers_named
 import com.audiops.shared.resources.model_bangla
 import com.audiops.shared.resources.model_bangla_purpose
 import com.audiops.shared.resources.model_dpdfnet
@@ -186,6 +188,7 @@ import com.audiops.shared.resources.summary_loudness
 import com.audiops.shared.resources.summary_peak
 import com.audiops.shared.resources.summary_rate
 import com.audiops.shared.resources.summary_silence
+import com.audiops.shared.resources.summary_speakers
 import com.audiops.shared.resources.summary_speed
 import com.audiops.shared.resources.summary_strength
 import com.audiops.shared.resources.time_days
@@ -619,7 +622,10 @@ fun JobSpec.summary(): String? = when (this) {
     is JobSpec.Enhance -> stringResource(mode.title)
 
     // The spoken language; history from before languages were chosen names the languages the model covers.
-    is JobSpec.Transcribe -> stringResource(if (language != SpeechLanguage.AUTO) language.label else model.label)
+    is JobSpec.Transcribe -> listOfNotNull(
+        stringResource(if (language != SpeechLanguage.AUTO) language.label else model.label),
+        if (speakers) stringResource(Res.string.summary_speakers) else null,
+    ).joinToString(" · ")
 
     is JobSpec.Speak -> listOfNotNull(ttsVoice(voice)?.name, ttsVoice(voice)?.let { stringResource(ttsLanguageLabel(it.language)) })
         .joinToString(" · ")
@@ -660,6 +666,8 @@ suspend fun UiMessage.text(): String = when (this) {
     is UiMessage.InputReady -> getString(Res.string.message_input_ready, name)
     is UiMessage.RecordFailed -> getString(Res.string.error_record, detail ?: getString(Res.string.record_permission_needed))
     is UiMessage.ImportFailed -> getString(Res.string.error_import, detail ?: getString(Res.string.error_unknown))
+    UiMessage.SpeakersNamed -> getString(Res.string.message_speakers_named)
+    UiMessage.SpeakersNotNamed -> getString(Res.string.error_speakers_named)
 }
 
 /** "Just now", "5 min ago", "3 h ago", "2 d ago". */

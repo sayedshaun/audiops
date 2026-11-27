@@ -87,6 +87,43 @@ internal object AudioPipelines {
             TranscriptionModel.BANGLA -> BanglaTranscriber.transcribe(context, audio, listener)
         }
 
+    /**
+     * Transcribes decoded [audio] utterance by utterance (cut at pauses by Silero VAD) and, with
+     * [speakers], tells the speakers apart by their voices. Returns the lines and each speaker's voice.
+     */
+    fun transcribeUtterances(
+        context: Context,
+        audio: File,
+        language: String,
+        model: TranscriptionModel,
+        speakers: Boolean,
+        listener: ProcessingListener,
+    ): Pair<List<MeetingLine>, List<FloatArray?>> {
+        val vad = MeetingModels.vad(context, listener)
+        try {
+            throwIfCancelled()
+            val extractor = if (speakers) MeetingModels.speakerExtractor(context, listener) else null
+            try {
+                throwIfCancelled()
+                val recognizer = recognizer(context, model, language, listener)
+                try {
+                    val transcriber = MeetingTranscriber(
+                        recognizer = { samples -> recognizeUtterance(recognizer, samples) },
+                        embedder = { samples -> extractor?.let { embedUtterance(it, samples) } },
+                    )
+                    val lines = SpeechTranscription.lines(audio, VadDetector(vad), transcriber, listener)
+                    return lines to transcriber.voices(lines)
+                } finally {
+                    recognizer.release()
+                }
+            } finally {
+                extractor?.release()
+            }
+        } finally {
+            vad.release()
+        }
+    }
+
     /** A recognizer for single utterances with [model] (live meetings). Release it after use. */
     fun recognizer(context: Context, model: TranscriptionModel, language: String, listener: ProcessingListener): OfflineRecognizer =
         when (model) {

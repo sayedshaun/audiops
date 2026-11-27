@@ -3,8 +3,10 @@ package com.audiops.app
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.serialization.Serializable
 
 /** One utterance of a meeting: [speaker] (0-based) said [text] from [startMs] to [endMs]. */
+@Serializable
 data class MeetingLine(val startMs: Long, val endMs: Long, val speaker: Int, val text: String)
 
 /** The files and facts of a finished meeting, which the ViewModel turns into a history entry. */
@@ -13,6 +15,8 @@ data class MeetingResult(
     val transcriptPath: String,
     val subtitlesPath: String?,
     val audioPath: String,
+    /** The speakers file ([SpeakerInfo] and renaming), when one was written. */
+    val speakersPath: String?,
     val startedAt: Long,
     val durationMs: Long,
     val speakers: Int,

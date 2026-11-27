@@ -173,8 +173,8 @@ class AndroidLiveMeeting(context: Context) : LiveMeeting {
             startedAt: Long,
         ): MeetingState {
             val transcriber = MeetingTranscriber(
-                recognizer = { samples -> recognize(recognizer, samples) },
-                embedder = { samples -> embed(extractor, samples) },
+                recognizer = { samples -> recognizeUtterance(recognizer, samples) },
+                embedder = { samples -> embedUtterance(extractor, samples) },
             )
             publish()
             val worker = Thread({ work(transcriber) }, "meeting-worker").apply { start() }
@@ -195,10 +195,13 @@ class AndroidLiveMeeting(context: Context) : LiveMeeting {
                 audio.delete()
                 return MeetingState.Failed(FailureKind.NO_SPEECH, null)
             }
-            val text = MeetingDocument.text(final, speakerName)
-            val transcript = File(audio.parentFile, audio.nameWithoutExtension + ".txt").apply { writeText(text, Charsets.UTF_8) }
+            val lines = if (!model.punctuates) SpeechSentences.punctuate(final, language, MeetingModels.MAX_SPEECH_MS) else final
+            val speakersFile = SpeakerTranscript.of(lines, transcriber.voices(final), VoiceBook(File(context.filesDir, VOICES_FILE)))
+            val document = speakersFile.transcript(speakerName)
+            val transcript = File(audio.parentFile, audio.nameWithoutExtension + ".txt").apply { writeText(document.text, Charsets.UTF_8) }
             val subtitles = File(audio.parentFile, audio.nameWithoutExtension + ".srt")
-                .apply { writeText(Subtitles.srt(MeetingDocument.cues(final, speakerName)), Charsets.UTF_8) }
+                .apply { writeText(Subtitles.srt(document.cues), Charsets.UTF_8) }
+            val speakers = SpeakerTranscript.fileFor(transcript.absolutePath).apply { speakersFile.write(this) }
             val label = SimpleDateFormat("yyyy-MM-dd HH.mm", Locale.getDefault()).format(Date(startedAt))
             return MeetingState.Finished(
                 MeetingResult(
@@ -206,11 +209,12 @@ class AndroidLiveMeeting(context: Context) : LiveMeeting {
                     transcriptPath = transcript.absolutePath,
                     subtitlesPath = subtitles.absolutePath,
                     audioPath = audio.absolutePath,
+                    speakersPath = speakers.absolutePath,
                     startedAt = startedAt,
                     durationMs = synchronized(this) { elapsedMs },
                     speakers = final.map { it.speaker }.distinct().size,
                     model = model,
-                    preview = final.joinToString(" ") { it.text },
+                    preview = lines.joinToString(" ") { it.text },
                 ),
             )
         }
@@ -452,32 +456,13 @@ class AndroidLiveMeeting(context: Context) : LiveMeeting {
     private companion object {
         const val TAG = "LiveMeeting"
 
+        /** Remembered voices (the engine's [VoiceBook] file). */
+        const val VOICES_FILE = "voices.json"
+
         /** Debug builds play this file (in the app's external files folder) instead of the microphone. */
         const val TEST_FILE = "meeting-test.wav"
 
         val END = Segment(-1, FloatArray(0))
-
-        fun recognize(recognizer: OfflineRecognizer, samples: FloatArray): String {
-            val stream = recognizer.createStream()
-            try {
-                stream.acceptWaveform(samples, MEETING_RATE)
-                recognizer.decode(stream)
-                return recognizer.getResult(stream).text
-            } finally {
-                stream.release()
-            }
-        }
-
-        fun embed(extractor: SpeakerEmbeddingExtractor, samples: FloatArray): FloatArray? {
-            val stream = extractor.createStream()
-            try {
-                stream.acceptWaveform(samples, MEETING_RATE)
-                stream.inputFinished()
-                return if (extractor.isReady(stream)) extractor.compute(stream) else null
-            } finally {
-                stream.release()
-            }
-        }
 
         fun rms(chunk: FloatArray): Float {
             var energy = 0.0

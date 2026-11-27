@@ -215,6 +215,8 @@ fun SpeakScreen(latestJob: Job?, snackbar: SnackbarHostState, actions: ToolActio
                             actions.onSaveSubtitles,
                             actions.onCopied,
                             actions.readText,
+                            actions.speakers,
+                            actions.onNameSpeakers,
                         ),
                     )
                 }

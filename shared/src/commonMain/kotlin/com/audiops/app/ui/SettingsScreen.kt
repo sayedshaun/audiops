@@ -32,6 +32,7 @@ import androidx.compose.material.icons.rounded.BrightnessAuto
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Contrast
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Gavel
 import androidx.compose.material.icons.rounded.History
@@ -96,6 +97,7 @@ import com.audiops.shared.resources.action_cancel
 import com.audiops.shared.resources.action_clear
 import com.audiops.shared.resources.action_close
 import com.audiops.shared.resources.action_delete
+import com.audiops.shared.resources.action_forget_voice
 import com.audiops.shared.resources.back
 import com.audiops.shared.resources.clear_history_body
 import com.audiops.shared.resources.clear_history_title
@@ -169,11 +171,13 @@ import com.audiops.shared.resources.settings_section_about
 import com.audiops.shared.resources.settings_section_appearance
 import com.audiops.shared.resources.settings_section_processing
 import com.audiops.shared.resources.settings_section_storage
+import com.audiops.shared.resources.settings_section_voices
 import com.audiops.shared.resources.settings_source_code
 import com.audiops.shared.resources.settings_source_code_summary
 import com.audiops.shared.resources.settings_theme
 import com.audiops.shared.resources.settings_title
 import com.audiops.shared.resources.settings_version
+import com.audiops.shared.resources.settings_voices_hint
 import com.audiops.shared.resources.theme_dark
 import com.audiops.shared.resources.theme_light
 import com.audiops.shared.resources.theme_system
@@ -191,6 +195,7 @@ data class SettingsActions(
     val onTranscriptionModel: (TranscriptionModel) -> Unit,
     val onDeleteModel: (AiModel) -> Unit,
     val onClearHistory: () -> Unit,
+    val onForgetVoice: (name: String) -> Unit = {},
 )
 
 /** [androidOnly]: AI components that are bundled or downloaded only on Android. */
@@ -301,6 +306,7 @@ fun SettingsScreen(
     busy: Boolean,
     showTranscription: Boolean,
     actions: SettingsActions,
+    voices: List<String> = emptyList(),
 ) {
     var page by rememberSaveable { mutableStateOf(SettingsPage.MAIN) }
     // Hoisted so returning from a sub-page keeps the main page's scroll position.
@@ -315,6 +321,7 @@ fun SettingsScreen(
             busy = busy,
             showTranscription = showTranscription,
             actions = actions,
+            voices = voices,
             listState = mainListState,
             onOpen = { page = it },
         )
@@ -342,6 +349,7 @@ private fun SettingsMain(
     busy: Boolean,
     showTranscription: Boolean,
     actions: SettingsActions,
+    voices: List<String>,
     listState: LazyListState,
     onOpen: (SettingsPage) -> Unit,
 ) {
@@ -433,6 +441,41 @@ private fun SettingsMain(
                         onCheckedChange = actions.onKeepScreenOn,
                     )
                 })
+            }
+
+            // Named speakers' voice prints, kept on the device; each can be forgotten.
+            if (voices.isNotEmpty()) {
+                item { SectionHeader(stringResource(Res.string.settings_section_voices)) }
+                item {
+                    Text(
+                        stringResource(Res.string.settings_voices_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+                    )
+                }
+                item {
+                    SettingsGroup(
+                        *voices.map { name ->
+                            val row: @Composable (Shape) -> Unit = { shape ->
+                                SettingsRow(
+                                    icon = Icons.Rounded.RecordVoiceOver,
+                                    title = name,
+                                    shape = shape,
+                                    trailing = {
+                                        IconButton(onClick = { actions.onForgetVoice(name) }) {
+                                            Icon(
+                                                Icons.Rounded.DeleteOutline,
+                                                contentDescription = stringResource(Res.string.action_forget_voice, name),
+                                            )
+                                        }
+                                    },
+                                )
+                            }
+                            row
+                        }.toTypedArray(),
+                    )
+                }
             }
 
             item { SectionHeader(stringResource(Res.string.settings_section_storage)) }
