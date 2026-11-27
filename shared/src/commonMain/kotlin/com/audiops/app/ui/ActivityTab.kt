@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import com.audiops.app.Job
 import com.audiops.app.JobStatus
 import com.audiops.app.SaveFormat
+import com.audiops.app.SpeakerInfo
 import com.audiops.app.SubtitleFormat
 import com.audiops.shared.resources.Res
 import com.audiops.shared.resources.action_cancel
@@ -98,6 +99,8 @@ data class ActivityActions(
     val onSaveSubtitles: (Job, SubtitleFormat, destination: String?) -> Unit,
     val onCopied: () -> Unit,
     val readText: suspend (path: String) -> String?,
+    val speakers: suspend (Job) -> List<SpeakerInfo> = { emptyList() },
+    val onNameSpeakers: (jobId: String, names: List<String?>, remember: Boolean) -> Unit = { _, _, _ -> },
 )
 
 /** Running and queued jobs, then history. Tap a job for its result. */
@@ -277,6 +280,8 @@ private fun JobSheet(job: Job, actions: ActivityActions, onDismiss: () -> Unit) 
                     actions.onSaveSubtitles,
                     actions.onCopied,
                     actions.readText,
+                    actions.speakers,
+                    actions.onNameSpeakers,
                 ),
             )
             if (!job.status.active) {

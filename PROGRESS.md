@@ -1,12 +1,13 @@
 # Progress
 
-Snapshot as of 2026-11-18: v0.3.0 is prepared on `release/0.3.0` (all pending features combined), not yet tagged. Updated in place; the history is in `CHANGES.md`.
+Snapshot as of 2026-11-27: v0.5.0 is prepared (sentences at pauses, speaker labels and names, sound suggestions, Kokoro voices, language-first tools). Updated in place; the history is in `CHANGES.md`.
 
 ## Status
 
 Audiops is a Kotlin Multiplatform audio toolkit: fourteen tools on Android (Android only), a job queue with persistent history, and a Material 3 Expressive UI. Built, unit-tested, lint-checked, R8-built, and exercised end to end on an Android emulator.
 
 ### Done
+- **0.5.0 (prepared):** transcription cut at pauses with padded VAD utterances (sentences for the many-language and Bangla models; no word split between sections), speaker labels for files, naming speakers and remembered voices (on the device, Settings → Remembered voices), sound recognition with a suggested tool and Analyze's main sounds (Zipformer AudioSet tagger), ten Kokoro English voices, Language and Model sections first, modern selectors. All checked on the emulator, including the R8 build.
 - **Live meeting (unreleased, `feature/live-meeting`):** real-time meeting transcription with speakers (Silero VAD + the Settings transcription model + CAM++ speaker embeddings, live labels corrected by a final re-clustering), microphone foreground service, transcript/SRT/recording saved to Activity. Verified on the emulator with a 4-speaker test clip (all utterances labelled correctly).
 - **Tools tab redesign (unreleased, `feature/tools-top-bar`):** title bar instead of the hero card, Choose file and Record under the title, compact tiles, Recently used row.
 - **Licence:** Apache 2.0 (`LICENSE`, `NOTICE`).
@@ -33,6 +34,7 @@ Audiops is a Kotlin Multiplatform audio toolkit: fourteen tools on Android (Andr
 - **Emulator end to end:** every DSP tool on a 3-minute 48 kHz stereo file; queue; history across restarts; playback; save; cancel during download; staged enhancement memory.
 
 ### Not yet done
+- **0.5.0 on a phone:** Kokoro speed (5.4 s of speech took ~34 s on the x86 emulator; int8 should be faster on ARM, fp32 would be 325 MB), speaker naming with real voices (threshold 0.6 for remembered voices), sound suggestions on real recordings (brown/low-frequency noise is not noticed).
 - **Live meeting on a phone:** not yet tried with a real microphone, real voices across a table, or for an hour (battery, heat, whether Parakeet keeps up on a mid-range CPU). Speaker thresholds were tuned on clean clips; room audio may need a lower value.
 - **Physical devices:** not tested; the emulator is x86_64 while phones are arm64.
 

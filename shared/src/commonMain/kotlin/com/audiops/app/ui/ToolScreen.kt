@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AudioFile
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.RecordVoiceOver
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.Stop
@@ -42,11 +44,13 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
@@ -63,6 +67,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -74,6 +79,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.audiops.app.AudioInput
@@ -89,6 +95,7 @@ import com.audiops.app.LoudnessTarget
 import com.audiops.app.Preset
 import com.audiops.app.SaveFormat
 import com.audiops.app.SeparatedStem
+import com.audiops.app.SpeakerInfo
 import com.audiops.app.SpeechLanguage
 import com.audiops.app.Stage
 import com.audiops.app.SubtitleFormat
@@ -101,6 +108,7 @@ import com.audiops.shared.resources.action_cancel
 import com.audiops.shared.resources.action_change
 import com.audiops.shared.resources.action_choose
 import com.audiops.shared.resources.action_copy
+import com.audiops.shared.resources.action_name_speakers
 import com.audiops.shared.resources.action_record
 import com.audiops.shared.resources.action_reset
 import com.audiops.shared.resources.action_save_srt
@@ -138,10 +146,13 @@ import com.audiops.shared.resources.report_loudness
 import com.audiops.shared.resources.report_peak
 import com.audiops.shared.resources.report_rms
 import com.audiops.shared.resources.report_silence
+import com.audiops.shared.resources.report_sounds
 import com.audiops.shared.resources.report_title
 import com.audiops.shared.resources.result_ready_body
 import com.audiops.shared.resources.result_ready_title
 import com.audiops.shared.resources.sample_rate_khz
+import com.audiops.shared.resources.speakers_option
+import com.audiops.shared.resources.speakers_option_hint
 import com.audiops.shared.resources.status_cancelled
 import com.audiops.shared.resources.stems_ready_body
 import com.audiops.shared.resources.stems_ready_title
@@ -149,8 +160,6 @@ import com.audiops.shared.resources.step_language
 import com.audiops.shared.resources.step_model
 import com.audiops.shared.resources.step_options
 import com.audiops.shared.resources.step_recording
-import com.audiops.shared.resources.transcribe_model_used
-import com.audiops.shared.resources.transcribe_whisper_hint
 import com.audiops.shared.resources.transcript_title
 import com.audiops.shared.resources.unit_dbfs
 import com.audiops.shared.resources.unit_lufs
@@ -181,6 +190,7 @@ data class ToolActions(
     val onBack: () -> Unit,
     val onChoose: (id: String, name: String) -> Unit,
     val onLanguage: (SpeechLanguage) -> Unit,
+    val onTranscriptionModel: (TranscriptionModel) -> Unit = {},
     val onStart: (JobSpec) -> Unit,
     val onCancel: (jobId: String) -> Unit,
     val onSave: (Job, destination: String?) -> Unit,
@@ -189,6 +199,8 @@ data class ToolActions(
     val onSaveSubtitles: (Job, SubtitleFormat, destination: String?) -> Unit,
     val onCopied: () -> Unit,
     val readText: suspend (path: String) -> String?,
+    val speakers: suspend (Job) -> List<SpeakerInfo> = { emptyList() },
+    val onNameSpeakers: (jobId: String, names: List<String?>, remember: Boolean) -> Unit = { _, _, _ -> },
 )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -217,7 +229,19 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
         onBack = actions.onBack,
         snackbar = snackbar,
     ) {
-        StepTitle(1, stringResource(Res.string.step_recording))
+        // Language tools start with what is spoken, then the model for it.
+        val languageSteps = if (tool == Tool.TRANSCRIBE) 2 else 0
+        if (tool == Tool.TRANSCRIBE) {
+            StepTitle(1, stringResource(Res.string.step_language))
+            Spacer(Modifier.height(12.dp))
+            LanguageField(selected = state.language, onSelect = actions.onLanguage)
+            Spacer(Modifier.height(28.dp))
+            StepTitle(2, stringResource(Res.string.step_model))
+            Spacer(Modifier.height(12.dp))
+            TranscriptionModelChoice(state.language, state.transcriptionModel, actions.onTranscriptionModel)
+            Spacer(Modifier.height(28.dp))
+        }
+        StepTitle(languageSteps + 1, stringResource(Res.string.step_recording))
         Spacer(Modifier.height(12.dp))
         InputCard(
             input = state.input,
@@ -246,12 +270,7 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
         }
         if (tool.hasOptions) {
             Spacer(Modifier.height(28.dp))
-            val stepTitle = when {
-                tool != Tool.TRANSCRIBE -> Res.string.step_options
-                state.transcriptionModel.usesLanguage -> Res.string.step_language
-                else -> Res.string.step_model
-            }
-            StepTitle(2, stringResource(stepTitle))
+            StepTitle(languageSteps + 2, stringResource(Res.string.step_options))
             Spacer(Modifier.height(12.dp))
             OptionsCard {
                 ToolOptionsEditor(
@@ -269,7 +288,10 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
 
         if (!tool.hasOptions) {
             Spacer(Modifier.height(28.dp))
-            OptionsCard { action() }
+            OptionsCard {
+                if (tool == Tool.TRANSCRIBE) SpeakersOption(options.speakers) { options = options.copy(speakers = it) }
+                action()
+            }
         }
 
         AnimatedVisibility(visible = job != null, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
@@ -286,6 +308,8 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
                             actions.onSaveSubtitles,
                             actions.onCopied,
                             actions.readText,
+                            actions.speakers,
+                            actions.onNameSpeakers,
                         ),
                         // The waveform of the recording this job works on, if it is still the one on screen.
                         peaks = state.waveform?.peaks?.takeIf { state.input?.id == job.inputId },
@@ -296,7 +320,44 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
     }
 }
 
-private val Tool.hasOptions: Boolean get() = this != Tool.ANALYZE && this != Tool.SEPARATE
+/** Whether a transcript tells speakers apart: a whole-row switch. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun SpeakersOption(checked: Boolean, onChange: (Boolean) -> Unit) {
+    val haptics = LocalHapticFeedback.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .toggleable(value = checked, role = Role.Switch) {
+                haptics.performHapticFeedback(if (it) HapticFeedbackType.ToggleOn else HapticFeedbackType.ToggleOff)
+                onChange(it)
+            }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ShapedIcon(
+            Icons.Rounded.RecordVoiceOver,
+            MaterialShapes.Clover4Leaf.toShape(),
+            MaterialTheme.colorScheme.secondaryContainer,
+            MaterialTheme.colorScheme.onSecondaryContainer,
+            size = 40.dp,
+        )
+        Spacer(Modifier.width(16.dp))
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(Res.string.speakers_option), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(Res.string.speakers_option_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Switch(checked = checked, onCheckedChange = null)
+    }
+}
+
+private val Tool.hasOptions: Boolean get() = this != Tool.ANALYZE && this != Tool.SEPARATE && this != Tool.TRANSCRIBE
 
 @Composable
 internal fun OptionsCard(content: @Composable () -> Unit) {
@@ -497,6 +558,7 @@ data class ToolOptions(
     val eqPreset: EqPreset = EqPreset.VOICE_CLARITY,
     val sampleRate: Int = 16_000,
     val preset: Preset = Preset.PODCAST,
+    val speakers: Boolean = false,
 ) {
     fun toSpec(tool: Tool, language: SpeechLanguage, model: TranscriptionModel, durationMs: Long?): JobSpec = when (tool) {
         Tool.ENHANCE -> JobSpec.Enhance(if (enhanceMode == 0) EnhanceMode.FAST else EnhanceMode.STUDIO)
@@ -509,7 +571,7 @@ data class ToolOptions(
 
         Tool.SEPARATE -> JobSpec.Separate
 
-        Tool.TRANSCRIBE -> JobSpec.Transcribe(if (model.usesLanguage) language else SpeechLanguage.AUTO, model)
+        Tool.TRANSCRIBE -> JobSpec.Transcribe(language, effectiveTranscriptionModel(language, model), speakers)
 
         Tool.ANALYZE -> JobSpec.Analyze
 
@@ -550,7 +612,7 @@ private val ToolOptionsSaver = androidx.compose.runtime.saveable.Saver<ToolOptio
         listOf(
             it.denoiseLevel, it.silenceThresholdDb, it.silenceMinSeconds, it.trimStart, it.trimEnd,
             it.fadeInSeconds, it.fadeOutSeconds, it.volumeMode, it.loudnessTarget.name, it.gainDb,
-            it.speed, it.semitones, it.eqPreset.name, it.sampleRate, it.preset.name, it.enhanceMode,
+            it.speed, it.semitones, it.eqPreset.name, it.sampleRate, it.preset.name, it.enhanceMode, it.speakers,
         )
     },
     restore = {
@@ -561,6 +623,7 @@ private val ToolOptionsSaver = androidx.compose.runtime.saveable.Saver<ToolOptio
             loudnessTarget = LoudnessTarget.valueOf(it[8] as String), gainDb = it[9] as Float,
             speed = it[10] as Float, semitones = it[11] as Float, eqPreset = EqPreset.valueOf(it[12] as String),
             sampleRate = it[13] as Int, preset = Preset.valueOf(it[14] as String), enhanceMode = it[15] as Int,
+            speakers = it[16] as Boolean,
         )
     },
 )
@@ -577,17 +640,6 @@ private fun ToolOptionsEditor(
     onChange: (ToolOptions) -> Unit,
 ) {
     when (tool) {
-        Tool.TRANSCRIBE -> {
-            if (transcriptionModel.usesLanguage) {
-                LanguageField(selected = language, onSelect = onLanguage)
-            }
-            when (transcriptionModel) {
-                TranscriptionModel.WHISPER -> Hint(stringResource(Res.string.transcribe_whisper_hint))
-                else -> Hint(stringResource(transcriptionModel.summary))
-            }
-            Hint(stringResource(Res.string.transcribe_model_used, stringResource(transcriptionModel.label)))
-        }
-
         Tool.DENOISE -> {
             OptionLabel(stringResource(Res.string.option_strength))
             ConnectedChoice(
@@ -759,7 +811,7 @@ private fun ToolOptionsEditor(
             }
         }
 
-        Tool.ANALYZE, Tool.SPEAK, Tool.SEPARATE, Tool.MEETING -> Unit
+        Tool.ANALYZE, Tool.SPEAK, Tool.SEPARATE, Tool.MEETING, Tool.TRANSCRIBE -> Unit
     }
 }
 
@@ -833,6 +885,10 @@ data class JobCardActions(
     val onSaveSubtitles: (Job, SubtitleFormat, destination: String?) -> Unit,
     val onCopied: () -> Unit,
     val readText: suspend (path: String) -> String?,
+    /** The speakers of a transcript with speakers. */
+    val speakers: suspend (Job) -> List<SpeakerInfo> = { emptyList() },
+    /** Names the speakers of a job's transcript; with `remember`, keeps their voices. */
+    val onNameSpeakers: (jobId: String, names: List<String?>, remember: Boolean) -> Unit = { _, _, _ -> },
 )
 
 /** A job's live progress (over the recording's [peaks] when known), or its result: player and Save, transcript, or report. */
@@ -1003,7 +1059,8 @@ private fun TranscriptCard(job: Job, actions: JobCardActions) {
     val path = job.outputPath ?: return
     val clipboard = LocalClipboardManager.current
     val haptics = LocalHapticFeedback.current
-    val text by produceState<String?>(initialValue = job.preview, path) { value = actions.readText(path) ?: job.preview }
+    val text by produceState<String?>(initialValue = job.preview, path, job.revision) { value = actions.readText(path) ?: job.preview }
+    var naming by rememberSaveable(job.id) { mutableStateOf(false) }
     val saveAs = rememberFileSaver("text/plain") { actions.onSave(job, it) }
     val saveSrt = rememberFileSaver("application/x-subrip") { actions.onSaveSubtitles(job, SubtitleFormat.SRT, it) }
     val saveVtt = rememberFileSaver("text/vtt") { actions.onSaveSubtitles(job, SubtitleFormat.VTT, it) }
@@ -1016,7 +1073,7 @@ private fun TranscriptCard(job: Job, actions: JobCardActions) {
             Text(stringResource(Res.string.transcript_title), style = MaterialTheme.typography.titleLargeEmphasized)
             Spacer(Modifier.height(8.dp))
             SelectionContainer {
-                if (job.spec is JobSpec.Meeting) {
+                if (job.spec is JobSpec.Meeting || job.speakersPath != null) {
                     MeetingTranscriptText(
                         text.orEmpty(),
                     )
@@ -1025,6 +1082,18 @@ private fun TranscriptCard(job: Job, actions: JobCardActions) {
                 }
             }
             Spacer(Modifier.height(16.dp))
+            if (job.speakersPath != null) {
+                Button(
+                    onClick = { naming = true },
+                    shapes = ButtonDefaults.shapes(),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
+                ) {
+                    Icon(Icons.Rounded.RecordVoiceOver, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(Res.string.action_name_speakers))
+                }
+                Spacer(Modifier.height(8.dp))
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
                 FilledTonalButton(
                     onClick = {
@@ -1074,6 +1143,17 @@ private fun TranscriptCard(job: Job, actions: JobCardActions) {
             }
         }
     }
+    if (naming) {
+        SpeakerNamesSheet(
+            job = job,
+            load = actions.speakers,
+            onSave = { names, remember ->
+                naming = false
+                actions.onNameSpeakers(job.id, names, remember)
+            },
+            onDismiss = { naming = false },
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -1087,7 +1167,7 @@ private fun ReportCard(report: AudioReport) {
         Res.string.report_clipping to report.clippedSamples.toString(),
         Res.string.report_silence to "${(report.silenceRatio * 100).roundToInt()}%",
         Res.string.report_dc to decimal(report.dcOffset * 100, 2) + "%",
-    )
+    ) + listOfNotNull(report.sounds.takeIf { it.isNotEmpty() }?.let { Res.string.report_sounds to it.joinToString(" · ") })
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLargeIncreased,
@@ -1098,7 +1178,12 @@ private fun ReportCard(report: AudioReport) {
             rows.forEach { (label, value) ->
                 Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) { }) {
                     Text(stringResource(label), modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(value, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        value,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.padding(start = 16.dp).weight(1f, fill = false),
+                    )
                 }
             }
             Hint(stringResource(Res.string.report_hint))

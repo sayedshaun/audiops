@@ -31,6 +31,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -68,6 +69,7 @@ import com.audiops.shared.resources.speak_text_count
 import com.audiops.shared.resources.speak_text_label
 import com.audiops.shared.resources.speak_voice
 import com.audiops.shared.resources.speak_voice_summary
+import com.audiops.shared.resources.step_language
 import com.audiops.shared.resources.step_text
 import com.audiops.shared.resources.step_voice
 import kotlinx.coroutines.delay
@@ -105,7 +107,76 @@ fun SpeakScreen(latestJob: Job?, snackbar: SnackbarHostState, actions: ToolActio
         onBack = actions.onBack,
         snackbar = snackbar,
     ) {
-        StepTitle(1, stringResource(Res.string.step_text))
+        // What is spoken first, then who speaks it, then the text.
+        var languageDialog by rememberSaveable { mutableStateOf(false) }
+        var voiceDialog by rememberSaveable { mutableStateOf(false) }
+        val voicesForLanguage = ttsVoices.filter { it.language == voice.language }
+        StepTitle(1, stringResource(Res.string.step_language))
+        Spacer(Modifier.height(12.dp))
+        SelectorCard(
+            icon = Icons.Rounded.Translate,
+            label = stringResource(Res.string.speak_language),
+            value = stringResource(ttsLanguageLabel(voice.language)),
+            onClick = { languageDialog = true },
+        )
+
+        Spacer(Modifier.height(20.dp))
+        StepTitle(2, stringResource(Res.string.step_voice))
+        Spacer(Modifier.height(12.dp))
+        SelectorCard(
+            icon = Icons.Rounded.Person,
+            label = stringResource(Res.string.speak_voice),
+            value = voice.name,
+            supporting = voiceSummary(voice),
+            shape = MaterialShapes.Puffy,
+            onClick = if (voicesForLanguage.size > 1) ({ voiceDialog = true }) else null,
+        )
+        Spacer(Modifier.height(12.dp))
+        OptionsCard {
+            LabeledSlider(
+                label = stringResource(Res.string.speak_speed, formatSpeed(speed)),
+                value = speed,
+                range = 0.5f..2f,
+                step = 0.05f,
+                onChange = { speed = it },
+            )
+        }
+        if (languageDialog) {
+            SelectionSheet(
+                title = stringResource(Res.string.speak_language),
+                icon = Icons.Rounded.Translate,
+                options = ttsLanguages,
+                selected = voice.language,
+                label = { stringResource(ttsLanguageLabel(it)) },
+                detail = { language ->
+                    ttsVoices.first { it.language == language }.takeIf { it.nonCommercial }?.let {
+                        stringResource(Res.string.speak_non_commercial)
+                    }
+                },
+                onSelect = { language ->
+                    voiceId = ttsVoices.first { it.language == language }.id
+                    languageDialog = false
+                },
+                onDismiss = { languageDialog = false },
+            )
+        }
+        if (voiceDialog) {
+            SelectionSheet(
+                title = stringResource(Res.string.speak_voice),
+                icon = Icons.Rounded.Person,
+                options = voicesForLanguage.map { it.id },
+                selected = voice.id,
+                label = { id -> ttsVoice(id)?.name.orEmpty() },
+                onSelect = {
+                    voiceId = it
+                    voiceDialog = false
+                },
+                onDismiss = { voiceDialog = false },
+            )
+        }
+
+        Spacer(Modifier.height(20.dp))
+        StepTitle(3, stringResource(Res.string.step_text))
         Spacer(Modifier.height(12.dp))
         OutlinedTextField(
             value = text,
@@ -117,81 +188,17 @@ fun SpeakScreen(latestJob: Job?, snackbar: SnackbarHostState, actions: ToolActio
             shape = MaterialTheme.shapes.large,
             modifier = Modifier.fillMaxWidth(),
         )
-
-        Spacer(Modifier.height(20.dp))
-        StepTitle(2, stringResource(Res.string.step_voice))
         Spacer(Modifier.height(12.dp))
-        OptionsCard {
-            var languageDialog by rememberSaveable { mutableStateOf(false) }
-            var voiceDialog by rememberSaveable { mutableStateOf(false) }
-            val voicesForLanguage = ttsVoices.filter { it.language == voice.language }
-            PickerField(
-                icon = Icons.Rounded.Translate,
-                label = stringResource(Res.string.speak_language),
-                value = stringResource(ttsLanguageLabel(voice.language)),
-                onClick = { languageDialog = true },
-            )
-            if (voicesForLanguage.size > 1) {
-                PickerField(
-                    icon = Icons.Rounded.Person,
-                    label = stringResource(Res.string.speak_voice),
-                    value = voice.name,
-                    onClick = { voiceDialog = true },
-                )
-            }
-            Hint(voiceSummary(voice))
-            LabeledSlider(
-                label = stringResource(Res.string.speak_speed, formatSpeed(speed)),
-                value = speed,
-                range = 0.5f..2f,
-                step = 0.05f,
-                onChange = { speed = it },
-            )
-            if (languageDialog) {
-                ChoiceDialog(
-                    title = stringResource(Res.string.speak_language),
-                    icon = Icons.Rounded.Translate,
-                    options = ttsLanguages,
-                    selected = voice.language,
-                    label = { stringResource(ttsLanguageLabel(it)) },
-                    detail = { language ->
-                        ttsVoices.first { it.language == language }.takeIf { it.nonCommercial }?.let {
-                            stringResource(Res.string.speak_non_commercial)
-                        }
-                    },
-                    onSelect = { language ->
-                        voiceId = ttsVoices.first { it.language == language }.id
-                        languageDialog = false
-                    },
-                    onDismiss = { languageDialog = false },
-                )
-            }
-            if (voiceDialog) {
-                ChoiceDialog(
-                    title = stringResource(Res.string.speak_voice),
-                    icon = Icons.Rounded.Person,
-                    options = voicesForLanguage.map { it.id },
-                    selected = voice.id,
-                    label = { id -> ttsVoice(id)?.name.orEmpty() },
-                    detail = { null },
-                    onSelect = {
-                        voiceId = it
-                        voiceDialog = false
-                    },
-                    onDismiss = { voiceDialog = false },
-                )
-            }
-            Button(
-                onClick = { actions.onStart(JobSpec.Speak(text.trim(), voice.id, speed)) },
-                enabled = text.isNotBlank(),
-                shapes = ButtonDefaults.shapes(),
-                contentPadding = PrimaryButtonPadding,
-                modifier = Modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
-            ) {
-                Icon(tool.icon, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(tool.action), style = MaterialTheme.typography.titleMedium)
-            }
+        Button(
+            onClick = { actions.onStart(JobSpec.Speak(text.trim(), voice.id, speed)) },
+            enabled = text.isNotBlank(),
+            shapes = ButtonDefaults.shapes(),
+            contentPadding = PrimaryButtonPadding,
+            modifier = Modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
+        ) {
+            Icon(tool.icon, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(tool.action), style = MaterialTheme.typography.titleMedium)
         }
 
         AnimatedVisibility(visible = latestJob != null, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
@@ -208,6 +215,8 @@ fun SpeakScreen(latestJob: Job?, snackbar: SnackbarHostState, actions: ToolActio
                             actions.onSaveSubtitles,
                             actions.onCopied,
                             actions.readText,
+                            actions.speakers,
+                            actions.onNameSpeakers,
                         ),
                     )
                 }
@@ -218,72 +227,11 @@ fun SpeakScreen(latestJob: Job?, snackbar: SnackbarHostState, actions: ToolActio
 
 @Composable
 private fun voiceSummary(voice: TtsVoice): String {
-    val summary = stringResource(Res.string.speak_voice_summary, voice.name, voice.license, voice.downloadMb)
+    val summary = stringResource(Res.string.speak_voice_summary, voice.license, voice.downloadMb)
     return if (voice.nonCommercial) "$summary · ${stringResource(Res.string.speak_non_commercial)}" else summary
 }
 
 private fun formatSpeed(speed: Float): String {
     val hundredths = (speed * 100).roundToInt()
     return "${hundredths / 100}.${(hundredths % 100).toString().padStart(2, '0')}"
-}
-
-/** A tappable field showing the current choice; opens a dialog. */
-@Composable
-private fun PickerField(icon: ImageVector, label: String, value: String, onClick: () -> Unit) {
-    ListItem(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .clickable(role = Role.DropdownList, onClick = onClick),
-        overlineContent = { Text(label) },
-        headlineContent = { Text(value) },
-        leadingContent = { Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-        trailingContent = { Icon(Icons.Rounded.ArrowDropDown, contentDescription = null) },
-        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-    )
-}
-
-/** Single-choice list in a dialog, scrolling when long. */
-@Composable
-private fun <T> ChoiceDialog(
-    title: String,
-    icon: ImageVector,
-    options: List<T>,
-    selected: T,
-    label: @Composable (T) -> String,
-    detail: @Composable (T) -> String?,
-    onSelect: (T) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = { Icon(icon, contentDescription = null) },
-        title = { Text(title) },
-        text = {
-            Column(Modifier.selectableGroup().verticalScroll(rememberScrollState())) {
-                options.forEach { option ->
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 56.dp)
-                            .clip(MaterialTheme.shapes.large)
-                            .selectable(selected = option == selected, role = Role.RadioButton) { onSelect(option) }
-                            .padding(horizontal = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        RadioButton(selected = option == selected, onClick = null)
-                        Column(Modifier.padding(start = 16.dp)) {
-                            Text(label(option), style = MaterialTheme.typography.bodyLarge)
-                            detail(option)?.let {
-                                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) }
-        },
-    )
 }

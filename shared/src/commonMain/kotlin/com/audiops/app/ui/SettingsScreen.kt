@@ -32,6 +32,7 @@ import androidx.compose.material.icons.rounded.BrightnessAuto
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Contrast
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Gavel
 import androidx.compose.material.icons.rounded.History
@@ -96,6 +97,7 @@ import com.audiops.shared.resources.action_cancel
 import com.audiops.shared.resources.action_clear
 import com.audiops.shared.resources.action_close
 import com.audiops.shared.resources.action_delete
+import com.audiops.shared.resources.action_forget_voice
 import com.audiops.shared.resources.back
 import com.audiops.shared.resources.clear_history_body
 import com.audiops.shared.resources.clear_history_title
@@ -109,6 +111,8 @@ import com.audiops.shared.resources.license_dsp
 import com.audiops.shared.resources.license_dsp_summary
 import com.audiops.shared.resources.license_espeak
 import com.audiops.shared.resources.license_espeak_summary
+import com.audiops.shared.resources.license_kokoro
+import com.audiops.shared.resources.license_kokoro_summary
 import com.audiops.shared.resources.license_litert
 import com.audiops.shared.resources.license_litert_summary
 import com.audiops.shared.resources.license_mediapipe
@@ -131,6 +135,8 @@ import com.audiops.shared.resources.license_sherpa
 import com.audiops.shared.resources.license_sherpa_summary
 import com.audiops.shared.resources.license_silero
 import com.audiops.shared.resources.license_silero_summary
+import com.audiops.shared.resources.license_sounds
+import com.audiops.shared.resources.license_sounds_summary
 import com.audiops.shared.resources.license_speaker
 import com.audiops.shared.resources.license_speaker_summary
 import com.audiops.shared.resources.license_supertonic
@@ -169,13 +175,13 @@ import com.audiops.shared.resources.settings_section_about
 import com.audiops.shared.resources.settings_section_appearance
 import com.audiops.shared.resources.settings_section_processing
 import com.audiops.shared.resources.settings_section_storage
-import com.audiops.shared.resources.settings_section_transcription
+import com.audiops.shared.resources.settings_section_voices
 import com.audiops.shared.resources.settings_source_code
 import com.audiops.shared.resources.settings_source_code_summary
 import com.audiops.shared.resources.settings_theme
 import com.audiops.shared.resources.settings_title
-import com.audiops.shared.resources.settings_transcription_model
 import com.audiops.shared.resources.settings_version
+import com.audiops.shared.resources.settings_voices_hint
 import com.audiops.shared.resources.theme_dark
 import com.audiops.shared.resources.theme_light
 import com.audiops.shared.resources.theme_system
@@ -193,6 +199,7 @@ data class SettingsActions(
     val onTranscriptionModel: (TranscriptionModel) -> Unit,
     val onDeleteModel: (AiModel) -> Unit,
     val onClearHistory: () -> Unit,
+    val onForgetVoice: (name: String) -> Unit = {},
 )
 
 /** [androidOnly]: AI components that are bundled or downloaded only on Android. */
@@ -228,6 +235,18 @@ private val licenses = listOf(
         Res.string.license_speaker,
         Res.string.license_speaker_summary,
         "https://github.com/modelscope/3D-Speaker",
+        androidOnly = true,
+    ),
+    LicenseEntry(
+        Res.string.license_kokoro,
+        Res.string.license_kokoro_summary,
+        "https://huggingface.co/hexgrad/Kokoro-82M",
+        androidOnly = true,
+    ),
+    LicenseEntry(
+        Res.string.license_sounds,
+        Res.string.license_sounds_summary,
+        "https://github.com/k2-fsa/icefall/pull/1421",
         androidOnly = true,
     ),
     LicenseEntry(
@@ -303,6 +322,7 @@ fun SettingsScreen(
     busy: Boolean,
     showTranscription: Boolean,
     actions: SettingsActions,
+    voices: List<String> = emptyList(),
 ) {
     var page by rememberSaveable { mutableStateOf(SettingsPage.MAIN) }
     // Hoisted so returning from a sub-page keeps the main page's scroll position.
@@ -317,6 +337,7 @@ fun SettingsScreen(
             busy = busy,
             showTranscription = showTranscription,
             actions = actions,
+            voices = voices,
             listState = mainListState,
             onOpen = { page = it },
         )
@@ -344,12 +365,11 @@ private fun SettingsMain(
     busy: Boolean,
     showTranscription: Boolean,
     actions: SettingsActions,
+    voices: List<String>,
     listState: LazyListState,
     onOpen: (SettingsPage) -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
-    var showModelDialog by rememberSaveable { mutableStateOf(false) }
     var showClearDialog by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
@@ -424,32 +444,7 @@ private fun SettingsMain(
                 )
             }
 
-            // Phone-only sections: transcription defaults and keeping the screen awake.
-            if (showTranscription) {
-                item { SectionHeader(stringResource(Res.string.settings_section_transcription)) }
-                item {
-                    SettingsGroup(
-                        { shape ->
-                            SettingsRow(
-                                icon = Icons.Rounded.RecordVoiceOver,
-                                title = stringResource(Res.string.settings_transcription_model),
-                                summary = stringResource(settings.transcriptionModel.label),
-                                shape = shape,
-                                onClick = { showModelDialog = true },
-                            )
-                        },
-                        { shape ->
-                            SettingsRow(
-                                icon = Icons.Rounded.Translate,
-                                title = stringResource(Res.string.settings_default_language),
-                                summary = stringResource(settings.defaultLanguage.label),
-                                shape = shape,
-                                onClick = { showLanguageDialog = true },
-                            )
-                        },
-                    )
-                }
-            }
+            // Language and model choices live on the Transcribe and Live meeting screens.
             item { SectionHeader(stringResource(Res.string.settings_section_processing)) }
             item {
                 SettingsGroup({ shape ->
@@ -462,6 +457,41 @@ private fun SettingsMain(
                         onCheckedChange = actions.onKeepScreenOn,
                     )
                 })
+            }
+
+            // Named speakers' voice prints, kept on the device; each can be forgotten.
+            if (voices.isNotEmpty()) {
+                item { SectionHeader(stringResource(Res.string.settings_section_voices)) }
+                item {
+                    Text(
+                        stringResource(Res.string.settings_voices_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+                    )
+                }
+                item {
+                    SettingsGroup(
+                        *voices.map { name ->
+                            val row: @Composable (Shape) -> Unit = { shape ->
+                                SettingsRow(
+                                    icon = Icons.Rounded.RecordVoiceOver,
+                                    title = name,
+                                    shape = shape,
+                                    trailing = {
+                                        IconButton(onClick = { actions.onForgetVoice(name) }) {
+                                            Icon(
+                                                Icons.Rounded.DeleteOutline,
+                                                contentDescription = stringResource(Res.string.action_forget_voice, name),
+                                            )
+                                        }
+                                    },
+                                )
+                            }
+                            row
+                        }.toTypedArray(),
+                    )
+                }
             }
 
             item { SectionHeader(stringResource(Res.string.settings_section_storage)) }
@@ -535,29 +565,6 @@ private fun SettingsMain(
                 )
             }
         }
-    }
-
-    if (showLanguageDialog) {
-        LanguageDialog(
-            title = stringResource(Res.string.settings_default_language),
-            selected = settings.defaultLanguage,
-            onSelect = {
-                actions.onDefaultLanguage(it)
-                showLanguageDialog = false
-            },
-            onDismiss = { showLanguageDialog = false },
-        )
-    }
-
-    if (showModelDialog) {
-        TranscriptionModelDialog(
-            selected = settings.transcriptionModel,
-            onSelect = {
-                actions.onTranscriptionModel(it)
-                showModelDialog = false
-            },
-            onDismiss = { showModelDialog = false },
-        )
     }
 
     if (showClearDialog) {

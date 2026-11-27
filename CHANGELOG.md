@@ -13,6 +13,22 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-27
+
+### Added
+- **Speaker labels for files.** Transcribe has a "Tell speakers apart" switch: the transcript starts each turn with Speaker 1, Speaker 2… and the time, like a live meeting.
+- **Suggestions from the sound.** After you choose or record a file, the Tools tab says what it sounds like (speech, speech with background noise, music) with its main sounds, and offers the tool worth trying: Transcribe, Enhance speech or Separate music. Analyze lists the main sounds too. This uses a small sound-recognition model (about 27 MB, downloaded once in the background).
+- **Kokoro voices.** Ten natural English voices for text to speech: six American (Heart, Bella, Nicole, Michael, Fenrir, Puck) and four British (Emma, Isabella, George, Fable). They share one download of about 155 MB.
+- **Name the speakers.** On a transcript or meeting with speakers, tap **Name speakers** to give each voice a name; the transcript and subtitles are rewritten with the names. Audiops can remember the named voices (on the phone only) and names those people by itself in later transcripts and meetings. Remembered voices are listed in Settings, where each can be forgotten.
+
+### Changed
+- **Modern pickers.** Language and voice are chosen from cards that open a searchable sheet, instead of plain dialogs.
+- **Language first.** Transcribe and Live meeting now open with the language spoken, then the model for it: only models that handle that language are shown, the recommended one first and marked. Text to speech asks for the language, then the voice, then the text. These choices moved out of Settings.
+- **Sentences for every language.** Languages transcribed with the many-language or Bangla model (which write no punctuation) now get a sentence at each pause, with a capital letter and the language's full stop (। for Bangla and Hindi, 。 for Chinese and Japanese), and a new paragraph after a long pause. These recordings are now cut at pauses instead of every 20 seconds, so no word is split in two.
+
+### Fixed
+- **Title bar colour when scrolling.** On Tools, Activity and Settings the status bar area now takes the same colour as the title bar when you scroll.
+
 ## [0.4.1] - 2026-11-27
 
 ### Changed

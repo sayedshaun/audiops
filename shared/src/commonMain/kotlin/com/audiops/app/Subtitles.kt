@@ -77,6 +77,18 @@ object Cues {
         return cues
     }
 
+    /**
+     * [cues] in order with no overlap: each starts no earlier than the one before ends (utterances
+     * widened with the audio around them can overlap a little).
+     */
+    fun sequential(cues: List<Cue>): List<Cue> {
+        var previousEnd = 0L
+        return cues.map { cue ->
+            val start = maxOf(cue.startMs, previousEnd)
+            cue.copy(startMs = start, endMs = maxOf(cue.endMs, start + MIN_CUE_MS)).also { previousEnd = it.endMs }
+        }
+    }
+
     /** Splits at sentence ends, and at spaces when a sentence is longer than [MAX_CHARS]. */
     internal fun chunk(text: String): List<String> {
         val sentences = mutableListOf<String>()

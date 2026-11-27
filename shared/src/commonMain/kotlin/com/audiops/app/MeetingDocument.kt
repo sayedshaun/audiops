@@ -22,7 +22,7 @@ object MeetingDocument {
 
     /** One subtitle per utterance, prefixed with its speaker. */
     fun cues(lines: List<MeetingLine>, speakerName: (Int) -> String): List<Cue> =
-        lines.map { Cue(it.startMs, it.endMs, "${speakerName(it.speaker + 1)}: ${it.text}") }
+        Cues.sequential(lines.map { Cue(it.startMs, it.endMs, "${speakerName(it.speaker + 1)}: ${it.text}") })
 
     /** m:ss, or h:mm:ss from an hour on. */
     fun clock(ms: Long): String {

@@ -20,6 +20,14 @@ class TtsTest {
                 assertTrue(voice.id, supertonicSpeaker(voice) in 0..9)
             }
             if (voice.engine == TtsEngine.POCKET) assertTrue(voice.id, voice.files.keys.single().endsWith(".litertlm"))
+            if (voice.engine == TtsEngine.KOKORO) {
+                assertTrue(voice.id, voice.language == "en-US" || voice.language == "en-GB")
+                assertTrue(
+                    voice.id,
+                    "voices.bin" in voice.files && "lexicon-us-en.txt" in voice.files && "lexicon-gb-en.txt" in voice.files,
+                )
+                assertTrue(voice.id, kokoroSpeaker(voice) in 0..53)
+            }
         }
     }
 
@@ -34,10 +42,17 @@ class TtsTest {
             ttsVoices.first { it.language == language }.engine != TtsEngine.SUPERTONIC
         }
         assertEquals(setOf("en-GB", "pt-PT", "fa", "kk", "ne", "no"), withoutSupertonic.toSet())
-        // The voices of one Supertonic or PocketTTS language share their files.
+        // The voices of one Supertonic, Kokoro or PocketTTS language share their files.
         val english = ttsVoices.filter { it.language == "en-US" }
-        assertEquals(10, english.size)
-        assertEquals(2, english.map { it.files }.toSet().size)
+        assertEquals(16, english.size)
+        assertEquals(3, english.map { it.files }.toSet().size)
+        assertEquals(listOf("Emma", "Isabella", "George", "Fable", "Cori"), ttsVoices.filter { it.language == "en-GB" }.map { it.name })
+    }
+
+    @Test fun kokoroVoicesMapToItsSpeakerTable() {
+        // Positions in the model's speaker_names metadata.
+        assertEquals(3, kokoroSpeaker(ttsVoice("kokoro-af_heart")!!))
+        assertEquals(26, kokoroSpeaker(ttsVoice("kokoro-bm_george")!!))
     }
 
     @Test fun supertonicStylesMapToItsSpeakerTable() {

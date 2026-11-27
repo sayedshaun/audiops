@@ -58,6 +58,21 @@ class MeetingTranscriber(
         return lines.mapIndexed { index, line -> line.copy(speaker = speakers[index]) }
     }
 
+    /**
+     * The voice of each speaker in [final] (the lines [finish] returned, in the same order): the mean
+     * direction of their utterances' embeddings, or null for a speaker with no utterance long enough.
+     */
+    fun voices(final: List<MeetingLine>): List<FloatArray?> {
+        val count = (final.maxOfOrNull { it.speaker } ?: -1) + 1
+        val sums = arrayOfNulls<FloatArray>(count)
+        final.forEachIndexed { index, line ->
+            val unit = embeddings.getOrNull(index)?.let(SpeakerClusters::normalized) ?: return@forEachIndexed
+            val sum = sums[line.speaker] ?: FloatArray(unit.size).also { sums[line.speaker] = it }
+            for (i in unit.indices) sum[i] += unit[i]
+        }
+        return sums.map { it?.let(SpeakerClusters::normalized) }
+    }
+
     private fun renumbered(lines: List<MeetingLine>): List<MeetingLine> {
         val numbers = SpeakerClusters.renumber(lines.map { it.speaker }.toIntArray())
         return lines.mapIndexed { index, line -> line.copy(speaker = numbers[index]) }

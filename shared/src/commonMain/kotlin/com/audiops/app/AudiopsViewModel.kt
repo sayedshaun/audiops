@@ -40,6 +40,10 @@ data class AudiopsState(
     val language: SpeechLanguage = SpeechLanguage.ENGLISH,
     /** Active jobs first (in queue order), then history, newest first. */
     val jobs: List<Job> = emptyList(),
+    /** What the current recording sounds like, once known (worked out in the background). */
+    val sounds: SoundProfile? = null,
+    /** Names of the voices remembered on this device, A to Z. */
+    val rememberedVoices: List<String> = emptyList(),
 ) {
     val activeJobs: List<Job> get() = jobs.filter { it.status.active }
 
@@ -140,6 +144,7 @@ class AudiopsViewModel(
         }
         if (_state.value.input != null) loadWaveform()
         refreshStorage()
+        refreshVoices()
     }
 
     // Navigation
@@ -195,19 +200,33 @@ class AudiopsViewModel(
         open(job.tool)
     }
 
+    /**
+     * Sets the spoken language for transcription and live meetings, and remembers it. When the chosen
+     * model cannot transcribe it, the recommended model for the language is chosen instead.
+     */
     fun setLanguage(language: SpeechLanguage) {
         savedState[KEY_LANGUAGE] = language.name
         _state.update { it.copy(language = language) }
+        viewModelScope.launch {
+            settingsRepository.setDefaultLanguage(language)
+            val model = settings.value?.transcriptionModel
+            if (model == null ||
+                !model.supports(language)
+            ) {
+                settingsRepository.setTranscriptionModel(recommendedTranscriptionModel(language))
+            }
+        }
     }
 
     private fun loadWaveform() {
         val input = _state.value.input ?: return
         waveformJob?.cancel()
-        _state.update { it.copy(waveform = null, waveformLoading = true, inputProblem = null) }
+        _state.update { it.copy(waveform = null, waveformLoading = true, inputProblem = null, sounds = null) }
         waveformJob = viewModelScope.launch {
             try {
                 val waveform = runOnWorker { engine.waveform(input.id, WAVEFORM_BARS) }
                 _state.update { if (it.input?.id == input.id) it.copy(waveform = waveform, waveformLoading = false) else it }
+                identifySounds(input)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
@@ -216,6 +235,23 @@ class AudiopsViewModel(
                 _state.update { if (it.input?.id == input.id) it.copy(inputProblem = problem, waveformLoading = false) else it }
             }
         }
+    }
+
+    /**
+     * Works out what [input] sounds like, to suggest a tool. Quietly gives up (no suggestion) when the
+     * platform cannot, the sound model cannot be downloaded, or the recording changes meanwhile.
+     */
+    private suspend fun identifySounds(input: AudioInput) {
+        if (!engine.supportsIdentify) return
+        val profile = try {
+            runOnWorker { engine.identify(input.id, ProcessingListener.None) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            if (!e.isRecoverable()) throw e
+            return
+        }
+        _state.update { if (it.input?.id == input.id) it.copy(sounds = profile) else it }
     }
 
     // Jobs
@@ -383,13 +419,18 @@ class AudiopsViewModel(
                     )
 
                     is JobSpec.Transcribe -> {
-                        val path = engine.transcribe(job.inputId, spec.language.code, spec.model, listener)
+                        val path = engine.transcribe(job.inputId, spec.language.code, spec.model, spec.speakers, speakerName, listener)
                         val text = engine.readText(path)
                         if (text.isBlank()) {
                             engine.deleteFile(path)
                             job.copy(status = JobStatus.FAILED, failure = FailureKind.NO_SPEECH)
                         } else {
-                            job.copy(outputPath = path, preview = text.take(PREVIEW_LENGTH), subtitlesPath = engine.subtitlesFor(path))
+                            job.copy(
+                                outputPath = path,
+                                preview = text.take(PREVIEW_LENGTH),
+                                subtitlesPath = engine.subtitlesFor(path),
+                                speakersPath = engine.speakersFile(path),
+                            )
                         }
                     }
 
@@ -443,16 +484,74 @@ class AudiopsViewModel(
      * meeting in history; [speakerName] names speakers (1-based) in the saved transcript.
      */
     fun startMeeting(name: String, speakerName: (Int) -> String) {
-        val model = settings.value?.transcriptionModel?.takeIf { it != TranscriptionModel.AUTO } ?: TranscriptionModel.PARAKEET
-        val language = if (model == TranscriptionModel.WHISPER) _state.value.language.code else ""
-        meeting.start(model, language, name, speakerName)
+        val language = _state.value.language
+        val model = settings.value?.transcriptionModel?.takeIf { it != TranscriptionModel.AUTO && it.supports(language) }
+            ?: recommendedTranscriptionModel(language)
+        meetingLanguage = language
+        meeting.start(model, language.code, name, speakerName)
     }
+
+    /** The language of the meeting that is running, for its history entry. */
+    private var meetingLanguage = SpeechLanguage.AUTO
 
     fun stopMeeting() = meeting.stop()
 
     fun discardMeeting() {
         meeting.discard()
         _messages.trySend(UiMessage.Cancelled)
+    }
+
+    /**
+     * Names speakers ("Speaker 1", "Speaker 2"…) in saved transcripts. The UI sets it from its
+     * localized text; transcripts already saved keep the words they were written with.
+     */
+    var speakerName: (Int) -> String = { "Speaker $it" }
+
+    /** The speakers of a transcript with speakers, for naming them. */
+    suspend fun speakers(job: Job): List<SpeakerInfo> {
+        val path = job.outputPath ?: return emptyList()
+        if (job.speakersPath == null) return emptyList()
+        return runCatching { runOnWorker { engine.speakers(path) } }.getOrDefault(emptyList())
+    }
+
+    /**
+     * Names the speakers of [jobId]'s transcript ([names] in speaker order; blank keeps "Speaker N")
+     * and, with [remember], keeps the named voices so later transcripts are named by themselves.
+     */
+    fun nameSpeakers(jobId: String, names: List<String?>, remember: Boolean) {
+        val job = _state.value.jobs.firstOrNull { it.id == jobId } ?: return
+        val path = job.outputPath ?: return
+        val name = speakerName
+        viewModelScope.launch {
+            val text = runCatching {
+                runOnWorker {
+                    engine.nameSpeakers(path, names, remember, name)
+                    engine.readText(path)
+                }
+            }.getOrElse {
+                _messages.trySend(UiMessage.SpeakersNotNamed)
+                return@launch
+            }
+            update(jobId) { it.copy(preview = text.take(PREVIEW_LENGTH), revision = it.revision + 1) }
+            persist()
+            refreshVoices()
+            _messages.trySend(UiMessage.SpeakersNamed)
+        }
+    }
+
+    /** Forgets a remembered voice. */
+    fun forgetVoice(name: String) {
+        viewModelScope.launch {
+            runCatching { runOnWorker { engine.forgetVoice(name) } }
+            refreshVoices()
+        }
+    }
+
+    private fun refreshVoices() {
+        viewModelScope.launch {
+            val names = runCatching { runOnWorker { engine.rememberedVoices() } }.getOrDefault(emptyList())
+            _state.update { it.copy(rememberedVoices = names) }
+        }
     }
 
     /** Dismisses a failed meeting. */
@@ -464,13 +563,14 @@ class AudiopsViewModel(
             tool = Tool.MEETING,
             inputId = result.audioPath,
             inputName = result.name,
-            spec = JobSpec.Meeting(result.model, result.speakers, result.durationMs),
+            spec = JobSpec.Meeting(result.model, result.speakers, result.durationMs, meetingLanguage),
             status = JobStatus.DONE,
             createdAt = result.startedAt,
             finishedAt = currentTimeMillis(),
             outputPath = result.transcriptPath,
             subtitlesPath = result.subtitlesPath,
             audioPath = result.audioPath,
+            speakersPath = result.speakersPath,
             preview = result.preview.take(PREVIEW_LENGTH),
         )
         _state.update { s ->

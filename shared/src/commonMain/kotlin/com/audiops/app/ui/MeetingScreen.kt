@@ -88,6 +88,7 @@ import com.audiops.app.Job
 import com.audiops.app.MeetingDocument
 import com.audiops.app.MeetingLine
 import com.audiops.app.MeetingState
+import com.audiops.app.SpeechLanguage
 import com.audiops.app.Stage
 import com.audiops.app.Tool
 import com.audiops.app.TranscriptionModel
@@ -113,14 +114,15 @@ import com.audiops.shared.resources.meeting_last
 import com.audiops.shared.resources.meeting_listening
 import com.audiops.shared.resources.meeting_listening_hint
 import com.audiops.shared.resources.meeting_live
-import com.audiops.shared.resources.meeting_model
-import com.audiops.shared.resources.meeting_model_hint
 import com.audiops.shared.resources.meeting_name
 import com.audiops.shared.resources.meeting_preparing
 import com.audiops.shared.resources.meeting_screen_off
 import com.audiops.shared.resources.meeting_speaker
 import com.audiops.shared.resources.meeting_speakers
 import com.audiops.shared.resources.stage_model_download_percent
+import com.audiops.shared.resources.step_language
+import com.audiops.shared.resources.step_model
+import com.audiops.shared.resources.step_start
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -134,6 +136,8 @@ data class MeetingActions(
     val onDiscard: () -> Unit,
     val onDismissError: () -> Unit,
     val onMicrophoneDenied: () -> Unit,
+    val onLanguage: (SpeechLanguage) -> Unit,
+    val onTranscriptionModel: (TranscriptionModel) -> Unit,
     val jobCard: JobCardActions,
 )
 
@@ -143,7 +147,14 @@ data class MeetingActions(
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun MeetingScreen(state: MeetingState, model: TranscriptionModel, latestJob: Job?, snackbar: SnackbarHostState, actions: MeetingActions) {
+fun MeetingScreen(
+    state: MeetingState,
+    language: SpeechLanguage,
+    model: TranscriptionModel,
+    latestJob: Job?,
+    snackbar: SnackbarHostState,
+    actions: MeetingActions,
+) {
     val tool = Tool.MEETING
     val running = state is MeetingState.Preparing || state is MeetingState.Live || state is MeetingState.Finishing
     // A meeting that finishes while this screen is open is shown first, above Start: it is the
@@ -217,7 +228,15 @@ fun MeetingScreen(state: MeetingState, model: TranscriptionModel, latestJob: Job
                         Text(stringResource(Res.string.action_meeting_new))
                     }
                 } else {
-                    MeetingIntro(model) {
+                    // What is spoken, then the model for it, then Start.
+                    StepTitle(1, stringResource(Res.string.step_language))
+                    LanguageField(selected = language, onSelect = actions.onLanguage)
+                    Spacer(Modifier.height(12.dp))
+                    StepTitle(2, stringResource(Res.string.step_model))
+                    TranscriptionModelChoice(language, model, actions.onTranscriptionModel)
+                    Spacer(Modifier.height(12.dp))
+                    StepTitle(3, stringResource(Res.string.step_start))
+                    MeetingIntro {
                         actions.onDismissError()
                         requestMicrophone()
                     }
@@ -238,7 +257,7 @@ fun MeetingScreen(state: MeetingState, model: TranscriptionModel, latestJob: Job
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun MeetingIntro(model: TranscriptionModel, onStart: () -> Unit) {
+private fun MeetingIntro(onStart: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -267,16 +286,6 @@ private fun MeetingIntro(model: TranscriptionModel, onStart: () -> Unit) {
                 color = colors.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
-            Spacer(Modifier.height(20.dp))
-            Surface(color = colors.surfaceContainerHighest, shape = CircleShape) {
-                Row(Modifier.padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Rounded.GraphicEq, contentDescription = null, modifier = Modifier.size(18.dp), tint = colors.primary)
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(Res.string.meeting_model, stringResource(model.label)), style = MaterialTheme.typography.labelLarge)
-                }
-            }
-            Spacer(Modifier.height(6.dp))
-            Hint(stringResource(Res.string.meeting_model_hint))
             Spacer(Modifier.height(24.dp))
             Button(
                 onClick = onStart,

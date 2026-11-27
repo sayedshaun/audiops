@@ -24,6 +24,19 @@ class AndroidAudioEngine(context: Context) :
     override val supportsTranscribe: Boolean = true
     override val supportsSpeak: Boolean = true
     override val supportsSeparate: Boolean = true
+    override val supportsIdentify: Boolean = true
+
+    override fun identify(source: String, listener: ProcessingListener): SoundProfile =
+        withDecoded(source) { pcm -> SoundTagger.identify(context, pcm, listener) }
+
+    /** Adds the main sounds to the measurements, when the sound model can be had (it is small; offline, they are left out). */
+    override fun analyze(source: String, listener: ProcessingListener): AudioReport {
+        val report = super.analyze(source, listener)
+        val sounds = runCatching { identify(source, ProcessingListener.None).tags }
+            .onFailure { if (it is java.util.concurrent.CancellationException || it is InterruptedException) throw it }
+            .getOrDefault(emptyList())
+        return report.copy(sounds = sounds)
+    }
 
     override fun decode(source: String): File = AudioDecoder.decode(context, source.toUri(), workDir)
 
@@ -41,8 +54,31 @@ class AndroidAudioEngine(context: Context) :
         outputs.map { it.absolutePath }
     }
 
-    override fun transcribe(source: String, language: String, model: TranscriptionModel, listener: ProcessingListener): String =
-        withDecoded(source) { pcm -> storeTranscript(AudioPipelines.transcribe(context, pcm, language, model, listener)) }
+    /**
+     * Models that punctuate transcribe in fixed sections, as before. With speakers, or with a model
+     * that writes no punctuation, the recording is cut at pauses instead: each utterance gets a
+     * speaker, or becomes a sentence.
+     */
+    override fun transcribe(
+        source: String,
+        language: String,
+        model: TranscriptionModel,
+        speakers: Boolean,
+        speakerName: (Int) -> String,
+        listener: ProcessingListener,
+    ): String = withDecoded(source) { pcm ->
+        if (!speakers && model.punctuates) {
+            storeTranscript(AudioPipelines.transcribe(context, pcm, language, model, listener))
+        } else {
+            val (lines, speakerVoices) = AudioPipelines.transcribeUtterances(context, pcm, language, model, speakers, listener)
+            val finished = if (model.punctuates) lines else SpeechSentences.punctuate(lines, language, MeetingModels.MAX_SPEECH_MS)
+            if (speakers) {
+                storeSpeakerTranscript(SpeakerTranscript.of(finished, speakerVoices, voices), speakerName)
+            } else {
+                storeTranscript(SpeechTranscription.plain(finished, language))
+            }
+        }
+    }
 
     override val saveFormats: List<SaveFormat> = AudioEncoder.formats
 

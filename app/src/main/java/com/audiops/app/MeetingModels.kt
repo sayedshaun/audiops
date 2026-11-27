@@ -36,6 +36,9 @@ internal object MeetingModels {
     /** Longer speech is cut here, so text keeps appearing while someone talks at length. */
     private const val MAX_SPEECH_SECONDS = 12f
 
+    /** [MAX_SPEECH_SECONDS] in milliseconds: an utterance this long was cut, not ended by a pause. */
+    const val MAX_SPEECH_MS = (MAX_SPEECH_SECONDS * 1000).toLong()
+
     fun vad(context: Context, listener: ProcessingListener): Vad {
         val directory = ModelFiles.ensure(context.noBackupFilesDir, "silero-vad/$VAD_REVISION", VAD_URL, vadDigests, listener)
         return Vad(

@@ -83,5 +83,6 @@ val AiModel.icon: ImageVector
         AiModel.PARAKEET, AiModel.OMNILINGUAL, AiModel.WHISPER, AiModel.BANGLA -> Tool.TRANSCRIBE.icon
         AiModel.SCNET -> Tool.SEPARATE.icon
         AiModel.MEETING -> Tool.MEETING.icon
-        AiModel.POCKET_TTS, AiModel.PIPER, AiModel.SUPERTONIC -> Tool.SPEAK.icon
+        AiModel.SOUNDS -> Tool.ANALYZE.icon
+        AiModel.POCKET_TTS, AiModel.PIPER, AiModel.SUPERTONIC, AiModel.KOKORO -> Tool.SPEAK.icon
     }

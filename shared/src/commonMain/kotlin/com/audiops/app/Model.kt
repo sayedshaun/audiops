@@ -119,8 +119,46 @@ enum class TranscriptionModel { AUTO, PARAKEET, OMNILINGUAL, WHISPER, BANGLA }
 /** The models a user can pick. [TranscriptionModel.AUTO] only exists for history saved by earlier versions. */
 val selectableTranscriptionModels = TranscriptionModel.entries - TranscriptionModel.AUTO
 
+/** Language codes of the 25 European languages the punctuated model (Parakeet v3) was trained on. */
+val punctuatedModelLanguages = setOf(
+    "bg", "cs", "da", "de", "el", "en", "es", "et", "fi", "fr", "hr", "hu", "it",
+    "lt", "lv", "mt", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "uk",
+)
+
+/**
+ * Whether the model writes punctuation and capitals itself. The others get sentence breaks at
+ * pauses instead (`SpeechSentences`).
+ */
+val TranscriptionModel.punctuates: Boolean
+    get() = this != TranscriptionModel.OMNILINGUAL && this != TranscriptionModel.BANGLA
+
+/** Whether this model can transcribe [language]. The many-language and small models cover every offered language. */
+fun TranscriptionModel.supports(language: SpeechLanguage): Boolean = when (this) {
+    TranscriptionModel.PARAKEET -> language.code in punctuatedModelLanguages
+    TranscriptionModel.BANGLA -> language == SpeechLanguage.BANGLA
+    TranscriptionModel.AUTO, TranscriptionModel.OMNILINGUAL, TranscriptionModel.WHISPER -> true
+}
+
+/**
+ * The best model for [language]: the Bangla model for Bangla, the punctuated model for its European
+ * languages, the small model for Urdu (the many-language model writes Urdu in Devanagari), and the
+ * many-language model for everything else.
+ */
+fun recommendedTranscriptionModel(language: SpeechLanguage): TranscriptionModel = when {
+    language == SpeechLanguage.BANGLA -> TranscriptionModel.BANGLA
+    language.code in punctuatedModelLanguages -> TranscriptionModel.PARAKEET
+    language == SpeechLanguage.URDU -> TranscriptionModel.WHISPER
+    else -> TranscriptionModel.OMNILINGUAL
+}
+
+/** The models offered for [language], the recommended one first. */
+fun transcriptionModelsFor(language: SpeechLanguage): List<TranscriptionModel> {
+    val recommended = recommendedTranscriptionModel(language)
+    return listOf(recommended) + selectableTranscriptionModels.filter { it != recommended && it.supports(language) }
+}
+
 /** Downloadable AI models, listed and deleted one by one in Settings → Downloaded models. */
-enum class AiModel { ENHANCE, NOISE, SCNET, PARAKEET, OMNILINGUAL, WHISPER, BANGLA, POCKET_TTS, PIPER, SUPERTONIC, MEETING }
+enum class AiModel { ENHANCE, NOISE, SCNET, PARAKEET, OMNILINGUAL, WHISPER, BANGLA, POCKET_TTS, PIPER, SUPERTONIC, MEETING, SOUNDS, KOKORO }
 
 /**
  * One-tap chains of the existing tools for common kinds of recording. Each preset is a fixed list
@@ -234,6 +272,25 @@ sealed interface AudioOperation {
     data class Resample(val sampleRate: Int) : AudioOperation
 }
 
+/** What a recording mostly is, judged from the sounds in it. */
+enum class SoundKind { SPEECH, NOISY_SPEECH, MUSIC, OTHER }
+
+/**
+ * The sounds heard in a recording: what it mostly is ([kind]) and the main sounds ([tags], AudioSet
+ * class names in English, strongest first).
+ */
+@Serializable
+data class SoundProfile(val kind: SoundKind, val tags: List<String>)
+
+/** The tool most worth trying for this kind of recording, or null when there is no clear one. */
+val SoundKind.suggestedTool: Tool?
+    get() = when (this) {
+        SoundKind.SPEECH -> Tool.TRANSCRIBE
+        SoundKind.NOISY_SPEECH -> Tool.ENHANCE
+        SoundKind.MUSIC -> Tool.SEPARATE
+        SoundKind.OTHER -> null
+    }
+
 /** What a job does. */
 @Serializable
 sealed interface JobSpec {
@@ -244,7 +301,12 @@ sealed interface JobSpec {
 
     @Serializable
     @SerialName("transcribe")
-    data class Transcribe(val language: SpeechLanguage, val model: TranscriptionModel = TranscriptionModel.AUTO) : JobSpec
+    data class Transcribe(
+        val language: SpeechLanguage,
+        val model: TranscriptionModel = TranscriptionModel.AUTO,
+        /** Whether the transcript tells speakers apart. */
+        val speakers: Boolean = false,
+    ) : JobSpec
 
     /** Text to speech: [voice] is a [TtsVoice.id]; [speed] 1 = normal. */
     @Serializable
@@ -264,10 +326,18 @@ sealed interface JobSpec {
     @SerialName("analyze")
     data object Analyze : JobSpec
 
-    /** A live meeting transcription: [speakers] told apart over [durationMs], transcribed with [model]. */
+    /**
+     * A live meeting transcription: [speakers] told apart over [durationMs], transcribed in [language]
+     * with [model]. Meetings saved by 0.4.0 have no language ([SpeechLanguage.AUTO]).
+     */
     @Serializable
     @SerialName("meeting")
-    data class Meeting(val model: TranscriptionModel, val speakers: Int, val durationMs: Long) : JobSpec
+    data class Meeting(
+        val model: TranscriptionModel,
+        val speakers: Int,
+        val durationMs: Long,
+        val language: SpeechLanguage = SpeechLanguage.AUTO,
+    ) : JobSpec
 }
 
 @Serializable
@@ -299,6 +369,8 @@ data class AudioReport(
     val dcOffset: Float,
     /** Share of 10 ms frames below -50 dBFS, 0..1. */
     val silenceRatio: Float,
+    /** The main sounds heard (AudioSet class names), strongest first; empty where sounds are not identified. */
+    val sounds: List<String> = emptyList(),
 )
 
 /** Where a running job is. Not persisted. [subFraction] is progress within item [index]. */
@@ -333,14 +405,21 @@ data class Job(
     val subtitlesPath: String? = null,
     /** The recording of a live meeting (WAV); null for every other job. */
     val audioPath: String? = null,
+    /** The speakers file of a transcript with speakers, for naming them; null otherwise. */
+    val speakersPath: String? = null,
+    /** Increases each time the transcript is rewritten (speakers named), so it is read again. */
+    val revision: Int = 0,
     val report: AudioReport? = null,
     val failure: FailureKind? = null,
     val failureDetail: String? = null,
     @Transient val progress: JobProgress? = null,
 )
 
-/** Every file a job left in app storage: its output, the stems of a separation, its subtitles and a meeting's recording. */
-val Job.files: List<String> get() = (listOfNotNull(outputPath, subtitlesPath, audioPath) + stemPaths.orEmpty()).distinct()
+/**
+ * Every file a job left in app storage: its output, the stems of a separation, its subtitles, its
+ * speakers file and a meeting's recording.
+ */
+val Job.files: List<String> get() = (listOfNotNull(outputPath, subtitlesPath, audioPath, speakersPath) + stemPaths.orEmpty()).distinct()
 
 /** The files music separation writes, in this order. */
 enum class SeparatedStem(val fileSuffix: String) {
@@ -374,4 +453,6 @@ sealed interface UiMessage {
     data class InputReady(val name: String) : UiMessage
     data class ImportFailed(val detail: String?) : UiMessage
     data class RecordFailed(val detail: String?) : UiMessage
+    data object SpeakersNamed : UiMessage
+    data object SpeakersNotNamed : UiMessage
 }

@@ -52,6 +52,7 @@ import com.audiops.shared.resources.error_out_of_memory
 import com.audiops.shared.resources.error_processing_failed
 import com.audiops.shared.resources.error_record
 import com.audiops.shared.resources.error_save
+import com.audiops.shared.resources.error_speakers_named
 import com.audiops.shared.resources.error_unknown
 import com.audiops.shared.resources.error_unreadable
 import com.audiops.shared.resources.error_unsupported_format
@@ -134,12 +135,15 @@ import com.audiops.shared.resources.message_job_failed
 import com.audiops.shared.resources.message_job_finished
 import com.audiops.shared.resources.message_models_deleted
 import com.audiops.shared.resources.message_saved
+import com.audiops.shared.resources.message_speakers_named
 import com.audiops.shared.resources.model_bangla
 import com.audiops.shared.resources.model_bangla_purpose
 import com.audiops.shared.resources.model_dpdfnet
 import com.audiops.shared.resources.model_dpdfnet_purpose
 import com.audiops.shared.resources.model_enhance
 import com.audiops.shared.resources.model_enhance_purpose
+import com.audiops.shared.resources.model_kokoro
+import com.audiops.shared.resources.model_kokoro_purpose
 import com.audiops.shared.resources.model_meeting
 import com.audiops.shared.resources.model_meeting_purpose
 import com.audiops.shared.resources.model_omnilingual
@@ -152,6 +156,8 @@ import com.audiops.shared.resources.model_pocket_tts
 import com.audiops.shared.resources.model_pocket_tts_purpose
 import com.audiops.shared.resources.model_scnet
 import com.audiops.shared.resources.model_scnet_purpose
+import com.audiops.shared.resources.model_sounds
+import com.audiops.shared.resources.model_sounds_purpose
 import com.audiops.shared.resources.model_supertonic
 import com.audiops.shared.resources.model_supertonic_purpose
 import com.audiops.shared.resources.model_whisper
@@ -186,6 +192,7 @@ import com.audiops.shared.resources.summary_loudness
 import com.audiops.shared.resources.summary_peak
 import com.audiops.shared.resources.summary_rate
 import com.audiops.shared.resources.summary_silence
+import com.audiops.shared.resources.summary_speakers
 import com.audiops.shared.resources.summary_speed
 import com.audiops.shared.resources.summary_strength
 import com.audiops.shared.resources.time_days
@@ -227,11 +234,6 @@ import com.audiops.shared.resources.transcription_choice_omnilingual
 import com.audiops.shared.resources.transcription_choice_parakeet
 import com.audiops.shared.resources.transcription_choice_whisper
 import com.audiops.shared.resources.transcription_model_auto
-import com.audiops.shared.resources.transcription_model_auto_summary
-import com.audiops.shared.resources.transcription_model_bangla_summary
-import com.audiops.shared.resources.transcription_model_omnilingual_summary
-import com.audiops.shared.resources.transcription_model_parakeet_summary
-import com.audiops.shared.resources.transcription_model_whisper_summary
 import com.audiops.shared.resources.tts_language_ar
 import com.audiops.shared.resources.tts_language_bg
 import com.audiops.shared.resources.tts_language_cs
@@ -354,6 +356,8 @@ val AiModel.title: StringResource
         AiModel.SUPERTONIC -> Res.string.model_supertonic
         AiModel.SCNET -> Res.string.model_scnet
         AiModel.MEETING -> Res.string.model_meeting
+        AiModel.SOUNDS -> Res.string.model_sounds
+        AiModel.KOKORO -> Res.string.model_kokoro
     }
 
 /** What the model is used for. */
@@ -370,6 +374,8 @@ val AiModel.purpose: StringResource
         AiModel.SUPERTONIC -> Res.string.model_supertonic_purpose
         AiModel.SCNET -> Res.string.model_scnet_purpose
         AiModel.MEETING -> Res.string.model_meeting_purpose
+        AiModel.SOUNDS -> Res.string.model_sounds_purpose
+        AiModel.KOKORO -> Res.string.model_kokoro_purpose
     }
 
 /** What a transcription option listens for. Model names appear only under Settings → Downloaded models. */
@@ -380,15 +386,6 @@ val TranscriptionModel.label: StringResource
         TranscriptionModel.OMNILINGUAL -> Res.string.transcription_choice_omnilingual
         TranscriptionModel.WHISPER -> Res.string.transcription_choice_whisper
         TranscriptionModel.BANGLA -> Res.string.transcription_choice_bangla
-    }
-
-val TranscriptionModel.summary: StringResource
-    get() = when (this) {
-        TranscriptionModel.AUTO -> Res.string.transcription_model_auto_summary
-        TranscriptionModel.PARAKEET -> Res.string.transcription_model_parakeet_summary
-        TranscriptionModel.OMNILINGUAL -> Res.string.transcription_model_omnilingual_summary
-        TranscriptionModel.WHISPER -> Res.string.transcription_model_whisper_summary
-        TranscriptionModel.BANGLA -> Res.string.transcription_model_bangla_summary
     }
 
 /** Whether the transcription screen asks for a language with this model. */
@@ -632,12 +629,11 @@ fun JobSpec.summary(): String? = when (this) {
 
     is JobSpec.Enhance -> stringResource(mode.title)
 
-    // The languages the transcription listened for; with a chosen language, that language.
-    is JobSpec.Transcribe -> if (model.usesLanguage && language != SpeechLanguage.AUTO) {
-        stringResource(language.label)
-    } else {
-        stringResource(model.label)
-    }
+    // The spoken language; history from before languages were chosen names the languages the model covers.
+    is JobSpec.Transcribe -> listOfNotNull(
+        stringResource(if (language != SpeechLanguage.AUTO) language.label else model.label),
+        if (speakers) stringResource(Res.string.summary_speakers) else null,
+    ).joinToString(" · ")
 
     is JobSpec.Speak -> listOfNotNull(ttsVoice(voice)?.name, ttsVoice(voice)?.let { stringResource(ttsLanguageLabel(it.language)) })
         .joinToString(" · ")
@@ -648,7 +644,7 @@ fun JobSpec.summary(): String? = when (this) {
     is JobSpec.Meeting -> listOf(
         formatDuration(durationMs),
         pluralStringResource(Res.plurals.meeting_speakers, speakers, speakers),
-        stringResource(model.label),
+        stringResource(if (language != SpeechLanguage.AUTO) language.label else model.label),
     ).joinToString(" · ")
 }
 
@@ -678,6 +674,8 @@ suspend fun UiMessage.text(): String = when (this) {
     is UiMessage.InputReady -> getString(Res.string.message_input_ready, name)
     is UiMessage.RecordFailed -> getString(Res.string.error_record, detail ?: getString(Res.string.record_permission_needed))
     is UiMessage.ImportFailed -> getString(Res.string.error_import, detail ?: getString(Res.string.error_unknown))
+    UiMessage.SpeakersNamed -> getString(Res.string.message_speakers_named)
+    UiMessage.SpeakersNotNamed -> getString(Res.string.error_speakers_named)
 }
 
 /** "Just now", "5 min ago", "3 h ago", "2 d ago". */

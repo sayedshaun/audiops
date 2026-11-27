@@ -664,3 +664,66 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 ### Changed
 - CHANGELOG: Unreleased became 0.4.1 (transcription named by language). versionCode 4001 (from the tag).
+
+## 2026-11-27: Language and Model sections on language tools (`feature/language-model-sections`)
+
+### Changed
+- Transcribe: 1 Language (`LanguageField`), 2 Model (`TranscriptionModelChoice`, connected radio group, Recommended badge), 3 Recording, then Transcribe. Live meeting: Language, Model, then Start (intro card). Text to speech: Language, Voice (with speed), Text, then Create speech.
+- `Model.kt`: `punctuatedModelLanguages`, `TranscriptionModel.supports`, `recommendedTranscriptionModel` (Bangla → Bangla, 25 European → Parakeet, Urdu → Whisper, else Omnilingual), `transcriptionModelsFor`. `AudiopsViewModel.setLanguage` saves the language and switches to the recommended model when the chosen one cannot handle it; live meetings use the language too. `JobSpec.Transcribe` always records the language; `JobSpec.Meeting` gained `language` (defaults to AUTO for 0.4.0 history). Activity summaries show the language.
+- Removed Settings → Transcription (model and language rows), `TranscriptionModelDialog` and their strings; `ParakeetTranscriber.languages` moved to `punctuatedModelLanguages`.
+- Tests: `ModelTest.eachLanguageOffersItsModelsWithTheRecommendedOneFirst`, meeting round trip with language, ViewModel meeting test records the language.
+- Checked on the emulator (light): Transcribe (English → three models; Bangla → Bangla model recommended, punctuated model hidden; back to English → punctuated model chosen again), Live meeting sections shared with Transcribe, Text to speech order. Dark mode not seen (the emulator stayed light).
+
+## 2026-11-27: modern language and voice selectors (`feature/language-model-sections`)
+
+### Changed
+- New `Selector.kt`: `SelectorCard` (shaped icon, small label over an emphasised value, optional supporting line, tonal unfold chevron; read-only without `onClick`) and `SelectionSheet` (modal bottom sheet with a shaped-icon header, a pill search field for lists over 8, pill rows with the choice in `secondaryContainer` and a check, opens at the current choice; "Nothing matches." when filtered empty).
+- `LanguageField` uses them (searchable list of spoken languages); `LanguageDialog` removed. Text to speech: Language and Voice are `SelectorCard`s (voice card shows licence and size), speed in its own card; the private `PickerField`/`ChoiceDialog` removed. `speak_voice_summary` no longer repeats the voice name.
+- Checked on the emulator (light): language card, sheet with search ("eng" → English), selection, Text to speech cards.
+
+## 2026-11-27: title bar reaches behind the status bar on the tabs (`feature/language-model-sections`)
+
+### Fixed
+- On Tools, Activity and Settings the scrolled (tinted) title bar stopped below the status bar, which kept the page colour. The navigation `Scaffold` in `Shell` applied the status bar inset as content padding; it now uses `contentWindowInsets = WindowInsets(0, 0, 0, 0)`, so each tab's `LargeFlexibleTopAppBar` draws behind the status bar like the tool screens do. Checked on the emulator: status bar strip and collapsed bar are the same colour (RGB 237, 237, 246).
+
+## 2026-11-27: sentences at pauses, speaker labels for files, naming speakers (`feature/speech-segments`)
+
+### Added
+- `SpeechTranscription` (jvmShared): a recording is downsampled to 16 kHz (anti-alias + `Resampler`), cut into utterances by a `SpeechDetector` (Silero VAD on Android: `VadDetector`) and transcribed by `MeetingTranscriber`, the same path a live meeting takes. `AndroidAudioEngine.transcribe` uses it for transcripts with speakers and for the models that write no punctuation (`TranscriptionModel.punctuates`: Omnilingual and Bangla); Parakeet and Whisper without speakers keep the 20/30 s sections.
+- `SpeechSentences`: each utterance becomes a sentence (capital letter, the language's full stop: । for bn/as/hi/mr/ne/sa/pa, ۔ for Urdu, 。 for zh/ja, ። ။ ។ for am/my/km, none for th/lo, else "."), utterances cut at the 12 s VAD limit run on, a 2 s pause starts a paragraph, Turkish/Azerbaijani capital İ. Applied to live meetings with those models too. No punctuation model was added: sherpa-onnx's only offline one is the 294 MB CT-Transformer for Chinese and English; the Bangla MuRIL restorer is 778 MB with Kaggle-competition weights of unclear licence.
+- `JobSpec.Transcribe.speakers` and a "Tell speakers apart" switch on Transcribe. The engine gets a `speakerName` (the ViewModel's, set from the localized "Speaker N").
+- Speaker naming: `SpeakerTranscript` (`<transcript>.speakers.json`: lines, each speaker's mean voice embedding, names) is written for meetings and transcripts with speakers; `AudioEngine.speakersFile/speakers/nameSpeakers` rewrite the text and SRT from it. `VoiceBook` (`filesDir/voices.json`) keeps named voices (refined each time a name is given again, shared lock) and names speakers in new transcripts and meetings (one-to-one, closest first, cosine ≥ 0.6). `Job.speakersPath` (in `Job.files`), `Job.revision` (re-reads the transcript after naming), `MeetingResult.speakersPath`, `AudiopsState.rememberedVoices`. UI: Name speakers button and `SpeakerNamesSheet` (first words of each speaker, name field, remember switch), Settings → Remembered voices with Forget.
+- Tests: `SpeakersTest` (sentences, cut utterances, paragraphs, the utterance pipeline with a one-second fake detector, speaker voices, `VoiceBook` matching, naming through a `JvmAudioEngine`, speakers file round trip), ViewModel naming test, Transcribe-with-speakers round trip.
+- Not checked on the emulator (another session is using it); the VAD path was not run on a device yet.
+
+## 2026-11-27: what a recording sounds like (`feature/sound-tags`)
+
+### Added
+- `SoundTagger` (app): k2-fsa's small Zipformer audio tagger (AudioSet, 527 classes, int8, 27 MB, Apache 2.0; `k2-fsa/sherpa-onnx-zipformer-small-audio-tagging-2024-04-15` at `c24f9d0f`, model and label list SHA-256 pinned) through sherpa-onnx `AudioTagging`. CED was considered first but is GPL-3.0.
+- `SoundTags` (jvmShared): up to three 10 s windows (start, middle, end) at 16 kHz, averaged scores, and a `SoundProfile`: `SoundKind` (speech, noisy speech, music, other) and up to four main sounds. Thresholds from host runs of the model: speech ≥ 0.9 on speech clips, music/singing ≥ 0.5 on music; added white noise or hum scores 0.15–0.5 across the noise classes (brown noise was not noticed). Speech over music below 0.6 stays speech.
+- `AudioEngine.supportsIdentify`/`identify`; the ViewModel identifies each chosen recording after its waveform loads (`AudiopsState.sounds`; failures, such as no network for the first download, just mean no suggestion). Tools tab: `SoundSuggestion` card under the recording with the suggested tool (`SoundKind.suggestedTool`: Transcribe, Enhance speech, Separate music). Analyze: `AudioReport.sounds` ("Main sounds" row). Settings → Downloaded models lists it (`AiModel.SOUNDS`).
+- Licence: `licenses/ICEFALL-AUDIO-TAGGING-APACHE-2.0.txt` (icefall licence, with the AudioSet CC BY 4.0 attribution), notices, NOTICE and the licence list.
+- Tests: `SoundTagsTest` (classification with real model scores, averaging, windows), ViewModel identification test.
+- Not checked on the emulator (another session is using it).
+
+## 2026-11-27: Kokoro English voices (`feature/kokoro-voices`)
+
+### Added
+- `TtsEngine.KOKORO`: Kokoro v1.0 int8 (hexgrad, Apache 2.0) from `csukuangfj/kokoro-int8-multi-lang-v1_0` at `57adb37f` (model, voices.bin, tokens and the US and UK lexicons, every file SHA-256 pinned, ~155 MB in `kokoro/<revision>`). Ten voices: en-US Heart, Bella, Nicole, Michael, Fenrir, Puck; en-GB Emma, Isabella, George, Fable; speaker ids from the model's `speaker_names` metadata (`kokoroSpeaker`). `SpeechSynthesizer.kokoro` passes the variety's lexicon and the bundled espeak-ng data; with no `lang` set, sherpa-onnx 1.13.8 looks words up in the lexicon and spells missing ones with espeak-ng (checked in `kokoro-multi-lang-lexicon.cc` at v1.13.8).
+- Measured on a laptop CPU (Ryzen 5 4650U, 4 threads, host sherpa-onnx 2.0.3): the int8 model needs about 1.5 s per second of speech, fp32 (325 MB) about 0.6 s. int8 was kept for the download size; ARM phones run int8 kernels well, but this still needs timing on a phone.
+- Settings → Downloaded models (`AiModel.KOKORO`), licence list, `licenses/KOKORO-APACHE-2.0.txt`, notices, NOTICE. `TtsTest` checks the Kokoro voices and their speaker ids.
+
+## 2026-11-27: utterance padding and emulator checks (`feature/kokoro-voices`)
+
+### Fixed
+- `VadDetector` fed sherpa-onnx's VAD 10 s blocks at once and lost most utterances (one of eight came through on the emulator); it now feeds 0.1 s blocks, as a live meeting does.
+- Silero VAD starts an utterance a few hundred ms late. Parakeet coped, but Omnilingual turned the clipped English utterances of the test clip into Arabic-script text (reproduced on the host with the same segments). `UtterancePadding` (jvmShared) widens every utterance by 0.3 s before and 0.2 s after from the surrounding audio, for file transcription and live meetings; `Cues.sequential` keeps subtitles from overlapping. Tests: `SpeakersTest.utterancesAreWidenedWithTheAudioAroundThem`.
+- Settings → Downloaded models: "Zipformer sound recognition"; the voice detection model's purpose now names speaker labels and sentences too.
+
+### Checked on the emulator (debug, then the R8 release build signed with the debug key)
+- Tools tab: "Sounds like speech" with Transcribe for the 4-voice test clip (also tagged "Speech synthesizer", which it is).
+- Transcribe with speakers (Parakeet): all eight utterances, four speakers right; Name speakers rewrote the transcript; a new transcript of the same clip named Ana and Ben by itself; Forget removed Ben (the next transcript said Speaker 2 again).
+- Transcribe with the many-language model: correct text in English, German, Spanish and French, one capitalised sentence per utterance.
+- Live meeting (test file, many-language model): correct text, sentences, Ana and Ben named.
+- Kokoro: Heart (US) and Emma (UK) synthesize; the Heart output transcribes back to the typed text ("Audiops", not in the lexicon, spelled by espeak-ng). 5.4 s of speech took about 34 s on the x86_64 emulator including loading; a phone needs timing.
+- Dark theme: Settings → Remembered voices, Downloaded models, the suggestion card. `make ci` passes.

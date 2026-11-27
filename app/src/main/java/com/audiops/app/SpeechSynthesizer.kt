@@ -9,6 +9,7 @@ import com.google.mediapipe.tasks.core.Delegate
 import com.k2fsa.sherpa.onnx.GenerationConfig
 import com.k2fsa.sherpa.onnx.OfflineTts
 import com.k2fsa.sherpa.onnx.OfflineTtsConfig
+import com.k2fsa.sherpa.onnx.OfflineTtsKokoroModelConfig
 import com.k2fsa.sherpa.onnx.OfflineTtsModelConfig
 import com.k2fsa.sherpa.onnx.OfflineTtsSupertonicModelConfig
 import com.k2fsa.sherpa.onnx.OfflineTtsVitsModelConfig
@@ -16,8 +17,9 @@ import java.io.File
 import java.util.zip.ZipInputStream
 
 /**
- * Text to speech. Supertonic 3 voices (Supertone, INT8, 31 languages) and Piper voices run through
- * sherpa-onnx (Piper with espeak-ng, whose data ships in the APK and is unpacked on first use);
+ * Text to speech. Supertonic 3 voices (Supertone, INT8, 31 languages), Kokoro voices (English) and
+ * Piper voices run through sherpa-onnx (Kokoro and Piper with espeak-ng, whose data ships in the APK
+ * and is unpacked on first use);
  * PocketTTS voices (Kyutai, INT8) run through MediaPipe's TextToSpeech task. Text is synthesized in sentence groups ([TextChunks]) so progress
  * shows and Cancel takes effect between them. The engine is released after each job.
  */
@@ -47,6 +49,7 @@ internal object SpeechSynthesizer {
             TtsEngine.POCKET -> pocket(context, directory, voice, speed, pieces, output, listener)
             TtsEngine.PIPER -> piper(context, directory, voice, speed, pieces, output, listener)
             TtsEngine.SUPERTONIC -> supertonic(directory, voice, speed, pieces, output, listener)
+            TtsEngine.KOKORO -> kokoro(context, directory, voice, speed, pieces, output, listener)
         }
     }
 
@@ -59,6 +62,50 @@ internal object SpeechSynthesizer {
 
         // One folder for every Supertonic language and voice.
         TtsEngine.SUPERTONIC -> "supertonic-3/${voice.revision}"
+
+        // One folder for every Kokoro voice.
+        TtsEngine.KOKORO -> "kokoro/${voice.revision}"
+    }
+
+    /**
+     * Kokoro v1.0 (hexgrad, Apache 2.0), int8, through sherpa-onnx. Words are looked up in the
+     * lexicon of the voice's English (US or UK); words it lacks are spelled out by espeak-ng.
+     */
+    private fun kokoro(
+        context: Context,
+        directory: File,
+        voice: TtsVoice,
+        speed: Float,
+        pieces: List<String>,
+        output: File,
+        listener: ProcessingListener,
+    ) {
+        fun path(name: String) = File(directory, name).absolutePath
+        val lexicon = if (voice.language == "en-GB") "lexicon-gb-en.txt" else "lexicon-us-en.txt"
+        val tts = OfflineTts(
+            config = OfflineTtsConfig(
+                model = OfflineTtsModelConfig(
+                    kokoro = OfflineTtsKokoroModelConfig(
+                        model = path("model.int8.onnx"),
+                        voices = path("voices.bin"),
+                        tokens = path("tokens.txt"),
+                        dataDir = espeakData(context).absolutePath,
+                        lexicon = path(lexicon),
+                    ),
+                    numThreads = 4,
+                    provider = "cpu",
+                ),
+            ),
+        )
+        try {
+            val speaker = kokoroSpeaker(voice)
+            write(output, pieces, listener) { piece ->
+                val audio = tts.generate(piece, speaker, speed)
+                audio.samples to audio.sampleRate
+            }
+        } finally {
+            tts.release()
+        }
     }
 
     private fun pocket(
@@ -182,7 +229,7 @@ internal object SpeechSynthesizer {
         }
     }
 
-    /** Unpacks the bundled espeak-ng data (GPL-3.0) once; it is shared by every Piper voice. */
+    /** Unpacks the bundled espeak-ng data (GPL-3.0) once; it is shared by every Piper and Kokoro voice. */
     private fun espeakData(context: Context): File {
         val root = File(context.noBackupFilesDir, "espeak-ng-data")
         val marker = File(root, ".complete-$ESPEAK_VERSION")

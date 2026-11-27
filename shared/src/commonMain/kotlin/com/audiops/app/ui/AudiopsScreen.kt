@@ -1,9 +1,12 @@
 package com.audiops.app.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -16,6 +19,7 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,6 +35,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.AudioFile
 import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Settings
@@ -45,6 +50,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
@@ -59,13 +65,16 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -76,12 +85,15 @@ import com.audiops.app.AudiopsViewModel
 import com.audiops.app.Job
 import com.audiops.app.MeetingDocument
 import com.audiops.app.MeetingState
+import com.audiops.app.SoundKind
+import com.audiops.app.SoundProfile
 import com.audiops.app.Stage
 import com.audiops.app.Tab
 import com.audiops.app.Tool
 import com.audiops.app.ToolCategory
 import com.audiops.app.TranscriptionModel
 import com.audiops.app.UserSettings
+import com.audiops.app.suggestedTool
 import com.audiops.shared.resources.Res
 import com.audiops.shared.resources.action_choose
 import com.audiops.shared.resources.action_record
@@ -92,6 +104,11 @@ import com.audiops.shared.resources.home_footer
 import com.audiops.shared.resources.home_recent
 import com.audiops.shared.resources.home_subtitle
 import com.audiops.shared.resources.meeting_live
+import com.audiops.shared.resources.meeting_speaker
+import com.audiops.shared.resources.sounds_music
+import com.audiops.shared.resources.sounds_noisy_speech
+import com.audiops.shared.resources.sounds_other
+import com.audiops.shared.resources.sounds_speech
 import com.audiops.shared.resources.tab_activity
 import com.audiops.shared.resources.tab_settings
 import com.audiops.shared.resources.tab_tools
@@ -110,6 +127,9 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
     val modelStorage by viewModel.modelStorage.collectAsStateWithLifecycle()
     val outputStorage by viewModel.outputStorage.collectAsStateWithLifecycle()
     val meeting by viewModel.meetingState.collectAsStateWithLifecycle()
+    // Saved transcripts name speakers in the app's language.
+    val speakerTemplate = stringResource(Res.string.meeting_speaker, SPEAKER_NUMBER)
+    SideEffect { viewModel.speakerName = { number -> speakerTemplate.replace(SPEAKER_NUMBER, number.toString()) } }
     val snackbar = remember { SnackbarHostState() }
 
     LaunchedEffect(viewModel) {
@@ -136,7 +156,8 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
         if (tool == Tool.MEETING) {
             MeetingScreen(
                 state = meeting,
-                model = settings?.transcriptionModel?.takeIf { it != TranscriptionModel.AUTO } ?: TranscriptionModel.PARAKEET,
+                language = state.language,
+                model = effectiveTranscriptionModel(state.language, settings?.transcriptionModel ?: TranscriptionModel.AUTO),
                 latestJob = state.latestJob(tool),
                 snackbar = snackbar,
                 actions = MeetingActions(
@@ -146,6 +167,8 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                     onDiscard = viewModel::discardMeeting,
                     onDismissError = viewModel::acknowledgeMeeting,
                     onMicrophoneDenied = { viewModel.recordFailed(null) },
+                    onLanguage = viewModel::setLanguage,
+                    onTranscriptionModel = viewModel::setTranscriptionModel,
                     jobCard = JobCardActions(
                         viewModel::cancel,
                         viewModel::saveOutput,
@@ -154,6 +177,8 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                         viewModel::saveSubtitles,
                         viewModel::notifyCopied,
                         viewModel::readText,
+                        viewModel::speakers,
+                        viewModel::nameSpeakers,
                     ),
                 ),
             )
@@ -165,6 +190,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                     onBack = { viewModel.back() },
                     onChoose = viewModel::chooseInput,
                     onLanguage = viewModel::setLanguage,
+                    onTranscriptionModel = viewModel::setTranscriptionModel,
                     onStart = { spec -> viewModel.start(tool, spec) },
                     onCancel = viewModel::cancel,
                     onSave = viewModel::saveOutput,
@@ -173,6 +199,8 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                     onSaveSubtitles = viewModel::saveSubtitles,
                     onCopied = viewModel::notifyCopied,
                     readText = viewModel::readText,
+                    speakers = viewModel::speakers,
+                    onNameSpeakers = viewModel::nameSpeakers,
                 ),
             )
         } else if (tool != null) {
@@ -192,6 +220,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                     onBack = { viewModel.back() },
                     onChoose = viewModel::chooseInput,
                     onLanguage = viewModel::setLanguage,
+                    onTranscriptionModel = viewModel::setTranscriptionModel,
                     onStart = { spec -> viewModel.start(tool, spec) },
                     onCancel = viewModel::cancel,
                     onSave = viewModel::saveOutput,
@@ -200,6 +229,8 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                     onSaveSubtitles = viewModel::saveSubtitles,
                     onCopied = viewModel::notifyCopied,
                     readText = viewModel::readText,
+                    speakers = viewModel::speakers,
+                    onNameSpeakers = viewModel::nameSpeakers,
                 ),
             )
         } else {
@@ -234,6 +265,8 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                             onSaveSubtitles = viewModel::saveSubtitles,
                             onCopied = viewModel::notifyCopied,
                             readText = viewModel::readText,
+                            speakers = viewModel::speakers,
+                            onNameSpeakers = viewModel::nameSpeakers,
                         ),
                     )
 
@@ -244,6 +277,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                         outputStorage = outputStorage,
                         busy = state.activeJobs.isNotEmpty(),
                         showTranscription = Tool.TRANSCRIBE !in viewModel.unsupportedTools,
+                        voices = state.rememberedVoices,
                         actions = SettingsActions(
                             onThemeMode = viewModel::setThemeMode,
                             onDynamicColor = viewModel::setDynamicColor,
@@ -252,6 +286,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                             onDefaultLanguage = viewModel::setDefaultLanguage,
                             onTranscriptionModel = viewModel::setTranscriptionModel,
                             onDeleteModel = viewModel::deleteModel,
+                            onForgetVoice = viewModel::forgetVoice,
                             onClearHistory = viewModel::clearHistory,
                         ),
                     )
@@ -281,6 +316,9 @@ private fun Shell(tab: Tab, activeJobs: Int, snackbar: SnackbarHostState, onTab:
         val wide = maxWidth >= 600.dp
         Scaffold(
             snackbarHost = { SnackbarHost(snackbar) },
+            // The status bar inset is left to each tab's title bar, which then draws behind the
+            // status bar in its own (scroll-dependent) colour; the navigation bars handle the rest.
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             bottomBar = {
                 if (!wide) {
                     ShortNavigationBar {
@@ -398,6 +436,17 @@ private fun ToolsTab(
                         }
                     }
                 }
+                // What the recording sounds like, and the tool worth trying for it.
+                item(key = "sounds") {
+                    val sounds = state.sounds
+                    AnimatedVisibility(
+                        visible = sounds != null && state.input != null && (sounds.tags.isNotEmpty() || sounds.kind != SoundKind.OTHER),
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically(),
+                    ) {
+                        if (sounds != null) SoundSuggestion(sounds, unsupported, onOpen)
+                    }
+                }
                 val recent = state.recentTools(limit = columns)
                 if (recent.isNotEmpty()) {
                     item(key = "title-recent") { SectionLabel(stringResource(Res.string.home_recent)) }
@@ -416,6 +465,65 @@ private fun ToolsTab(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(start = 4.dp, top = 16.dp),
                     )
+                }
+            }
+        }
+    }
+}
+
+/** What the recording sounds like ("Sounds like speech", the main sounds) and a button for the suggested tool. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun SoundSuggestion(sounds: SoundProfile, unsupported: Set<Tool>, onOpen: (Tool) -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val tool = sounds.kind.suggestedTool?.takeIf { it !in unsupported }
+    Card(
+        modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(containerColor = colors.surfaceContainer),
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            val (container, content) = (tool?.category ?: ToolCategory.UTILITIES).colors(colors)
+            ShapedIcon(
+                icon = Icons.Rounded.GraphicEq,
+                shape = MaterialShapes.SoftBurst.toShape(),
+                container = container,
+                content = content,
+                size = 44.dp,
+            )
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    stringResource(
+                        when (sounds.kind) {
+                            SoundKind.SPEECH -> Res.string.sounds_speech
+                            SoundKind.NOISY_SPEECH -> Res.string.sounds_noisy_speech
+                            SoundKind.MUSIC -> Res.string.sounds_music
+                            SoundKind.OTHER -> Res.string.sounds_other
+                        },
+                    ),
+                    style = MaterialTheme.typography.titleMediumEmphasized,
+                )
+                if (sounds.tags.isNotEmpty()) {
+                    Text(
+                        sounds.tags.joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            if (tool != null) {
+                Spacer(Modifier.width(12.dp))
+                FilledTonalButton(
+                    onClick = { onOpen(tool) },
+                    shapes = ButtonDefaults.shapes(),
+                    modifier = Modifier.heightIn(min = 48.dp),
+                ) {
+                    Icon(tool.icon, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(tool.title), maxLines = 1)
                 }
             }
         }
@@ -558,3 +666,6 @@ private fun ProcessingAction(count: Int, onClick: () -> Unit) {
         )
     }
 }
+
+/** Stands in for the number in the localized "Speaker N" text. */
+private const val SPEAKER_NUMBER = "{n}"

@@ -39,6 +39,7 @@ private class FakeEngine(
     val deleted: MutableList<String> = Collections.synchronizedList(mutableListOf())
     val processed: MutableList<List<AudioOperation>> = Collections.synchronizedList(mutableListOf())
     val transcribeCalls: MutableList<Pair<String, TranscriptionModel>> = Collections.synchronizedList(mutableListOf())
+    val speakerTranscripts: MutableList<String> = Collections.synchronizedList(mutableListOf())
     private val running = AtomicInteger()
     val maxConcurrent = AtomicInteger()
 
@@ -58,6 +59,31 @@ private class FakeEngine(
 
     override fun subtitlesFor(transcriptPath: String): String? = subtitles
 
+    @Volatile var speakersFile: String? = null
+
+    @Volatile var soundProfile: SoundProfile? = null
+
+    override val supportsIdentify: Boolean get() = soundProfile != null
+
+    override fun identify(source: String, listener: ProcessingListener): SoundProfile = soundProfile!!
+
+    override fun speakersFile(transcriptPath: String): String? = speakersFile
+
+    val namedSpeakers: MutableList<Pair<List<String?>, Boolean>> = Collections.synchronizedList(mutableListOf())
+    val voices: MutableList<String> = Collections.synchronizedList(mutableListOf())
+
+    override fun nameSpeakers(transcriptPath: String, names: List<String?>, remember: Boolean, speakerName: (Int) -> String) {
+        namedSpeakers += names to remember
+        if (remember) names.filterNotNull().forEach { voices += it }
+        transcript = names.firstOrNull() ?: speakerName(1)
+    }
+
+    override fun rememberedVoices(): List<String> = voices.toList()
+
+    override fun forgetVoice(name: String) {
+        voices -= name
+    }
+
     val separated = AtomicInteger()
 
     override fun separate(source: String, listener: ProcessingListener): List<String> {
@@ -72,8 +98,16 @@ private class FakeEngine(
         return "/out/speech.wav"
     }
 
-    override fun transcribe(source: String, language: String, model: TranscriptionModel, listener: ProcessingListener): String {
+    override fun transcribe(
+        source: String,
+        language: String,
+        model: TranscriptionModel,
+        speakers: Boolean,
+        speakerName: (Int) -> String,
+        listener: ProcessingListener,
+    ): String {
         transcribeCalls += language to model
+        if (speakers) speakerTranscripts += speakerName(1)
         return "/out/transcript.txt"
     }
 
@@ -196,6 +230,7 @@ class AudiopsViewModelTest {
                     transcriptPath = "/out/meeting.txt",
                     subtitlesPath = "/out/meeting.srt",
                     audioPath = "/out/meeting.wav",
+                    speakersPath = "/out/meeting.speakers.json",
                     startedAt = 1_000,
                     durationMs = 90_000,
                     speakers = 2,
@@ -226,8 +261,8 @@ class AudiopsViewModelTest {
         vm.stopMeeting()
         val job = vm.awaitJobs(1, JobStatus.DONE).single()
         assertEquals(Tool.MEETING, job.tool)
-        assertEquals(JobSpec.Meeting(TranscriptionModel.PARAKEET, 2, 90_000), job.spec)
-        assertEquals(listOf("/out/meeting.txt", "/out/meeting.srt", "/out/meeting.wav"), job.files)
+        assertEquals(JobSpec.Meeting(TranscriptionModel.PARAKEET, 2, 90_000, SpeechLanguage.ENGLISH), job.spec)
+        assertEquals(listOf("/out/meeting.txt", "/out/meeting.srt", "/out/meeting.wav", "/out/meeting.speakers.json"), job.files)
         assertEquals(job, vm.state.value.latestJob(Tool.MEETING))
         eventually { meeting.acknowledged == 1 && meeting.state.value == MeetingState.Idle }
         eventually { runBlocking { history.load() }.singleOrNull()?.id == job.id }
@@ -292,6 +327,40 @@ class AudiopsViewModelTest {
         vm.start(Tool.TRANSCRIBE, JobSpec.Transcribe(SpeechLanguage.URDU, TranscriptionModel.WHISPER))
         vm.awaitJobs(1, JobStatus.DONE)
         assertEquals(listOf("ur" to TranscriptionModel.WHISPER), engine.transcribeCalls.toList())
+    }
+
+    @Test fun speakerTranscriptsAreNamedRewrittenAndTheirVoicesRemembered() {
+        val engine = FakeEngine().apply { speakersFile = "/out/transcript.speakers.json" }
+        val vm = viewModel(engine)
+        vm.speakerName = { "Sprecher $it" }
+        vm.start(Tool.TRANSCRIBE, JobSpec.Transcribe(SpeechLanguage.GERMAN, TranscriptionModel.PARAKEET, speakers = true))
+        val job = vm.awaitJobs(1, JobStatus.DONE).single()
+        assertEquals(listOf("Sprecher 1"), engine.speakerTranscripts.toList())
+        assertEquals("/out/transcript.speakers.json", job.speakersPath)
+        assertTrue("/out/transcript.speakers.json" in job.files)
+
+        vm.nameSpeakers(job.id, listOf("Ana", null), remember = true)
+        val deadline = System.currentTimeMillis() + 5_000
+        while (vm.state.value.jobs.single().revision == 0 && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        val named = vm.state.value.jobs.single()
+        assertEquals(1, named.revision)
+        assertEquals("Ana", named.preview)
+        assertEquals(listOf(listOf("Ana", null) to true), engine.namedSpeakers.toList())
+        while (vm.state.value.rememberedVoices.isEmpty() && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        assertEquals(listOf("Ana"), vm.state.value.rememberedVoices)
+
+        vm.forgetVoice("Ana")
+        while (vm.state.value.rememberedVoices.isNotEmpty() && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        assertEquals(emptyList<String>(), vm.state.value.rememberedVoices)
+    }
+
+    @Test fun aChosenRecordingIsIdentifiedForASuggestion() {
+        val profile = SoundProfile(SoundKind.NOISY_SPEECH, listOf("Speech", "Wind"))
+        val vm = viewModel(FakeEngine().apply { soundProfile = profile })
+        vm.chooseInput("content://a", "a.wav")
+        val deadline = System.currentTimeMillis() + 5_000
+        while (vm.state.value.sounds == null && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        assertEquals(profile, vm.state.value.sounds)
     }
 
     @Test fun audioIsSavedInTheChosenFormat() {
