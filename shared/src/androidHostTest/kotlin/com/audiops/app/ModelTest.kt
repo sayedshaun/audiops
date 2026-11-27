@@ -38,6 +38,7 @@ class ModelTest {
             JobSpec.Enhance(EnhanceMode.FAST),
             JobSpec.Separate,
             JobSpec.Analyze,
+            JobSpec.Meeting(TranscriptionModel.PARAKEET, speakers = 3, durationMs = 61_000),
             JobSpec.Transcribe(SpeechLanguage.BANGLA),
             JobSpec.Transcribe(SpeechLanguage.AUTO, TranscriptionModel.PARAKEET),
             JobSpec.Speak("Hello there.", "pocket-alba", 1.25f),
@@ -137,6 +138,17 @@ class ModelTest {
     @Test fun onlyQueuedAndRunningJobsAreActive() {
         assertEquals(setOf(JobStatus.QUEUED, JobStatus.RUNNING), JobStatus.entries.filter { it.active }.toSet())
         assertFalse(JobStatus.CANCELLED.active)
+    }
+
+    @Test fun recentToolsAreNewestFirstWithoutRepeats() {
+        val analyze = job(JobSpec.Analyze, id = "a", tool = Tool.ANALYZE).copy(createdAt = 1)
+        val trim = analyze.copy(id = "b", tool = Tool.TRIM, createdAt = 2)
+        val analyzeAgain = analyze.copy(id = "c", createdAt = 3)
+        val fade = analyze.copy(id = "d", tool = Tool.FADE, createdAt = 4, status = JobStatus.RUNNING)
+        val state = AudiopsState(jobs = listOf(fade, trim, analyze, analyzeAgain))
+        assertEquals(listOf(Tool.FADE, Tool.ANALYZE, Tool.TRIM), state.recentTools(limit = 3))
+        assertEquals(listOf(Tool.FADE, Tool.ANALYZE), state.recentTools(limit = 2))
+        assertEquals(emptyList<Tool>(), AudiopsState().recentTools(limit = 2))
     }
 
     @Test fun latestJobMatchesToolAndCurrentInput() {

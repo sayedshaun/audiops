@@ -7,6 +7,8 @@ Snapshot as of 2026-11-18: v0.3.0 is prepared on `release/0.3.0` (all pending fe
 Audiops is a Kotlin Multiplatform audio toolkit: fourteen tools on Android (Android only), a job queue with persistent history, and a Material 3 Expressive UI. Built, unit-tested, lint-checked, R8-built, and exercised end to end on an Android emulator.
 
 ### Done
+- **Live meeting (unreleased, `feature/live-meeting`):** real-time meeting transcription with speakers (Silero VAD + the Settings transcription model + CAM++ speaker embeddings, live labels corrected by a final re-clustering), microphone foreground service, transcript/SRT/recording saved to Activity. Verified on the emulator with a 4-speaker test clip (all utterances labelled correctly).
+- **Tools tab redesign (unreleased, `feature/tools-top-bar`):** title bar instead of the hero card, Choose file and Record under the title, compact tiles, Recently used row.
 - **Licence:** Apache 2.0 (`LICENSE`, `NOTICE`).
 - **Moto g96 (8 GB, Android 16):** Enhance speech completes from a fresh install of 0.1.1 (peak 0.8 GB, ~3 min for 11 s); before, the old vocoder reached 4.7 GB and was killed.
 - **Released v0.1.2** (https://github.com/sayedshaun/audiops/releases/tag/v0.1.2, from `8a42ec9`): background jobs, Tools tab layout, Settings sub-pages, per-model storage, Omnilingual ASR for Auto with a Whisper Tiny fallback, Urdu on Whisper Tiny. Android files signed locally, as for earlier releases.
@@ -31,6 +33,7 @@ Audiops is a Kotlin Multiplatform audio toolkit: fourteen tools on Android (Andr
 - **Emulator end to end:** every DSP tool on a 3-minute 48 kHz stereo file; queue; history across restarts; playback; save; cancel during download; staged enhancement memory.
 
 ### Not yet done
+- **Live meeting on a phone:** not yet tried with a real microphone, real voices across a table, or for an hour (battery, heat, whether Parakeet keeps up on a mid-range CPU). Speaker thresholds were tuned on clean clips; room audio may need a lower value.
 - **Physical devices:** not tested; the emulator is x86_64 while phones are arm64.
 
 ## Open questions
@@ -45,6 +48,8 @@ Audiops is a Kotlin Multiplatform audio toolkit: fourteen tools on Android (Andr
 6. **Before tagging v0.2.0:** rotate the release keystore password (it was printed to a local session log); decide whether Apache-2.0 still fits the app given the eSpeak NG (GPL-3.0) code inside sherpa-onnx; test recording, M4A/Opus export, text to speech and Parakeet on a phone.
 
 ## Next steps
+
+- **Live meeting:** test a real 30–60 minute meeting on the Moto g96 (screen off), check that transcription keeps up, battery use, and speaker accuracy; consider renaming speakers and a pause button.
 
 - **Enhance Studio speed:** profile Resemble on the phone and try fewer solver steps (it uses 32 evaluations today); Fast mode (DPDFNet) is the quick option.
 

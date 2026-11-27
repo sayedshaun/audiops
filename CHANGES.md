@@ -614,3 +614,36 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 ### Changed
 - CHANGELOG: Unreleased became 0.3.1 (colourful splash icon, Transcribe history names the model, Piper Ukrainian removed, Android only). versionCode 3001.
+
+## 2026-11-26: Tools tab title bar (`feature/tools-top-bar`)
+
+### Changed
+- Removed the Tools tab's top card (`HeroBanner` with its animated `Waveform`, and `ProcessingBanner`, which replaced it while jobs ran). The tab now uses a `LargeFlexibleTopAppBar` (app name + `home_subtitle`, exit-until-collapsed) like Activity and Settings; while jobs are active, a small `FilledTonalButton` ("Processing N →") in its actions opens Activity. Deleted the unused `HeroBanner`, `Waveform`, the hero preview and the `home_hero_title` string (`home_hero_body` renamed `home_subtitle`). Checked on the emulator in light and dark; the Processing button was not exercised with a live job.
+
+## 2026-11-26: Choose file and Record under the Tools title (`feature/tools-top-bar`)
+
+### Changed
+- With no recording and no recording in progress, the Tools tab shows `InputActions` (filled Choose file + tonal Record, `PrimaryButtonHeight`) under the title bar instead of the empty `InputCard`; `AnimatedContent` cross-fades to `InputCard` once a recording exists or recording starts. `InputCard` hides its "No recording selected" header while the first recording is being made, so only the recording panel shows. Checked on the emulator: empty state in light and dark, recording, and the card after stopping.
+
+## 2026-11-26: compact tool tiles and Recently used (`feature/tools-top-bar`)
+
+### Changed
+- `ToolTile` is a 76 dp row (44 dp `ShapedIcon` + `titleSmallEmphasized` name, `shapes.large`); the description is left to the tool screen's subtitle. `TileMinWidth` 160 dp. Rows are drawn by `ToolRow`, headings by `SectionLabel` (now `heading()` semantics).
+- New `AudiopsState.recentTools(limit)` (distinct tools of the newest jobs, from history, so nothing new is persisted); the Tools tab shows one row of them under "Recently used" (`home_recent`) when there are any. `ModelTest.recentToolsAreNewestFirstWithoutRepeats` covers it.
+- Verified the Processing button with a real Studio enhancement on the emulator: it appears in the title bar and opens Activity.
+- Considered a category jump bar; with compact tiles the list fits in about two phone screens, so it was not added.
+
+## 2026-11-27: Live meeting (`feature/live-meeting`)
+
+### Added
+- Live meeting tool (AI): real-time meeting transcription with speakers, on device. `LiveMeeting` boundary (commonMain), `AndroidLiveMeeting` + `MeetingService` (FGS type microphone) + `MeetingModels` (Silero VAD v5 at deepghs/silero-vad-onnx `193243f7`; CAM++ zh/en at csukuangfj/speaker-embedding-models `a8055d6d`, both SHA-256 pinned, digests checked against the Hugging Face API). `MeetingTranscriber`, `SpeakerClusters` (live centroid assignment + final average-linkage re-clustering) in jvmShared; `MeetingDocument` (transcript and SRT) in commonMain. Transcribers expose `recognizer()` so a meeting decodes utterance by utterance with the Settings model (`AudioPipelines.recognizer`).
+- `MeetingScreen`: intro with model and Start; live header (time, speakers, level meter), transcript by turn with speaker colours, italic partial line, follow-latest with a Latest button; Stop and save / Discard (confirmed); Finishing state; the finished meeting shows first. Tools tab shows a red Live button while a meeting runs. Activity keeps meetings as `JobSpec.Meeting` jobs with `Job.audioPath`; the result card has the styled transcript, subtitles and the recording.
+- Licences: `licenses/SILERO-VAD-MIT.txt`, `licenses/3D-SPEAKER-APACHE-2.0.txt`, notices, NOTICE, Settings entries.
+- Tests: `MeetingTest` (clustering, transcriber, document), ViewModel meeting test, `ModelTest` round trip, `ModelFilesTest` verification record.
+
+### Changed
+- Thresholds 0.5 from measured CAM++ similarities on the Parakeet test clips (same voice ≥ 0.58, different voices ≤ 0.45; the first try at 0.4 merged the German and Spanish speakers).
+- `ModelFiles.ensure` records verified files (`.<name>.verified`: digest, size, mtime) and re-hashes only when they change; a meeting with Parakeet started after ~2.5 min of hashing on the emulator before.
+
+### Verified
+- Emulator (debug file source, 46 s clip of 4 speakers in 4 languages): live partials, turns and speaker count, Tools Live button, notification with Stop and save, finished transcript with all 8 utterances labelled correctly (1 2 1 3 2 4 3 1), saved to Activity. Not yet tried with a real microphone or on a phone; battery use over a long meeting is unmeasured.

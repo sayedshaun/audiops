@@ -1,5 +1,7 @@
 package com.audiops.app.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.OpenableColumns
@@ -12,6 +14,8 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 
@@ -62,3 +66,17 @@ actual val supportsDynamicColor: Boolean get() = Build.VERSION.SDK_INT >= Build.
 
 @Composable
 actual fun formatFileSize(bytes: Long): String = Formatter.formatShortFileSize(LocalContext.current, bytes)
+
+@Composable
+actual fun rememberMicrophonePermission(onResult: (granted: Boolean) -> Unit): () -> Unit {
+    val context = LocalContext.current
+    val result by rememberUpdatedState(onResult)
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> result(granted) }
+    return {
+        if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            result(true)
+        } else {
+            launcher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+}

@@ -129,6 +129,10 @@ import com.audiops.shared.resources.license_scnet
 import com.audiops.shared.resources.license_scnet_summary
 import com.audiops.shared.resources.license_sherpa
 import com.audiops.shared.resources.license_sherpa_summary
+import com.audiops.shared.resources.license_silero
+import com.audiops.shared.resources.license_silero_summary
+import com.audiops.shared.resources.license_speaker
+import com.audiops.shared.resources.license_speaker_summary
 import com.audiops.shared.resources.license_supertonic
 import com.audiops.shared.resources.license_supertonic_summary
 import com.audiops.shared.resources.license_whisper
@@ -212,6 +216,18 @@ private val licenses = listOf(
         Res.string.license_scnet,
         Res.string.license_scnet_summary,
         "https://github.com/starrytong/SCNet",
+        androidOnly = true,
+    ),
+    LicenseEntry(
+        Res.string.license_silero,
+        Res.string.license_silero_summary,
+        "https://github.com/snakers4/silero-vad",
+        androidOnly = true,
+    ),
+    LicenseEntry(
+        Res.string.license_speaker,
+        Res.string.license_speaker_summary,
+        "https://github.com/modelscope/3D-Speaker",
         androidOnly = true,
     ),
     LicenseEntry(

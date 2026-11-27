@@ -12,6 +12,9 @@ import androidx.lifecycle.viewModelScope
 class AudiopsApplication : Application() {
     val engine: AudioEngine by lazy { AndroidAudioEngine(this) }
 
+    /** The live meeting, which runs in [MeetingService] while the Activity may be gone. */
+    val meeting: AndroidLiveMeeting by lazy { AndroidLiveMeeting(this) }
+
     val settingsStore: DataStore<Preferences> by lazy {
         // Same file as the earlier `preferencesDataStore("settings")`, so settings carry over.
         createSettingsStore(filesDir.resolve("datastore/settings.preferences_pb").absolutePath)
@@ -55,7 +58,7 @@ class AudiopsApplication : Application() {
      */
     fun viewModel(restored: Bundle?): AudiopsViewModel = viewModel ?: run {
         val handle = SavedStateHandle(restored?.keySet()?.associateWith { restored.getString(it) }.orEmpty())
-        val vm = AudiopsViewModel(handle, engine, SettingsRepository(settingsStore), HistoryRepository(settingsStore))
+        val vm = AudiopsViewModel(handle, engine, SettingsRepository(settingsStore), HistoryRepository(settingsStore), meeting)
         JobNotifications(this) { startedActivities > 0 }.watch(vm.viewModelScope, vm.state, vm::cancelAll)
         savedState = handle
         viewModel = vm

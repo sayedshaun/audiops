@@ -18,6 +18,7 @@ enum class ToolCategory { AI, CLEAN_UP, EDIT, EFFECTS, UTILITIES }
 enum class Tool(val category: ToolCategory) {
     ENHANCE(ToolCategory.AI),
     TRANSCRIBE(ToolCategory.AI),
+    MEETING(ToolCategory.AI),
     SPEAK(ToolCategory.AI),
     SEPARATE(ToolCategory.AI),
     PRESETS(ToolCategory.CLEAN_UP),
@@ -119,7 +120,7 @@ enum class TranscriptionModel { AUTO, PARAKEET, OMNILINGUAL, WHISPER, BANGLA }
 val selectableTranscriptionModels = TranscriptionModel.entries - TranscriptionModel.AUTO
 
 /** Downloadable AI models, listed and deleted one by one in Settings → Downloaded models. */
-enum class AiModel { ENHANCE, NOISE, SCNET, PARAKEET, OMNILINGUAL, WHISPER, BANGLA, POCKET_TTS, PIPER, SUPERTONIC }
+enum class AiModel { ENHANCE, NOISE, SCNET, PARAKEET, OMNILINGUAL, WHISPER, BANGLA, POCKET_TTS, PIPER, SUPERTONIC, MEETING }
 
 /**
  * One-tap chains of the existing tools for common kinds of recording. Each preset is a fixed list
@@ -262,6 +263,11 @@ sealed interface JobSpec {
     @Serializable
     @SerialName("analyze")
     data object Analyze : JobSpec
+
+    /** A live meeting transcription: [speakers] told apart over [durationMs], transcribed with [model]. */
+    @Serializable
+    @SerialName("meeting")
+    data class Meeting(val model: TranscriptionModel, val speakers: Int, val durationMs: Long) : JobSpec
 }
 
 @Serializable
@@ -325,14 +331,16 @@ data class Job(
     val preview: String? = null,
     /** SubRip (SRT) subtitles of a transcript, when the transcription produced timing. */
     val subtitlesPath: String? = null,
+    /** The recording of a live meeting (WAV); null for every other job. */
+    val audioPath: String? = null,
     val report: AudioReport? = null,
     val failure: FailureKind? = null,
     val failureDetail: String? = null,
     @Transient val progress: JobProgress? = null,
 )
 
-/** Every file a job left in app storage: its output, the stems of a separation and its subtitles. */
-val Job.files: List<String> get() = (listOfNotNull(outputPath, subtitlesPath) + stemPaths.orEmpty()).distinct()
+/** Every file a job left in app storage: its output, the stems of a separation, its subtitles and a meeting's recording. */
+val Job.files: List<String> get() = (listOfNotNull(outputPath, subtitlesPath, audioPath) + stemPaths.orEmpty()).distinct()
 
 /** The files music separation writes, in this order. */
 enum class SeparatedStem(val fileSuffix: String) {

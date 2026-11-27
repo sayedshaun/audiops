@@ -2,8 +2,13 @@ package com.audiops.app.ui
 
 import com.audiops.app.Job
 import com.audiops.app.JobStatus
+import com.audiops.app.MeetingDocument
+import com.audiops.app.MeetingState
 import com.audiops.shared.resources.Res
 import com.audiops.shared.resources.action_cancel
+import com.audiops.shared.resources.meeting_finishing
+import com.audiops.shared.resources.meeting_preparing
+import com.audiops.shared.resources.meeting_speakers
 import com.audiops.shared.resources.message_job_failed
 import com.audiops.shared.resources.message_job_finished
 import com.audiops.shared.resources.notification_cancel_all
@@ -11,7 +16,11 @@ import com.audiops.shared.resources.notification_channel_finished
 import com.audiops.shared.resources.notification_channel_finished_description
 import com.audiops.shared.resources.notification_channel_running
 import com.audiops.shared.resources.notification_channel_running_description
+import com.audiops.shared.resources.notification_meeting_stop
+import com.audiops.shared.resources.notification_meeting_text
+import com.audiops.shared.resources.notification_meeting_title
 import com.audiops.shared.resources.notification_waiting
+import org.jetbrains.compose.resources.getPluralString
 import org.jetbrains.compose.resources.getString
 
 /** What the ongoing job notification shows: the current job, its progress and the queue. */
@@ -56,3 +65,24 @@ suspend fun notificationChannelText(): NotificationChannelText = NotificationCha
     finished = getString(Res.string.notification_channel_finished),
     finishedDescription = getString(Res.string.notification_channel_finished_description),
 )
+
+/** What the ongoing meeting notification shows. */
+data class MeetingNotice(val title: String, val text: String, val stopLabel: String)
+
+/** Notice for a meeting in [state], or null when no meeting is starting, running or finishing. */
+suspend fun meetingNotice(state: MeetingState): MeetingNotice? {
+    val text = when (state) {
+        is MeetingState.Preparing -> getString(Res.string.meeting_preparing)
+
+        is MeetingState.Live -> getString(
+            Res.string.notification_meeting_text,
+            MeetingDocument.clock(state.elapsedMs),
+            getPluralString(Res.plurals.meeting_speakers, state.speakers, state.speakers),
+        )
+
+        is MeetingState.Finishing -> getString(Res.string.meeting_finishing)
+
+        else -> return null
+    }
+    return MeetingNotice(getString(Res.string.notification_meeting_title), text, getString(Res.string.notification_meeting_stop))
+}

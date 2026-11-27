@@ -31,3 +31,7 @@ expect val supportsDynamicColor: Boolean
 /** Localized short file size, such as "104 MB". */
 @Composable
 expect fun formatFileSize(bytes: Long): String
+
+/** Returns a function that asks for microphone access when needed, then calls [onResult] with whether it was granted. */
+@Composable
+expect fun rememberMicrophonePermission(onResult: (granted: Boolean) -> Unit): () -> Unit

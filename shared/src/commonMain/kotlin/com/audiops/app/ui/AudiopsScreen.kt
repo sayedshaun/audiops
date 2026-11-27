@@ -7,7 +7,9 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -27,16 +29,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.AudioFile
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
@@ -47,6 +55,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,6 +64,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -62,6 +74,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.audiops.app.AudiopsState
 import com.audiops.app.AudiopsViewModel
 import com.audiops.app.Job
+import com.audiops.app.MeetingDocument
+import com.audiops.app.MeetingState
 import com.audiops.app.Stage
 import com.audiops.app.Tab
 import com.audiops.app.Tool
@@ -69,12 +83,15 @@ import com.audiops.app.ToolCategory
 import com.audiops.app.TranscriptionModel
 import com.audiops.app.UserSettings
 import com.audiops.shared.resources.Res
+import com.audiops.shared.resources.action_choose
+import com.audiops.shared.resources.action_record
 import com.audiops.shared.resources.app_name
 import com.audiops.shared.resources.badge_android_only
 import com.audiops.shared.resources.banner_processing
 import com.audiops.shared.resources.home_footer
-import com.audiops.shared.resources.home_hero_body
-import com.audiops.shared.resources.home_hero_title
+import com.audiops.shared.resources.home_recent
+import com.audiops.shared.resources.home_subtitle
+import com.audiops.shared.resources.meeting_live
 import com.audiops.shared.resources.tab_activity
 import com.audiops.shared.resources.tab_settings
 import com.audiops.shared.resources.tab_tools
@@ -92,6 +109,7 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val modelStorage by viewModel.modelStorage.collectAsStateWithLifecycle()
     val outputStorage by viewModel.outputStorage.collectAsStateWithLifecycle()
+    val meeting by viewModel.meetingState.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
 
     LaunchedEffect(viewModel) {
@@ -115,7 +133,31 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
         },
         label = "tool",
     ) { tool ->
-        if (tool == Tool.SPEAK) {
+        if (tool == Tool.MEETING) {
+            MeetingScreen(
+                state = meeting,
+                model = settings?.transcriptionModel?.takeIf { it != TranscriptionModel.AUTO } ?: TranscriptionModel.PARAKEET,
+                latestJob = state.latestJob(tool),
+                snackbar = snackbar,
+                actions = MeetingActions(
+                    onBack = { viewModel.back() },
+                    onStart = viewModel::startMeeting,
+                    onStop = viewModel::stopMeeting,
+                    onDiscard = viewModel::discardMeeting,
+                    onDismissError = viewModel::acknowledgeMeeting,
+                    onMicrophoneDenied = { viewModel.recordFailed(null) },
+                    jobCard = JobCardActions(
+                        viewModel::cancel,
+                        viewModel::saveOutput,
+                        viewModel.saveFormats,
+                        viewModel::saveAudio,
+                        viewModel::saveSubtitles,
+                        viewModel::notifyCopied,
+                        viewModel::readText,
+                    ),
+                ),
+            )
+        } else if (tool == Tool.SPEAK) {
             SpeakScreen(
                 latestJob = state.latestJob(tool),
                 snackbar = snackbar,
@@ -170,6 +212,8 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
                 when (tab) {
                     Tab.TOOLS -> ToolsTab(
                         state = state,
+                        meeting = meeting,
+                        onShowMeeting = { viewModel.open(Tool.MEETING) },
                         unsupported = viewModel.unsupportedTools,
                         onOpen = viewModel::open,
                         onShowActivity = { viewModel.selectTab(Tab.ACTIVITY) },
@@ -286,11 +330,13 @@ private fun TabIcon(item: TabItem, activeJobs: Int) {
     }
 }
 
-/** The Tools tab: hero, live processing banner, and tools grouped by category. */
+/** The Tools tab: title bar (with a link to Activity while jobs run), the recording, and tools grouped by category. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ToolsTab(
     state: AudiopsState,
+    meeting: MeetingState,
+    onShowMeeting: () -> Unit,
     unsupported: Set<Tool>,
     onOpen: (Tool) -> Unit,
     onShowActivity: () -> Unit,
@@ -300,8 +346,21 @@ private fun ToolsTab(
     val pickRecording = rememberAudioPicker(onChoose)
     val recorder = rememberRecorder(onChoose, onRecordFailed)
     KeepScreenOn(recorder.state.recording)
-    // No title bar: the banner at the top already says what the app is.
-    Scaffold { padding ->
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            LargeFlexibleTopAppBar(
+                title = { Text(stringResource(Res.string.app_name)) },
+                subtitle = { Text(stringResource(Res.string.home_subtitle), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                actions = {
+                    if (meeting is MeetingState.Live) MeetingAction(meeting.elapsedMs, onShowMeeting)
+                    if (state.activeJobs.isNotEmpty()) ProcessingAction(state.activeJobs.size, onShowActivity)
+                },
+                scrollBehavior = scrollBehavior,
+            )
+        },
+    ) { padding ->
         // Each category fills its rows: tiles stretch to share the width, so wide windows
         // (tablets) have no empty cells at the end of a row.
         BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -311,57 +370,43 @@ private fun ToolsTab(
                 contentPadding = PaddingValues(
                     start = 16.dp,
                     end = 16.dp,
-                    top = padding.calculateTopPadding() + 8.dp,
+                    top = padding.calculateTopPadding(),
                     bottom = 24.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(TileGap),
             ) {
-                item(key = "banner") {
-                    val running = state.activeJobs.firstOrNull()
-                    if (running != null) {
-                        ProcessingBanner(running, state.activeJobs.size, onShowActivity)
-                    } else {
-                        HeroBanner(
-                            title = stringResource(Res.string.home_hero_title),
-                            body = stringResource(Res.string.home_hero_body),
-                        )
+                item(key = "recording") {
+                    // With nothing chosen, the header's own buttons start the flow; the card appears once there is a recording.
+                    val effects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+                    AnimatedContent(
+                        targetState = state.input == null && !recorder.state.recording,
+                        transitionSpec = { fadeIn(effects) togetherWith fadeOut(effects) },
+                        label = "recording",
+                    ) { empty ->
+                        if (empty) {
+                            InputActions(onChoose = pickRecording, recorder = recorder)
+                        } else {
+                            InputCard(
+                                input = state.input,
+                                waveform = state.waveform,
+                                loading = state.waveformLoading,
+                                problem = state.inputProblem,
+                                selection = 0f..1f,
+                                onChoose = pickRecording,
+                                recorder = recorder,
+                            )
+                        }
                     }
                 }
-                item(key = "recording") {
-                    InputCard(
-                        input = state.input,
-                        waveform = state.waveform,
-                        loading = state.waveformLoading,
-                        problem = state.inputProblem,
-                        selection = 0f..1f,
-                        onChoose = pickRecording,
-                        recorder = recorder,
-                    )
+                val recent = state.recentTools(limit = columns)
+                if (recent.isNotEmpty()) {
+                    item(key = "title-recent") { SectionLabel(stringResource(Res.string.home_recent)) }
+                    item(key = "recent") { ToolRow(recent, columns, unsupported, onOpen) }
                 }
                 ToolCategory.entries.forEach { category ->
-                    item(key = "title-${category.name}") {
-                        Text(
-                            stringResource(category.title),
-                            style = MaterialTheme.typography.titleMediumEmphasized,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 2.dp),
-                        )
-                    }
+                    item(key = "title-${category.name}") { SectionLabel(stringResource(category.title)) }
                     Tool.entries.filter { it.category == category }.chunked(columns).forEach { row ->
-                        item(key = row.joinToString { it.name }) {
-                            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(TileGap)) {
-                                row.forEach { tool ->
-                                    ToolTile(
-                                        tool,
-                                        available = tool !in unsupported,
-                                        onClick = { onOpen(tool) },
-                                        modifier = Modifier.weight(1f).fillMaxHeight(),
-                                    )
-                                }
-                                // An incomplete last row keeps every tile the same width.
-                                repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
-                            }
-                        }
+                        item(key = row.joinToString { it.name }) { ToolRow(row, columns, unsupported, onOpen) }
                     }
                 }
                 item(key = "footer") {
@@ -377,9 +422,38 @@ private fun ToolsTab(
     }
 }
 
-private val TileMinWidth = 168.dp
+private val TileMinWidth = 160.dp
+private val TileHeight = 76.dp
 private val TileGap = 10.dp
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun SectionLabel(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.titleMediumEmphasized,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 4.dp, top = 16.dp, bottom = 2.dp).semantics { heading() },
+    )
+}
+
+/** One row of tiles. Tiles share the width, and an incomplete row keeps every tile the same width. */
+@Composable
+private fun ToolRow(tools: List<Tool>, columns: Int, unsupported: Set<Tool>, onOpen: (Tool) -> Unit) {
+    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(TileGap)) {
+        tools.forEach { tool ->
+            ToolTile(
+                tool,
+                available = tool !in unsupported,
+                onClick = { onOpen(tool) },
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+            )
+        }
+        repeat(columns - tools.size) { Spacer(Modifier.weight(1f)) }
+    }
+}
+
+/** A compact tile: the tool's shape and its name. The tool screen repeats the name with its description. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ToolTile(tool: Tool, available: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -388,8 +462,8 @@ private fun ToolTile(tool: Tool, available: Boolean, onClick: () -> Unit, modifi
     Card(
         onClick = onClick,
         enabled = available,
-        modifier = modifier.heightIn(min = 164.dp),
-        shape = MaterialTheme.shapes.extraLarge,
+        modifier = modifier.heightIn(min = TileHeight),
+        shape = MaterialTheme.shapes.large,
         // Unavailable tools recede (lower-emphasis container) instead of turning lighter.
         colors = CardDefaults.cardColors(
             containerColor = colors.surfaceContainer,
@@ -397,72 +471,90 @@ private fun ToolTile(tool: Tool, available: Boolean, onClick: () -> Unit, modifi
             disabledContentColor = colors.onSurfaceVariant,
         ),
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                ShapedIcon(icon = tool.icon, shape = tool.shape.toShape(), container = container, content = content, size = 52.dp)
+        Row(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            ShapedIcon(icon = tool.icon, shape = tool.shape.toShape(), container = container, content = content, size = 44.dp)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    stringResource(tool.title),
+                    style = MaterialTheme.typography.titleSmallEmphasized,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 if (!available) {
-                    Spacer(Modifier.weight(1f))
-                    Surface(color = colors.surfaceContainerHighest, shape = CircleShape) {
-                        Text(
-                            stringResource(Res.string.badge_android_only),
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = colors.onSurfaceVariant,
-                        )
-                    }
+                    Text(
+                        stringResource(Res.string.badge_android_only),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.onSurfaceVariant,
+                    )
                 }
             }
-            Text(
-                stringResource(tool.title),
-                style = MaterialTheme.typography.titleMediumEmphasized,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                stringResource(tool.description),
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.onSurfaceVariant,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-            )
         }
     }
 }
 
-/** Shown on the Tools tab while jobs run, so progress is visible without leaving. */
+/** Choose file and Record, shown under the title while no recording is chosen. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ProcessingBanner(job: Job, count: Int, onClick: () -> Unit) {
-    val colors = MaterialTheme.colorScheme
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLargeIncreased,
-        colors = CardDefaults.cardColors(containerColor = colors.primaryContainer, contentColor = colors.onPrimaryContainer),
-    ) {
-        Column(Modifier.padding(20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    stringResource(Res.string.banner_processing, count),
-                    style = MaterialTheme.typography.titleMediumEmphasized,
-                    modifier = Modifier.weight(1f),
-                )
-                Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = stringResource(Res.string.tab_activity))
-            }
-            Spacer(Modifier.height(4.dp))
-            Text(
-                "${stringResource(job.tool.title)} · ${job.inputName}",
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(12.dp))
-            WorkStatus(
-                status = job.progressText(),
-                progress = job.progress?.fraction,
-                downloading = job.progress?.stage == Stage.DOWNLOADING_MODEL,
-                seed = job.id,
-            )
+private fun InputActions(onChoose: () -> Unit, recorder: Recorder) {
+    Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(
+            onClick = onChoose,
+            shapes = ButtonDefaults.shapes(),
+            modifier = Modifier.weight(1f).heightIn(min = PrimaryButtonHeight),
+        ) {
+            Icon(Icons.Rounded.AudioFile, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+            Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+            Text(stringResource(Res.string.action_choose), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
+        if (recorder.available) {
+            FilledTonalButton(
+                onClick = recorder::toggle,
+                shapes = ButtonDefaults.shapes(),
+                modifier = Modifier.weight(1f).heightIn(min = PrimaryButtonHeight),
+            ) {
+                Icon(Icons.Rounded.Mic, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                Text(stringResource(Res.string.action_record), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
+/** Top-bar link back to a live meeting: a red dot and the running time. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun MeetingAction(elapsedMs: Long, onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    FilledTonalButton(
+        onClick = onClick,
+        shapes = ButtonDefaults.shapes(),
+        contentPadding = ButtonDefaults.SmallContentPadding,
+        colors = ButtonDefaults.filledTonalButtonColors(containerColor = colors.errorContainer, contentColor = colors.onErrorContainer),
+        modifier = Modifier.padding(end = 8.dp).heightIn(min = 40.dp),
+    ) {
+        Box(Modifier.size(8.dp).background(colors.error, CircleShape))
+        Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+        Text("${stringResource(Res.string.meeting_live)} ${MeetingDocument.clock(elapsedMs)}")
+    }
+}
+
+/** Top-bar link to Activity while jobs run, so progress is one tap away from the Tools tab. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ProcessingAction(count: Int, onClick: () -> Unit) {
+    FilledTonalButton(
+        onClick = onClick,
+        shapes = ButtonDefaults.shapes(),
+        contentPadding = ButtonDefaults.SmallContentPadding,
+        modifier = Modifier.padding(end = 8.dp).heightIn(min = 40.dp),
+    ) {
+        Text(stringResource(Res.string.banner_processing, count))
+        Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+        Icon(
+            Icons.AutoMirrored.Rounded.ArrowForward,
+            contentDescription = stringResource(Res.string.tab_activity),
+            modifier = Modifier.size(ButtonDefaults.SmallIconSize),
+        )
     }
 }

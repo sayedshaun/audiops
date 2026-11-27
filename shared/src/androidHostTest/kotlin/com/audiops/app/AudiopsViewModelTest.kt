@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
@@ -14,6 +15,7 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -145,11 +147,14 @@ class AudiopsViewModelTest {
 
     private fun store() = createSettingsStore(File(dir, "store-${stores++}.preferences_pb").absolutePath)
 
-    private fun viewModel(engine: AudioEngine, history: HistoryRepository = HistoryRepository(store())) =
-        AudiopsViewModel(SavedStateHandle(), engine, SettingsRepository(store()), history).apply {
-            created += this
-            chooseInput("/music/in.wav", "in.wav")
-        }
+    private fun viewModel(
+        engine: AudioEngine,
+        history: HistoryRepository = HistoryRepository(store()),
+        meeting: LiveMeeting = LiveMeeting.Unavailable,
+    ) = AudiopsViewModel(SavedStateHandle(), engine, SettingsRepository(store()), history, meeting).apply {
+        created += this
+        chooseInput("/music/in.wav", "in.wav")
+    }
 
     /** Waits (in real time) until the state satisfies [predicate]. */
     private fun AudiopsViewModel.awaitState(predicate: (AudiopsState) -> Boolean): AudiopsState = runBlocking {
@@ -169,6 +174,68 @@ class AudiopsViewModelTest {
     }
 
     private val gain = JobSpec.Process(listOf(AudioOperation.Gain(3f)))
+
+    /** A live meeting that finishes when stopped, with fixed files. */
+    private class FakeMeeting : LiveMeeting {
+        override val available = true
+        override val state = MutableStateFlow<MeetingState>(MeetingState.Idle)
+        var started: Pair<TranscriptionModel, String>? = null
+        var speakerName: ((Int) -> String)? = null
+        var acknowledged = 0
+
+        override fun start(model: TranscriptionModel, language: String, name: String, speakerName: (Int) -> String) {
+            started = model to name
+            this.speakerName = speakerName
+            state.value = MeetingState.Live(0, 0f, emptyList(), null, 0)
+        }
+
+        override fun stop() {
+            state.value = MeetingState.Finished(
+                MeetingResult(
+                    name = "Meeting 1",
+                    transcriptPath = "/out/meeting.txt",
+                    subtitlesPath = "/out/meeting.srt",
+                    audioPath = "/out/meeting.wav",
+                    startedAt = 1_000,
+                    durationMs = 90_000,
+                    speakers = 2,
+                    model = TranscriptionModel.PARAKEET,
+                    preview = "Speaker 1 (0:00) Hello.",
+                ),
+            )
+        }
+
+        override fun discard() {
+            state.value = MeetingState.Idle
+        }
+
+        override fun acknowledge() {
+            acknowledged++
+            state.value = MeetingState.Idle
+        }
+    }
+
+    @Test fun finishedMeetingIsSavedToHistoryWithItsFiles() {
+        val history = HistoryRepository(store())
+        val meeting = FakeMeeting()
+        val vm = viewModel(FakeEngine(), history, meeting)
+        assertFalse(Tool.MEETING in vm.unsupportedTools)
+        vm.startMeeting("Meeting 1") { "Speaker $it" }
+        assertEquals(TranscriptionModel.PARAKEET to "Meeting 1", meeting.started)
+        assertEquals("Speaker 2", meeting.speakerName?.invoke(2))
+        vm.stopMeeting()
+        val job = vm.awaitJobs(1, JobStatus.DONE).single()
+        assertEquals(Tool.MEETING, job.tool)
+        assertEquals(JobSpec.Meeting(TranscriptionModel.PARAKEET, 2, 90_000), job.spec)
+        assertEquals(listOf("/out/meeting.txt", "/out/meeting.srt", "/out/meeting.wav"), job.files)
+        assertEquals(job, vm.state.value.latestJob(Tool.MEETING))
+        eventually { meeting.acknowledged == 1 && meeting.state.value == MeetingState.Idle }
+        eventually { runBlocking { history.load() }.singleOrNull()?.id == job.id }
+    }
+
+    @Test fun meetingIsUnavailableWithoutAPlatformImplementation() {
+        assertTrue(Tool.MEETING in viewModel(FakeEngine()).unsupportedTools)
+    }
 
     @Test fun processJobFinishesAndIsSavedToHistory() {
         val history = HistoryRepository(store())
@@ -265,7 +332,7 @@ class AudiopsViewModelTest {
 
     @Test fun unsupportedToolsFailWithoutRunning() {
         val vm = viewModel(FakeEngine(supportsEnhance = false))
-        assertEquals(setOf(Tool.ENHANCE), vm.unsupportedTools)
+        assertEquals(setOf(Tool.ENHANCE, Tool.MEETING), vm.unsupportedTools)
         vm.start(Tool.ENHANCE, JobSpec.Enhance())
         assertEquals(FailureKind.UNSUPPORTED, vm.awaitJobs(1, JobStatus.FAILED).single().failure)
     }
@@ -300,7 +367,7 @@ class AudiopsViewModelTest {
 
     @Test fun separationIsUnsupportedWhereTheEngineCannotDoIt() {
         val vm = viewModel(FakeEngine(supportsSeparate = false))
-        assertEquals(setOf(Tool.SEPARATE), vm.unsupportedTools)
+        assertEquals(setOf(Tool.SEPARATE, Tool.MEETING), vm.unsupportedTools)
         vm.start(Tool.SEPARATE, JobSpec.Separate)
         assertEquals(FailureKind.UNSUPPORTED, vm.awaitJobs(1, JobStatus.FAILED).single().failure)
     }

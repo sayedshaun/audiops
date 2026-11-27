@@ -1,6 +1,7 @@
 package com.audiops.app
 
 import android.content.Context
+import com.k2fsa.sherpa.onnx.OfflineRecognizer
 import java.io.File
 
 /**
@@ -84,6 +85,15 @@ internal object AudioPipelines {
             TranscriptionModel.OMNILINGUAL -> OmnilingualTranscriber.transcribe(context, audio, listener)
             TranscriptionModel.WHISPER -> WhisperTranscriber.transcribe(context, audio, language, listener)
             TranscriptionModel.BANGLA -> BanglaTranscriber.transcribe(context, audio, listener)
+        }
+
+    /** A recognizer for single utterances with [model] (live meetings). Release it after use. */
+    fun recognizer(context: Context, model: TranscriptionModel, language: String, listener: ProcessingListener): OfflineRecognizer =
+        when (model) {
+            TranscriptionModel.PARAKEET, TranscriptionModel.AUTO -> ParakeetTranscriber.recognizer(context, listener)
+            TranscriptionModel.OMNILINGUAL -> OmnilingualTranscriber.recognizer(context, listener)
+            TranscriptionModel.WHISPER -> WhisperTranscriber.recognizer(context, language, listener)
+            TranscriptionModel.BANGLA -> BanglaTranscriber.recognizer(context, listener)
         }
 
     private fun crossfade(previous: FloatArray, enhanced: FloatArray): FloatArray {
