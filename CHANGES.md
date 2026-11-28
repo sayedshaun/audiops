@@ -763,3 +763,8 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - `MainActivity.askForNotificationsOnFirstLaunch` (was: on the first job or meeting). Settings → Processing shows the Notifications row only while `rememberNotificationAccess().enabled` is false (the "on" summary string was removed).
 - Tools tab title: `Wordmark()`: Outfit SemiBold (`composeResources/font/outfit_semibold.ttf`, Outfit-Fonts at `90277380`, SIL OFL 1.1: `licenses/OUTFIT-OFL-1.1.txt`, notices, NOTICE, licence list), letter spacing −0.02 em, `Brush.linearGradient` with fixed brand colours (light #3F33B5 → #6A4FE0 → #A54BC9, dark #B4ABFF → #CBA8FF → #F1A7E4, chosen by background luminance) so it stays recognisable under dynamic colour. `home_subtitle`: "On-device audio AI. Nothing leaves your phone."
 - Checked on the emulator: first-launch prompt (after resetting the permission and the asked flag), row hidden when on and shown with Turn on when off, wordmark in light, dark and collapsed.
+
+## 2026-11-28: website rule (`docs/website-rule`)
+
+### Changed
+- AGENTS.md → Repository rules: user-visible features update `website/` (and the README) in the same pull request; the Website workflow deploys it on `main`. The site was last updated for 0.3.0, so it is behind 0.4–0.6.

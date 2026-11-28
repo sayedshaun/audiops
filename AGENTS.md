@@ -10,6 +10,7 @@ This file is the single source of truth for any agent (Claude, Codex, Copilot, G
 - Commit or push only when the user asks.
 - Keep `CHANGES.md` (append one entry per meaningful change; never edit old entries) and `PROGRESS.md` (a current snapshot of done / next / open questions, updated in place).
 - Keep `CHANGELOG.md` for users: add a line under **Unreleased** for every user-visible change (Keep a Changelog groups). `CHANGES.md` is the detailed development log.
+- **Keep the website current.** When a change adds or changes a user-visible feature (a new tool, model, language, voice, or a notable change to what the app does), update the website in `website/` (`index.html`; screenshots in `website/images/`) in the same pull request: feature list, tool and language counts, model table and screenshots as they apply. The **Website** workflow (`.github/workflows/pages.yml`) deploys it to https://sayedshaun.github.io/audiops/ when `website/` changes on `main`. Keep the README's feature list in step with it.
 - **Before every commit, run `make check`** (formatting with ktlint via Spotless, then all unit tests) and fix what it reports. Run `make format` to fix formatting, then review the diff. Never commit with `--no-verify` and never disable a ktlint rule or delete a failing test to get a commit through; fix the code, or ask the user. The pre-commit hook (`make hooks`) runs the same checks; CI repeats them and blocks the merge to `main`.
 
 ## Product
