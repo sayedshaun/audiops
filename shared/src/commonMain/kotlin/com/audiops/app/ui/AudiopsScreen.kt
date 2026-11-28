@@ -55,6 +55,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
@@ -77,17 +78,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.audiops.app.AudiopsState
 import com.audiops.app.AudiopsViewModel
@@ -114,6 +121,7 @@ import com.audiops.shared.resources.home_recent
 import com.audiops.shared.resources.home_subtitle
 import com.audiops.shared.resources.meeting_live
 import com.audiops.shared.resources.meeting_speaker
+import com.audiops.shared.resources.outfit_semibold
 import com.audiops.shared.resources.sounds_music
 import com.audiops.shared.resources.sounds_noisy_speech
 import com.audiops.shared.resources.sounds_other
@@ -121,6 +129,7 @@ import com.audiops.shared.resources.sounds_speech
 import com.audiops.shared.resources.tab_activity
 import com.audiops.shared.resources.tab_settings
 import com.audiops.shared.resources.tab_tools
+import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -423,7 +432,7 @@ private fun ToolsTab(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(stringResource(Res.string.app_name), fontWeight = FontWeight.Medium) },
+                title = { Wordmark() },
                 subtitle = { titleSubtitle.Text(stringResource(Res.string.home_subtitle)) },
                 expandedHeight = titleSubtitle.expandedHeight(),
                 actions = {
@@ -508,6 +517,29 @@ private fun ToolsTab(
     }
 }
 
+/**
+ * The Audiops wordmark: Outfit SemiBold, tightly set, in the brand gradient (indigo, violet,
+ * orchid, from the app icon), lighter in the dark theme. It keeps the title bar's size, which
+ * shrinks as the bar collapses.
+ */
+@Composable
+private fun Wordmark() {
+    val colors = MaterialTheme.colorScheme
+    val outfit = FontFamily(Font(Res.font.outfit_semibold, FontWeight.SemiBold))
+    // The brand's own colours (from the app icon), not the theme's: a wordmark stays recognisable.
+    Text(
+        stringResource(Res.string.app_name),
+        style = LocalTextStyle.current.merge(
+            TextStyle(
+                fontFamily = outfit,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = (-0.02).em,
+                brush = Brush.linearGradient(if (colors.background.luminance() < 0.5f) WordmarkDark else WordmarkLight),
+            ),
+        ),
+    )
+}
+
 /** What the recording sounds like ("Sounds like speech", the main sounds) and a button for the suggested tool. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -569,6 +601,10 @@ private fun SoundSuggestion(sounds: SoundProfile, unsupported: Set<Tool>, onOpen
 
 private val TileMinWidth = 160.dp
 private val TileHeight = 76.dp
+
+/** Brand gradient for the wordmark on light and dark backgrounds. */
+private val WordmarkLight = listOf(Color(0xFF3F33B5), Color(0xFF6A4FE0), Color(0xFFA54BC9))
+private val WordmarkDark = listOf(Color(0xFFB4ABFF), Color(0xFFCBA8FF), Color(0xFFF1A7E4))
 private val FeaturedTileHeight = 148.dp
 private val TileGap = 10.dp
 

@@ -39,7 +39,6 @@ import androidx.compose.material.icons.rounded.Gavel
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LightMode
-import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.NotificationsOff
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.PrivacyTip
@@ -127,6 +126,8 @@ import com.audiops.shared.resources.license_notices
 import com.audiops.shared.resources.license_notices_summary
 import com.audiops.shared.resources.license_omnilingual
 import com.audiops.shared.resources.license_omnilingual_summary
+import com.audiops.shared.resources.license_outfit
+import com.audiops.shared.resources.license_outfit_summary
 import com.audiops.shared.resources.license_parakeet
 import com.audiops.shared.resources.license_parakeet_summary
 import com.audiops.shared.resources.license_piper
@@ -173,7 +174,6 @@ import com.audiops.shared.resources.settings_models_measuring
 import com.audiops.shared.resources.settings_models_none
 import com.audiops.shared.resources.settings_notifications
 import com.audiops.shared.resources.settings_notifications_off
-import com.audiops.shared.resources.settings_notifications_on
 import com.audiops.shared.resources.settings_outputs
 import com.audiops.shared.resources.settings_outputs_used
 import com.audiops.shared.resources.settings_privacy
@@ -246,6 +246,7 @@ private val licenses = listOf(
         "https://github.com/modelscope/3D-Speaker",
         androidOnly = true,
     ),
+    LicenseEntry(Res.string.license_outfit, Res.string.license_outfit_summary, "https://github.com/Outfitio/Outfit-Fonts"),
     LicenseEntry(
         Res.string.license_kokoro,
         Res.string.license_kokoro_summary,
@@ -457,38 +458,35 @@ private fun SettingsMain(
             item { SectionHeader(stringResource(Res.string.settings_section_processing)) }
             item {
                 val notifications = rememberNotificationAccess()
-                SettingsGroup(
-                    { shape ->
-                        // Progress and downloads show in a notification when Audiops is closed; it is off if the
-                        // first-run prompt was declined, so say so and offer the system page.
+                val keepScreenOn: @Composable (Shape) -> Unit = { shape ->
+                    SwitchRow(
+                        icon = Icons.Rounded.Smartphone,
+                        title = stringResource(Res.string.settings_keep_screen_on),
+                        summary = stringResource(Res.string.settings_keep_screen_on_summary),
+                        checked = settings.keepScreenOn,
+                        shape = shape,
+                        onCheckedChange = actions.onKeepScreenOn,
+                    )
+                }
+                if (notifications.enabled) {
+                    SettingsGroup(keepScreenOn)
+                } else {
+                    // Only while notifications are off (the first-launch prompt was declined, and Android
+                    // will not ask again): progress and downloads are hidden when Audiops is closed.
+                    val turnOn: @Composable (Shape) -> Unit = { shape ->
                         SettingsRow(
-                            icon = if (notifications.enabled) Icons.Rounded.NotificationsActive else Icons.Rounded.NotificationsOff,
+                            icon = Icons.Rounded.NotificationsOff,
                             title = stringResource(Res.string.settings_notifications),
-                            summary = stringResource(
-                                if (notifications.enabled) Res.string.settings_notifications_on else Res.string.settings_notifications_off,
-                            ),
+                            summary = stringResource(Res.string.settings_notifications_off),
                             shape = shape,
                             onClick = notifications.open,
                             trailing = {
-                                if (notifications.enabled) {
-                                    Chevron()
-                                } else {
-                                    FilledTonalButton(onClick = notifications.open) { Text(stringResource(Res.string.action_turn_on)) }
-                                }
+                                FilledTonalButton(onClick = notifications.open) { Text(stringResource(Res.string.action_turn_on)) }
                             },
                         )
-                    },
-                    { shape ->
-                        SwitchRow(
-                            icon = Icons.Rounded.Smartphone,
-                            title = stringResource(Res.string.settings_keep_screen_on),
-                            summary = stringResource(Res.string.settings_keep_screen_on_summary),
-                            checked = settings.keepScreenOn,
-                            shape = shape,
-                            onCheckedChange = actions.onKeepScreenOn,
-                        )
-                    },
-                )
+                    }
+                    SettingsGroup(turnOn, keepScreenOn)
+                }
             }
 
             // Named speakers' voice prints, kept on the device; each can be forgotten.

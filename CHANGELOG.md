@@ -13,6 +13,10 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+### Changed
+- **A real wordmark.** "Audiops" on the Tools tab is set in the Outfit typeface with the brand's indigo-to-orchid gradient (lighter in the dark theme), with the line "On-device audio AI. Nothing leaves your phone." under it.
+- **Notifications are asked for on first launch.** Settings → Notifications now appears only while notifications are off, to turn them back on (Android does not let an app ask again once declined).
+
 ## [0.6.0] - 2026-11-28
 
 ### Added
