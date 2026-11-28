@@ -1,12 +1,16 @@
 package com.audiops.app.ui
 
 import android.Manifest
+import android.app.NotificationManager
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.OpenableColumns
+import android.provider.Settings
 import android.text.format.Formatter
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.ColorScheme
@@ -15,9 +19,14 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import kotlinx.coroutines.CancellationException
 
 @Composable
 actual fun rememberAudioPicker(onPicked: (id: String, name: String) -> Unit): () -> Unit {
@@ -77,6 +86,39 @@ actual fun rememberMicrophonePermission(onResult: (granted: Boolean) -> Unit): (
             result(true)
         } else {
             launcher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+}
+
+@Composable
+actual fun rememberNotificationAccess(): NotificationAccess {
+    val context = LocalContext.current
+    val manager = remember(context) { context.getSystemService(NotificationManager::class.java) }
+    var enabled by remember { mutableStateOf(manager.areNotificationsEnabled()) }
+    LifecycleResumeEffect(manager) {
+        enabled = manager.areNotificationsEnabled()
+        onPauseOrDispose { }
+    }
+    return NotificationAccess(enabled) {
+        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { context.startActivity(intent) }
+    }
+}
+
+@Composable
+actual fun PlatformPredictiveBackHandler(enabled: Boolean, onProgress: (Float) -> Unit, onCancel: () -> Unit, onBack: () -> Unit) {
+    val progress by rememberUpdatedState(onProgress)
+    val cancel by rememberUpdatedState(onCancel)
+    val back by rememberUpdatedState(onBack)
+    PredictiveBackHandler(enabled = enabled) { events ->
+        try {
+            events.collect { progress(it.progress) }
+            back()
+        } catch (e: CancellationException) {
+            cancel()
+            throw e
         }
     }
 }

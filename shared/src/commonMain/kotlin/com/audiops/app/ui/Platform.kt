@@ -35,3 +35,17 @@ expect fun formatFileSize(bytes: Long): String
 /** Returns a function that asks for microphone access when needed, then calls [onResult] with whether it was granted. */
 @Composable
 expect fun rememberMicrophonePermission(onResult: (granted: Boolean) -> Unit): () -> Unit
+
+/** Whether the app may show notifications ([enabled]), and [open], which opens the system page to change that. */
+class NotificationAccess(val enabled: Boolean, val open: () -> Unit)
+
+/** The current [NotificationAccess], checked again whenever the screen resumes (the user may come back from the system page). */
+@Composable
+expect fun rememberNotificationAccess(): NotificationAccess
+
+/**
+ * Predictive back: while the user drags the back gesture, [onProgress] gets 0..1 so the screen can
+ * follow the finger; [onBack] runs when they let go, [onCancel] when they change their mind.
+ */
+@Composable
+expect fun PlatformPredictiveBackHandler(enabled: Boolean, onProgress: (Float) -> Unit, onCancel: () -> Unit, onBack: () -> Unit)

@@ -22,6 +22,7 @@ import com.audiops.app.ui.isDarkTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -90,7 +91,8 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Android 13+ needs permission to show the progress and "finished" notifications. Ask
-     * once, when the user starts their first job, so the request has an obvious reason.
+     * once, when the user starts their first job or live meeting, so the request has an obvious
+     * reason. Settings → Notifications opens the system page if it was declined.
      */
     private fun askForNotificationsOnFirstJob() {
         if (Build.VERSION.SDK_INT < 33) return
@@ -98,7 +100,10 @@ class MainActivity : ComponentActivity() {
         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
         if (checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED || prefs.getBoolean(KEY_ASKED, false)) return
         lifecycleScope.launch {
-            viewModel.state.filter { it.activeJobs.isNotEmpty() }.first()
+            merge(
+                viewModel.state.filter { it.activeJobs.isNotEmpty() },
+                viewModel.meetingState.filter { it !is MeetingState.Idle },
+            ).first()
             prefs.edit().putBoolean(KEY_ASKED, true).apply()
             // The answer needs no handling: notifications simply show or not.
             requestPermissions(arrayOf(permission), 0)

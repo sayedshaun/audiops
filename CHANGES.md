@@ -727,3 +727,32 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - Live meeting (test file, many-language model): correct text, sentences, Ana and Ben named.
 - Kokoro: Heart (US) and Emma (UK) synthesize; the Heart output transcribes back to the typed text ("Audiops", not in the lexicon, spelled by espeak-ng). 5.4 s of speech took about 34 s on the x86_64 emulator including loading; a phone needs timing.
 - Dark theme: Settings → Remembered voices, Downloaded models, the suggestion card. `make ci` passes.
+
+## 2026-11-28: title bars fit a two-line subtitle (`fix/title-subtitle-height`)
+
+### Fixed
+- `LargeFlexibleTopAppBar`'s expanded height fits one subtitle line; on the Moto g96 the Tools subtitle wraps and its second line touched Choose file / Record. `TitleBarSubtitle` (ui) measures the subtitle and adds the extra lines' height to `expandedHeight`; used on Tools, Activity, tool screens and Live meeting (all now `maxLines = 2` with an ellipsis). Checked on the emulator at font scale 1.3 (Tools expanded and collapsed, Live meeting).
+- 0.5.0 also installed on the Moto g96 over USB (arm64 APK from the release); the earlier failed install on the phone was not caused by the file (nothing was installed before, and the same file installed without error).
+
+## 2026-11-28: notifications row, meeting download progress, refined Settings (`feature/settings-polish`)
+
+### Findings
+- Job downloads already show in the ongoing notification (text and bar update every 0.5 s) and keep running when the app is swiped away from Recents (checked on the emulator). Notifications are hidden when POST_NOTIFICATIONS was never granted: the app asks once, on the first job, so a dismissed prompt on a fresh install (the Moto g96 had just been installed) means no notification at all.
+
+### Added / changed
+- `rememberNotificationAccess()` (expect/actual: `NotificationManager.areNotificationsEnabled`, rechecked on resume; opens `ACTION_APP_NOTIFICATION_SETTINGS`). Settings → Processing → Notifications: "On" with a chevron, or "Off" with a Turn on button.
+- `MainActivity` asks for notifications on the first job or the first live meeting.
+- `MeetingNotice.progress`: download fraction while preparing (text "Downloading model 1 of 2 · 40%"), an indeterminate bar while getting ready or finishing; `MeetingService` draws it.
+- Settings: `RowIcon` (40 dp tonal circle, secondary container) for every row; `GroupFootnote` under the remembered voices; shorter labels.
+- Checked on the emulator in light and dark: notifications on and off (revoked with `pm revoke`), Turn on opens the system page, the row updates on return.
+
+## 2026-11-28: Material 3 Expressive pass (`feature/settings-polish`)
+
+### Changed
+- Tools tab: `FeaturedToolTile` for the AI category (148 dp, 52 dp shaped icon, title in titleMediumEmphasized and the tool's description; alone in a row it switches to a horizontal layout), `pressScale` on every tile (0.96 while pressed, fast spatial spring).
+- `TranscriptToolbar`: `HorizontalFloatingToolbar` (vibrant colours) with Copy, Save text and a Subtitles menu (SRT, VTT); the attached `VibrantFloatingActionButton` names speakers (or copies when there are none). `ToolScaffold(floatingToolbar = …)` floats it (Scaffold FAB slot, centred, animated in) on Transcribe, and `MeetingScreen` on a just-finished meeting; content gets 104 dp of bottom room. `JobCard(floatingActions)` hides the inline actions there. Inline (Activity) it is one standard-colour pill without shadow, with a labelled Name speakers button.
+- `SaveButton`: a `SplitButtonLayout` (leading "Save WAV", trailing toggle that flips its arrow and opens M4A/Opus with their hints); a single format stays a plain button.
+- Navigation: opening a tool scales it in from 0.92 on `defaultSpatialSpec` while the tabs scale out to 1.04 (and back on close). `PlatformPredictiveBackHandler` (expect/actual over `PredictiveBackHandler`) drives the tool screen down to 90 % with 32 dp corners as the back gesture progresses.
+- Typography: title bars use `FontWeight.Medium`; the meeting clock, the speakers option and the remember switch use emphasized styles.
+- Activity job sheet scrolls (long transcripts were cut off).
+- Checked on the emulator (light and dark): tiles, floating toolbar with Name speakers on a 4-voice transcript, inline toolbar in Activity, split Save menu, predictive back mid-gesture. `make ci` passes.

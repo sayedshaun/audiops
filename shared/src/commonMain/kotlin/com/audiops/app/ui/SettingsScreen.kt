@@ -23,6 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -38,6 +39,8 @@ import androidx.compose.material.icons.rounded.Gavel
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.material.icons.rounded.NotificationsOff
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.PrivacyTip
 import androidx.compose.material.icons.rounded.RecordVoiceOver
@@ -49,6 +52,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -85,6 +89,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.audiops.app.AiModel
@@ -98,6 +103,7 @@ import com.audiops.shared.resources.action_clear
 import com.audiops.shared.resources.action_close
 import com.audiops.shared.resources.action_delete
 import com.audiops.shared.resources.action_forget_voice
+import com.audiops.shared.resources.action_turn_on
 import com.audiops.shared.resources.back
 import com.audiops.shared.resources.clear_history_body
 import com.audiops.shared.resources.clear_history_title
@@ -165,6 +171,9 @@ import com.audiops.shared.resources.settings_models_delete_title
 import com.audiops.shared.resources.settings_models_empty_summary
 import com.audiops.shared.resources.settings_models_measuring
 import com.audiops.shared.resources.settings_models_none
+import com.audiops.shared.resources.settings_notifications
+import com.audiops.shared.resources.settings_notifications_off
+import com.audiops.shared.resources.settings_notifications_on
 import com.audiops.shared.resources.settings_outputs
 import com.audiops.shared.resources.settings_outputs_used
 import com.audiops.shared.resources.settings_privacy
@@ -376,7 +385,7 @@ private fun SettingsMain(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(stringResource(Res.string.settings_title)) },
+                title = { Text(stringResource(Res.string.settings_title), fontWeight = FontWeight.Medium) },
                 scrollBehavior = scrollBehavior,
             )
         },
@@ -447,29 +456,44 @@ private fun SettingsMain(
             // Language and model choices live on the Transcribe and Live meeting screens.
             item { SectionHeader(stringResource(Res.string.settings_section_processing)) }
             item {
-                SettingsGroup({ shape ->
-                    SwitchRow(
-                        icon = Icons.Rounded.Smartphone,
-                        title = stringResource(Res.string.settings_keep_screen_on),
-                        summary = stringResource(Res.string.settings_keep_screen_on_summary),
-                        checked = settings.keepScreenOn,
-                        shape = shape,
-                        onCheckedChange = actions.onKeepScreenOn,
-                    )
-                })
+                val notifications = rememberNotificationAccess()
+                SettingsGroup(
+                    { shape ->
+                        // Progress and downloads show in a notification when Audiops is closed; it is off if the
+                        // first-run prompt was declined, so say so and offer the system page.
+                        SettingsRow(
+                            icon = if (notifications.enabled) Icons.Rounded.NotificationsActive else Icons.Rounded.NotificationsOff,
+                            title = stringResource(Res.string.settings_notifications),
+                            summary = stringResource(
+                                if (notifications.enabled) Res.string.settings_notifications_on else Res.string.settings_notifications_off,
+                            ),
+                            shape = shape,
+                            onClick = notifications.open,
+                            trailing = {
+                                if (notifications.enabled) {
+                                    Chevron()
+                                } else {
+                                    FilledTonalButton(onClick = notifications.open) { Text(stringResource(Res.string.action_turn_on)) }
+                                }
+                            },
+                        )
+                    },
+                    { shape ->
+                        SwitchRow(
+                            icon = Icons.Rounded.Smartphone,
+                            title = stringResource(Res.string.settings_keep_screen_on),
+                            summary = stringResource(Res.string.settings_keep_screen_on_summary),
+                            checked = settings.keepScreenOn,
+                            shape = shape,
+                            onCheckedChange = actions.onKeepScreenOn,
+                        )
+                    },
+                )
             }
 
             // Named speakers' voice prints, kept on the device; each can be forgotten.
             if (voices.isNotEmpty()) {
                 item { SectionHeader(stringResource(Res.string.settings_section_voices)) }
-                item {
-                    Text(
-                        stringResource(Res.string.settings_voices_hint),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
-                    )
-                }
                 item {
                     SettingsGroup(
                         *voices.map { name ->
@@ -492,6 +516,7 @@ private fun SettingsMain(
                         }.toTypedArray(),
                     )
                 }
+                item { GroupFootnote(stringResource(Res.string.settings_voices_hint)) }
             }
 
             item { SectionHeader(stringResource(Res.string.settings_section_storage)) }
@@ -744,7 +769,7 @@ private fun SettingsSubPage(title: String, onBack: () -> Unit, content: LazyList
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(title) },
+                title = { Text(title, fontWeight = FontWeight.Medium) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(Res.string.back))
@@ -819,7 +844,7 @@ private fun SettingsRow(
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         headlineContent = { Text(title) },
         supportingContent = summary?.let { { Text(it) } },
-        leadingContent = { Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+        leadingContent = { RowIcon(icon) },
         trailingContent = trailing,
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     )
@@ -847,9 +872,32 @@ private fun SwitchRow(
             },
         headlineContent = { Text(title) },
         supportingContent = { Text(summary) },
-        leadingContent = { Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+        leadingContent = { RowIcon(icon) },
         trailingContent = { Switch(checked = checked, onCheckedChange = null, enabled = enabled) },
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+    )
+}
+
+/** A row's icon in a soft tonal circle, so every settings row starts on the same quiet shape. */
+@Composable
+private fun RowIcon(icon: ImageVector) {
+    ShapedIcon(
+        icon,
+        CircleShape,
+        MaterialTheme.colorScheme.secondaryContainer,
+        MaterialTheme.colorScheme.onSecondaryContainer,
+        size = 40.dp,
+    )
+}
+
+/** A short note under a group, in the quiet style of system Settings footers. */
+@Composable
+private fun GroupFootnote(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 10.dp),
     )
 }
 

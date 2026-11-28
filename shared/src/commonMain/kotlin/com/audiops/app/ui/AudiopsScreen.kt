@@ -2,15 +2,19 @@ package com.audiops.app.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -31,6 +35,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.AudioFile
@@ -67,15 +72,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -136,160 +145,184 @@ fun AudiopsScreen(viewModel: AudiopsViewModel, appVersion: String) {
         viewModel.messages.collect { snackbar.showSnackbar(it.text()) }
     }
 
-    // Back closes the open tool; on another tab it returns to Tools (Android top-level convention).
-    PlatformBackHandler(enabled = state.tool != null || state.tab != Tab.TOOLS) {
+    // Back on another tab returns to Tools (Android top-level convention).
+    PlatformBackHandler(enabled = state.tool == null && state.tab != Tab.TOOLS) {
         if (!viewModel.back()) viewModel.selectTab(Tab.TOOLS)
     }
+    // Back from a tool is predictive: the tool screen shrinks and rounds off as the gesture follows the finger.
+    var backProgress by remember { mutableFloatStateOf(0f) }
+    PlatformPredictiveBackHandler(
+        enabled = state.tool != null,
+        onProgress = { backProgress = it },
+        onCancel = { backProgress = 0f },
+        onBack = { viewModel.back() },
+    )
+    LaunchedEffect(state.tool) { backProgress = 0f }
 
-    val spatial = MaterialTheme.motionScheme.defaultSpatialSpec<IntOffset>()
+    // Opening a tool grows it out of the Tools tab on an expressive spring; closing it settles back.
+    val spatial = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
     val effects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
     AnimatedContent(
         targetState = state.tool,
         transitionSpec = {
-            val forward = targetState != null
-            val direction = if (forward) 1 else -1
-            (fadeIn(effects) + slideInHorizontally(spatial) { it / 8 * direction }) togetherWith
-                (fadeOut(effects) + slideOutHorizontally(spatial) { -it / 8 * direction })
+            if (targetState != null) {
+                (fadeIn(effects) + scaleIn(spatial, initialScale = 0.92f)) togetherWith
+                    (fadeOut(effects) + scaleOut(spatial, targetScale = 1.04f))
+            } else {
+                (fadeIn(effects) + scaleIn(spatial, initialScale = 1.04f)) togetherWith
+                    (fadeOut(effects) + scaleOut(spatial, targetScale = 0.92f))
+            }
         },
         label = "tool",
     ) { tool ->
-        if (tool == Tool.MEETING) {
-            MeetingScreen(
-                state = meeting,
-                language = state.language,
-                model = effectiveTranscriptionModel(state.language, settings?.transcriptionModel ?: TranscriptionModel.AUTO),
-                latestJob = state.latestJob(tool),
-                snackbar = snackbar,
-                actions = MeetingActions(
-                    onBack = { viewModel.back() },
-                    onStart = viewModel::startMeeting,
-                    onStop = viewModel::stopMeeting,
-                    onDiscard = viewModel::discardMeeting,
-                    onDismissError = viewModel::acknowledgeMeeting,
-                    onMicrophoneDenied = { viewModel.recordFailed(null) },
-                    onLanguage = viewModel::setLanguage,
-                    onTranscriptionModel = viewModel::setTranscriptionModel,
-                    jobCard = JobCardActions(
-                        viewModel::cancel,
-                        viewModel::saveOutput,
-                        viewModel.saveFormats,
-                        viewModel::saveAudio,
-                        viewModel::saveSubtitles,
-                        viewModel::notifyCopied,
-                        viewModel::readText,
-                        viewModel::speakers,
-                        viewModel::nameSpeakers,
-                    ),
-                ),
-            )
-        } else if (tool == Tool.SPEAK) {
-            SpeakScreen(
-                latestJob = state.latestJob(tool),
-                snackbar = snackbar,
-                actions = ToolActions(
-                    onBack = { viewModel.back() },
-                    onChoose = viewModel::chooseInput,
-                    onLanguage = viewModel::setLanguage,
-                    onTranscriptionModel = viewModel::setTranscriptionModel,
-                    onStart = { spec -> viewModel.start(tool, spec) },
-                    onCancel = viewModel::cancel,
-                    onSave = viewModel::saveOutput,
-                    saveFormats = viewModel.saveFormats,
-                    onSaveAudio = viewModel::saveAudio,
-                    onSaveSubtitles = viewModel::saveSubtitles,
-                    onCopied = viewModel::notifyCopied,
-                    readText = viewModel::readText,
-                    speakers = viewModel::speakers,
-                    onNameSpeakers = viewModel::nameSpeakers,
-                ),
-            )
-        } else if (tool != null) {
-            ToolScreen(
-                state = ToolScreenState(
-                    tool = tool,
-                    input = state.input,
-                    waveform = state.waveform,
-                    waveformLoading = state.waveformLoading,
-                    inputProblem = state.inputProblem,
+        val progress = if (tool != null) backProgress else 0f
+        Box(
+            Modifier.fillMaxSize().graphicsLayer {
+                val scale = 1f - progress * 0.1f
+                scaleX = scale
+                scaleY = scale
+                shape = RoundedCornerShape((progress * 32).dp)
+                clip = progress > 0f
+            },
+        ) {
+            if (tool == Tool.MEETING) {
+                MeetingScreen(
+                    state = meeting,
                     language = state.language,
-                    transcriptionModel = settings?.transcriptionModel ?: TranscriptionModel.AUTO,
+                    model = effectiveTranscriptionModel(state.language, settings?.transcriptionModel ?: TranscriptionModel.AUTO),
                     latestJob = state.latestJob(tool),
-                ),
-                snackbar = snackbar,
-                actions = ToolActions(
-                    onBack = { viewModel.back() },
-                    onChoose = viewModel::chooseInput,
-                    onLanguage = viewModel::setLanguage,
-                    onTranscriptionModel = viewModel::setTranscriptionModel,
-                    onStart = { spec -> viewModel.start(tool, spec) },
-                    onCancel = viewModel::cancel,
-                    onSave = viewModel::saveOutput,
-                    saveFormats = viewModel.saveFormats,
-                    onSaveAudio = viewModel::saveAudio,
-                    onSaveSubtitles = viewModel::saveSubtitles,
-                    onCopied = viewModel::notifyCopied,
-                    readText = viewModel::readText,
-                    speakers = viewModel::speakers,
-                    onNameSpeakers = viewModel::nameSpeakers,
-                ),
-            )
-        } else {
-            Shell(
-                tab = state.tab,
-                activeJobs = state.activeJobs.size,
-                snackbar = snackbar,
-                onTab = viewModel::selectTab,
-            ) { tab ->
-                when (tab) {
-                    Tab.TOOLS -> ToolsTab(
-                        state = state,
-                        meeting = meeting,
-                        onShowMeeting = { viewModel.open(Tool.MEETING) },
-                        unsupported = viewModel.unsupportedTools,
-                        onOpen = viewModel::open,
-                        onShowActivity = { viewModel.selectTab(Tab.ACTIVITY) },
+                    snackbar = snackbar,
+                    actions = MeetingActions(
+                        onBack = { viewModel.back() },
+                        onStart = viewModel::startMeeting,
+                        onStop = viewModel::stopMeeting,
+                        onDiscard = viewModel::discardMeeting,
+                        onDismissError = viewModel::acknowledgeMeeting,
+                        onMicrophoneDenied = { viewModel.recordFailed(null) },
+                        onLanguage = viewModel::setLanguage,
+                        onTranscriptionModel = viewModel::setTranscriptionModel,
+                        jobCard = JobCardActions(
+                            viewModel::cancel,
+                            viewModel::saveOutput,
+                            viewModel.saveFormats,
+                            viewModel::saveAudio,
+                            viewModel::saveSubtitles,
+                            viewModel::notifyCopied,
+                            viewModel::readText,
+                            viewModel::speakers,
+                            viewModel::nameSpeakers,
+                        ),
+                    ),
+                )
+            } else if (tool == Tool.SPEAK) {
+                SpeakScreen(
+                    latestJob = state.latestJob(tool),
+                    snackbar = snackbar,
+                    actions = ToolActions(
+                        onBack = { viewModel.back() },
                         onChoose = viewModel::chooseInput,
-                        onRecordFailed = viewModel::recordFailed,
-                    )
+                        onLanguage = viewModel::setLanguage,
+                        onTranscriptionModel = viewModel::setTranscriptionModel,
+                        onStart = { spec -> viewModel.start(tool, spec) },
+                        onCancel = viewModel::cancel,
+                        onSave = viewModel::saveOutput,
+                        saveFormats = viewModel.saveFormats,
+                        onSaveAudio = viewModel::saveAudio,
+                        onSaveSubtitles = viewModel::saveSubtitles,
+                        onCopied = viewModel::notifyCopied,
+                        readText = viewModel::readText,
+                        speakers = viewModel::speakers,
+                        onNameSpeakers = viewModel::nameSpeakers,
+                    ),
+                )
+            } else if (tool != null) {
+                ToolScreen(
+                    state = ToolScreenState(
+                        tool = tool,
+                        input = state.input,
+                        waveform = state.waveform,
+                        waveformLoading = state.waveformLoading,
+                        inputProblem = state.inputProblem,
+                        language = state.language,
+                        transcriptionModel = settings?.transcriptionModel ?: TranscriptionModel.AUTO,
+                        latestJob = state.latestJob(tool),
+                    ),
+                    snackbar = snackbar,
+                    actions = ToolActions(
+                        onBack = { viewModel.back() },
+                        onChoose = viewModel::chooseInput,
+                        onLanguage = viewModel::setLanguage,
+                        onTranscriptionModel = viewModel::setTranscriptionModel,
+                        onStart = { spec -> viewModel.start(tool, spec) },
+                        onCancel = viewModel::cancel,
+                        onSave = viewModel::saveOutput,
+                        saveFormats = viewModel.saveFormats,
+                        onSaveAudio = viewModel::saveAudio,
+                        onSaveSubtitles = viewModel::saveSubtitles,
+                        onCopied = viewModel::notifyCopied,
+                        readText = viewModel::readText,
+                        speakers = viewModel::speakers,
+                        onNameSpeakers = viewModel::nameSpeakers,
+                    ),
+                )
+            } else {
+                Shell(
+                    tab = state.tab,
+                    activeJobs = state.activeJobs.size,
+                    snackbar = snackbar,
+                    onTab = viewModel::selectTab,
+                ) { tab ->
+                    when (tab) {
+                        Tab.TOOLS -> ToolsTab(
+                            state = state,
+                            meeting = meeting,
+                            onShowMeeting = { viewModel.open(Tool.MEETING) },
+                            unsupported = viewModel.unsupportedTools,
+                            onOpen = viewModel::open,
+                            onShowActivity = { viewModel.selectTab(Tab.ACTIVITY) },
+                            onChoose = viewModel::chooseInput,
+                            onRecordFailed = viewModel::recordFailed,
+                        )
 
-                    Tab.ACTIVITY -> ActivityTab(
-                        jobs = state.jobs,
-                        actions = ActivityActions(
-                            onCancel = viewModel::cancel,
-                            onDelete = viewModel::delete,
-                            onClear = viewModel::clearHistory,
-                            onReopen = viewModel::reopen,
-                            onSave = viewModel::saveOutput,
-                            saveFormats = viewModel.saveFormats,
-                            onSaveAudio = viewModel::saveAudio,
-                            onSaveSubtitles = viewModel::saveSubtitles,
-                            onCopied = viewModel::notifyCopied,
-                            readText = viewModel::readText,
-                            speakers = viewModel::speakers,
-                            onNameSpeakers = viewModel::nameSpeakers,
-                        ),
-                    )
+                        Tab.ACTIVITY -> ActivityTab(
+                            jobs = state.jobs,
+                            actions = ActivityActions(
+                                onCancel = viewModel::cancel,
+                                onDelete = viewModel::delete,
+                                onClear = viewModel::clearHistory,
+                                onReopen = viewModel::reopen,
+                                onSave = viewModel::saveOutput,
+                                saveFormats = viewModel.saveFormats,
+                                onSaveAudio = viewModel::saveAudio,
+                                onSaveSubtitles = viewModel::saveSubtitles,
+                                onCopied = viewModel::notifyCopied,
+                                readText = viewModel::readText,
+                                speakers = viewModel::speakers,
+                                onNameSpeakers = viewModel::nameSpeakers,
+                            ),
+                        )
 
-                    Tab.SETTINGS -> SettingsScreen(
-                        settings = settings ?: UserSettings(),
-                        appVersion = appVersion,
-                        modelStorage = modelStorage,
-                        outputStorage = outputStorage,
-                        busy = state.activeJobs.isNotEmpty(),
-                        showTranscription = Tool.TRANSCRIBE !in viewModel.unsupportedTools,
-                        voices = state.rememberedVoices,
-                        actions = SettingsActions(
-                            onThemeMode = viewModel::setThemeMode,
-                            onDynamicColor = viewModel::setDynamicColor,
-                            onPureBlack = viewModel::setPureBlack,
-                            onKeepScreenOn = viewModel::setKeepScreenOn,
-                            onDefaultLanguage = viewModel::setDefaultLanguage,
-                            onTranscriptionModel = viewModel::setTranscriptionModel,
-                            onDeleteModel = viewModel::deleteModel,
-                            onForgetVoice = viewModel::forgetVoice,
-                            onClearHistory = viewModel::clearHistory,
-                        ),
-                    )
+                        Tab.SETTINGS -> SettingsScreen(
+                            settings = settings ?: UserSettings(),
+                            appVersion = appVersion,
+                            modelStorage = modelStorage,
+                            outputStorage = outputStorage,
+                            busy = state.activeJobs.isNotEmpty(),
+                            showTranscription = Tool.TRANSCRIBE !in viewModel.unsupportedTools,
+                            voices = state.rememberedVoices,
+                            actions = SettingsActions(
+                                onThemeMode = viewModel::setThemeMode,
+                                onDynamicColor = viewModel::setDynamicColor,
+                                onPureBlack = viewModel::setPureBlack,
+                                onKeepScreenOn = viewModel::setKeepScreenOn,
+                                onDefaultLanguage = viewModel::setDefaultLanguage,
+                                onTranscriptionModel = viewModel::setTranscriptionModel,
+                                onDeleteModel = viewModel::deleteModel,
+                                onForgetVoice = viewModel::forgetVoice,
+                                onClearHistory = viewModel::clearHistory,
+                            ),
+                        )
+                    }
                 }
             }
         }
@@ -385,12 +418,14 @@ private fun ToolsTab(
     val recorder = rememberRecorder(onChoose, onRecordFailed)
     KeepScreenOn(recorder.state.recording)
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val titleSubtitle = rememberTitleBarSubtitle()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(stringResource(Res.string.app_name)) },
-                subtitle = { Text(stringResource(Res.string.home_subtitle), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                title = { Text(stringResource(Res.string.app_name), fontWeight = FontWeight.Medium) },
+                subtitle = { titleSubtitle.Text(stringResource(Res.string.home_subtitle)) },
+                expandedHeight = titleSubtitle.expandedHeight(),
                 actions = {
                     if (meeting is MeetingState.Live) MeetingAction(meeting.elapsedMs, onShowMeeting)
                     if (state.activeJobs.isNotEmpty()) ProcessingAction(state.activeJobs.size, onShowActivity)
@@ -455,7 +490,9 @@ private fun ToolsTab(
                 ToolCategory.entries.forEach { category ->
                     item(key = "title-${category.name}") { SectionLabel(stringResource(category.title)) }
                     Tool.entries.filter { it.category == category }.chunked(columns).forEach { row ->
-                        item(key = row.joinToString { it.name }) { ToolRow(row, columns, unsupported, onOpen) }
+                        item(key = row.joinToString { it.name }) {
+                            ToolRow(row, columns, unsupported, onOpen, featured = category == ToolCategory.AI)
+                        }
                     }
                 }
                 item(key = "footer") {
@@ -532,6 +569,7 @@ private fun SoundSuggestion(sounds: SoundProfile, unsupported: Set<Tool>, onOpen
 
 private val TileMinWidth = 160.dp
 private val TileHeight = 76.dp
+private val FeaturedTileHeight = 148.dp
 private val TileGap = 10.dp
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -547,17 +585,93 @@ private fun SectionLabel(text: String) {
 
 /** One row of tiles. Tiles share the width, and an incomplete row keeps every tile the same width. */
 @Composable
-private fun ToolRow(tools: List<Tool>, columns: Int, unsupported: Set<Tool>, onOpen: (Tool) -> Unit) {
+private fun ToolRow(tools: List<Tool>, columns: Int, unsupported: Set<Tool>, onOpen: (Tool) -> Unit, featured: Boolean = false) {
     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(TileGap)) {
         tools.forEach { tool ->
-            ToolTile(
-                tool,
-                available = tool !in unsupported,
-                onClick = { onOpen(tool) },
-                modifier = Modifier.weight(1f).fillMaxHeight(),
+            val modifier = Modifier.weight(1f).fillMaxHeight()
+            if (featured) {
+                FeaturedToolTile(
+                    tool,
+                    available = tool !in unsupported,
+                    onClick = { onOpen(tool) },
+                    modifier = modifier,
+                    wide = tools.size < columns,
+                )
+            } else {
+                ToolTile(tool, available = tool !in unsupported, onClick = { onOpen(tool) }, modifier = modifier)
+            }
+        }
+        // A featured tile left alone in its row spans the row; compact tiles keep their width.
+        if (!featured) repeat(columns - tools.size) { Spacer(Modifier.weight(1f)) }
+    }
+}
+
+/** Tiles shrink a little while pressed and spring back, so a tap feels physical. */
+@Composable
+private fun Modifier.pressScale(interaction: MutableInteractionSource): Modifier {
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (pressed) 0.96f else 1f, MaterialTheme.motionScheme.fastSpatialSpec(), label = "press")
+    return graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }
+}
+
+/**
+ * A larger tile for the AI tools, the heart of the app: the tool's shape, its name and what it does.
+ * The tonal container comes from the tool's category, so the group reads as one family.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun FeaturedToolTile(tool: Tool, available: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, wide: Boolean = false) {
+    val colors = MaterialTheme.colorScheme
+    val (container, content) = if (available) tool.category.colors(colors) else colors.surfaceContainerHighest to colors.onSurfaceVariant
+    val interaction = remember { MutableInteractionSource() }
+    Card(
+        onClick = onClick,
+        enabled = available,
+        interactionSource = interaction,
+        modifier = modifier.heightIn(min = if (wide) TileHeight else FeaturedTileHeight).pressScale(interaction),
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(
+            containerColor = colors.surfaceContainerHigh,
+            disabledContainerColor = colors.surfaceContainerLowest,
+            disabledContentColor = colors.onSurfaceVariant,
+        ),
+    ) {
+        val icon = @Composable {
+            ShapedIcon(icon = tool.icon, shape = tool.shape.toShape(), container = container, content = content, size = 52.dp)
+        }
+        val words = @Composable {
+            Text(
+                stringResource(tool.title),
+                style = MaterialTheme.typography.titleMediumEmphasized,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                if (available) stringResource(tool.description) else stringResource(Res.string.badge_android_only),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
         }
-        repeat(columns - tools.size) { Spacer(Modifier.weight(1f)) }
+        // Alone in its row, the tile lies on its side rather than leaving an empty half.
+        if (wide) {
+            Row(Modifier.fillMaxSize().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                icon()
+                Spacer(Modifier.width(16.dp))
+                Column(Modifier.weight(1f)) { words() }
+            }
+        } else {
+            Column(Modifier.fillMaxSize().padding(16.dp)) {
+                icon()
+                Spacer(Modifier.weight(1f).heightIn(min = 14.dp))
+                words()
+            }
+        }
     }
 }
 
@@ -567,10 +681,12 @@ private fun ToolRow(tools: List<Tool>, columns: Int, unsupported: Set<Tool>, onO
 private fun ToolTile(tool: Tool, available: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     val (container, content) = if (available) tool.category.colors(colors) else colors.surfaceContainerHighest to colors.onSurfaceVariant
+    val interaction = remember { MutableInteractionSource() }
     Card(
         onClick = onClick,
         enabled = available,
-        modifier = modifier.heightIn(min = TileHeight),
+        interactionSource = interaction,
+        modifier = modifier.heightIn(min = TileHeight).pressScale(interaction),
         shape = MaterialTheme.shapes.large,
         // Unavailable tools recede (lower-emphasis container) instead of turning lighter.
         colors = CardDefaults.cardColors(

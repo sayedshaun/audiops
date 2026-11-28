@@ -20,6 +20,7 @@ import com.audiops.shared.resources.notification_meeting_stop
 import com.audiops.shared.resources.notification_meeting_text
 import com.audiops.shared.resources.notification_meeting_title
 import com.audiops.shared.resources.notification_waiting
+import com.audiops.shared.resources.stage_model_download_percent
 import org.jetbrains.compose.resources.getPluralString
 import org.jetbrains.compose.resources.getString
 
@@ -66,13 +67,21 @@ suspend fun notificationChannelText(): NotificationChannelText = NotificationCha
     finishedDescription = getString(Res.string.notification_channel_finished_description),
 )
 
-/** What the ongoing meeting notification shows. */
-data class MeetingNotice(val title: String, val text: String, val stopLabel: String)
+/**
+ * What the ongoing meeting notification shows. [progress] is the model download (0..1) while one
+ * runs, -1 for a bar without a known end (getting ready, sorting out speakers), and null for no bar.
+ */
+data class MeetingNotice(val title: String, val text: String, val stopLabel: String, val progress: Float? = null)
 
 /** Notice for a meeting in [state], or null when no meeting is starting, running or finishing. */
 suspend fun meetingNotice(state: MeetingState): MeetingNotice? {
+    val download = (state as? MeetingState.Preparing)?.progress
     val text = when (state) {
-        is MeetingState.Preparing -> getString(Res.string.meeting_preparing)
+        is MeetingState.Preparing -> if (download != null) {
+            getString(Res.string.stage_model_download_percent, download.index, download.total, (download.subFraction * 100).toInt())
+        } else {
+            getString(Res.string.meeting_preparing)
+        }
 
         is MeetingState.Live -> getString(
             Res.string.notification_meeting_text,
@@ -84,5 +93,10 @@ suspend fun meetingNotice(state: MeetingState): MeetingNotice? {
 
         else -> return null
     }
-    return MeetingNotice(getString(Res.string.notification_meeting_title), text, getString(Res.string.notification_meeting_stop))
+    val progress = when (state) {
+        is MeetingState.Preparing -> download?.fraction ?: -1f
+        is MeetingState.Finishing -> -1f
+        else -> null
+    }
+    return MeetingNotice(getString(Res.string.notification_meeting_title), text, getString(Res.string.notification_meeting_stop), progress)
 }

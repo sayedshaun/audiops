@@ -1,11 +1,16 @@
 package com.audiops.app.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -33,6 +38,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AudioFile
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -43,6 +49,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -55,6 +62,8 @@ import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SplitButtonDefaults
+import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.toShape
@@ -76,6 +85,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -85,7 +95,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.audiops.app.SaveFormat
 import com.audiops.shared.resources.Res
+import com.audiops.shared.resources.action_more_formats
 import com.audiops.shared.resources.action_save
+import com.audiops.shared.resources.action_save_format
 import com.audiops.shared.resources.back
 import org.jetbrains.compose.resources.stringResource
 
@@ -174,25 +186,67 @@ fun WorkStatus(status: String, progress: Float?, downloading: Boolean = false, p
 }
 
 /**
- * A Save button. With one format it saves straight away; with several, a menu under the button asks
- * which one (with a line on what each is good for) and [onSave] gets the choice.
+ * Save for an audio result. With one format it is a single button; with several it is an
+ * Expressive split button: the main part saves straight away in the first format (lossless WAV),
+ * the arrow opens the other formats with a line on what each is for.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SaveButton(formats: List<SaveFormat>, modifier: Modifier = Modifier, onSave: (SaveFormat) -> Unit) {
-    var open by remember { mutableStateOf(false) }
-    Box(modifier.fillMaxWidth()) {
+    if (formats.size <= 1) {
         Button(
-            onClick = { if (formats.size > 1) open = true else onSave(formats.first()) },
+            onClick = { onSave(formats.first()) },
             shapes = ButtonDefaults.shapes(),
             contentPadding = PrimaryButtonPadding,
-            modifier = Modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
+            modifier = modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
         ) {
             Icon(Icons.Rounded.Save, contentDescription = null)
             Spacer(Modifier.width(8.dp))
             Text(stringResource(Res.string.action_save), style = MaterialTheme.typography.titleMedium)
         }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+        return
+    }
+    var open by remember { mutableStateOf(false) }
+    Box(modifier.fillMaxWidth()) {
+        SplitButtonLayout(
+            leadingButton = {
+                SplitButtonDefaults.LeadingButton(
+                    onClick = { onSave(formats.first()) },
+                    modifier = Modifier.heightIn(min = PrimaryButtonHeight),
+                ) {
+                    Icon(Icons.Rounded.Save, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        stringResource(Res.string.action_save_format, stringResource(formats.first().label)),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
+            },
+            trailingButton = {
+                val more = stringResource(Res.string.action_more_formats)
+                SplitButtonDefaults.TrailingButton(
+                    checked = open,
+                    onCheckedChange = { open = it },
+                    modifier = Modifier.heightIn(min = PrimaryButtonHeight).semantics { contentDescription = more },
+                ) {
+                    val rotation by animateFloatAsState(
+                        if (open) 180f else 0f,
+                        MaterialTheme.motionScheme.fastSpatialSpec(),
+                        label = "arrow",
+                    )
+                    Icon(
+                        Icons.Rounded.KeyboardArrowDown,
+                        contentDescription = null,
+                        modifier = Modifier.graphicsLayer {
+                            rotationZ =
+                                rotation
+                        },
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }, modifier = Modifier.align(Alignment.TopEnd)) {
             formats.forEach { format ->
                 DropdownMenuItem(
                     text = {
@@ -283,15 +337,19 @@ fun ToolScaffold(
     busy: Boolean,
     onBack: () -> Unit,
     snackbar: SnackbarHostState,
+    /** Actions that float over the bottom of the screen (an Expressive floating toolbar), or null. */
+    floatingToolbar: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val titleSubtitle = rememberTitleBarSubtitle()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(title) },
-                subtitle = { Text(subtitle, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                title = { Text(title, fontWeight = FontWeight.Medium) },
+                subtitle = { titleSubtitle.Text(subtitle) },
+                expandedHeight = titleSubtitle.expandedHeight(),
                 navigationIcon = {
                     IconButton(onClick = onBack, enabled = !busy) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(Res.string.back))
@@ -301,6 +359,18 @@ fun ToolScaffold(
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },
+        floatingActionButton = {
+            val effects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+            val spatial = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
+            AnimatedVisibility(
+                visible = floatingToolbar != null,
+                enter = fadeIn(effects) + scaleIn(spatial, initialScale = 0.8f),
+                exit = fadeOut(effects) + scaleOut(spatial, targetScale = 0.8f),
+            ) {
+                floatingToolbar?.invoke()
+            }
+        },
+        floatingActionButtonPosition = FabPosition.Center,
     ) { padding ->
         Column(
             Modifier
@@ -314,7 +384,8 @@ fun ToolScaffold(
                     .widthIn(max = 640.dp)
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .padding(top = 20.dp, bottom = 24.dp),
+                    // Room below the content for the floating toolbar, so it never covers the last line.
+                    .padding(top = 20.dp, bottom = if (floatingToolbar != null) 104.dp else 24.dp),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
                 content = content,
             )
