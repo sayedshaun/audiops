@@ -1,10 +1,13 @@
 package com.audiops.app.ui
 
 import android.Manifest
+import android.app.NotificationManager
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.OpenableColumns
+import android.provider.Settings
 import android.text.format.Formatter
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -15,9 +18,13 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.lifecycle.compose.LifecycleResumeEffect
 
 @Composable
 actual fun rememberAudioPicker(onPicked: (id: String, name: String) -> Unit): () -> Unit {
@@ -78,5 +85,22 @@ actual fun rememberMicrophonePermission(onResult: (granted: Boolean) -> Unit): (
         } else {
             launcher.launch(Manifest.permission.RECORD_AUDIO)
         }
+    }
+}
+
+@Composable
+actual fun rememberNotificationAccess(): NotificationAccess {
+    val context = LocalContext.current
+    val manager = remember(context) { context.getSystemService(NotificationManager::class.java) }
+    var enabled by remember { mutableStateOf(manager.areNotificationsEnabled()) }
+    LifecycleResumeEffect(manager) {
+        enabled = manager.areNotificationsEnabled()
+        onPauseOrDispose { }
+    }
+    return NotificationAccess(enabled) {
+        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { context.startActivity(intent) }
     }
 }

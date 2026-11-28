@@ -114,6 +114,10 @@ class MeetingService : Service() {
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setCategory(Notification.CATEGORY_SERVICE)
+            .apply {
+                val progress = notice.progress
+                if (progress != null) setProgress(PROGRESS_MAX, (progress.coerceAtLeast(0f) * PROGRESS_MAX).toInt(), progress < 0f)
+            }
             .apply { if (Build.VERSION.SDK_INT >= 31) setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE) }
             .apply { if (notice.stopLabel.isNotEmpty()) addAction(Notification.Action.Builder(null, notice.stopLabel, stop).build()) }
             .build()
@@ -123,6 +127,7 @@ class MeetingService : Service() {
         private const val TAG = "MeetingService"
         private const val ACTION_STOP = "com.audiops.app.action.STOP_MEETING"
         private const val NOTIFICATION_ID = 2
+        private const val PROGRESS_MAX = 1000
         private const val UPDATE_INTERVAL_MS = 1000L
 
         /** A long meeting is fine; the lock is released when the meeting ends. */

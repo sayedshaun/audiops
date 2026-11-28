@@ -93,8 +93,12 @@
     <string name="action_save_names">Save names</string>
     <string name="message_speakers_named">Speakers named</string>
     <string name="error_speakers_named">Could not name the speakers.</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notifications_on">Progress and downloads show here while Audiops is closed</string>
+    <string name="settings_notifications_off">Off, so progress is hidden while Audiops is closed</string>
+    <string name="action_turn_on">Turn on</string>
     <string name="settings_section_voices">Remembered voices</string>
-    <string name="settings_voices_hint">Speakers you named. Audiops recognises their voices and names them in new transcripts and meetings. Voice prints never leave this device.</string>
+    <string name="settings_voices_hint">Audiops recognises these voices and names them in new transcripts and meetings. Voice prints never leave this device.</string>
     <string name="action_forget_voice">Forget %1$s</string>
     <plurals name="meeting_speakers">
         <item quantity="one">%1$d speaker</item>
@@ -402,8 +406,8 @@
     <string name="settings_dynamic_color">Dynamic color</string>
     <string name="settings_dynamic_color_summary">Use colors from your wallpaper</string>
     <string name="settings_dynamic_color_unsupported">Requires Android 12 or newer</string>
-    <string name="settings_pure_black">Pure black dark theme</string>
-    <string name="settings_pure_black_summary">Black backgrounds in the dark theme. Saves power on OLED screens.</string>
+    <string name="settings_pure_black">Pure black</string>
+    <string name="settings_pure_black_summary">Black backgrounds in the dark theme, to save power on OLED screens</string>
     <string name="settings_default_language">Spoken language</string>
     <string name="transcription_choice_parakeet">English and European languages</string>
     <string name="transcription_choice_omnilingual">Many other languages</string>
@@ -423,8 +427,8 @@
     <string name="model_choice_recommended">Recommended</string>
     <string name="transcription_model_auto">Automatic</string>
     <string name="settings_section_processing">Processing</string>
-    <string name="settings_keep_screen_on">Keep screen on while processing</string>
-    <string name="settings_keep_screen_on_summary">Stops the screen from turning off during long jobs</string>
+    <string name="settings_keep_screen_on">Keep screen on</string>
+    <string name="settings_keep_screen_on_summary">While a long job runs and Audiops is open</string>
     <string name="settings_section_storage">Storage</string>
     <string name="settings_models">Downloaded models</string>
     <string name="settings_model_summary">%1$s · %2$s</string>

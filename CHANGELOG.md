@@ -13,6 +13,13 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+### Added
+- **Notifications in Settings.** Settings shows whether Audiops may post notifications (needed to follow progress and downloads while the app is closed) and opens the system page to turn them on. Audiops now also asks when you start your first live meeting, not only your first job.
+
+### Changed
+- **More refined Settings.** Each row's icon sits in a soft tonal circle, shorter labels ("Pure black", "Keep screen on"), and the remembered-voices explanation is a quiet note under the list.
+- **Live meeting download progress.** While a live meeting downloads its models, the notification shows the download and a progress bar instead of only "Getting ready".
+
 ### Fixed
 - **Two-line subtitles.** Where a screen's subtitle wraps to a second line (narrower screens, larger text), the title bar now grows to fit it instead of letting it run into the buttons below.
 

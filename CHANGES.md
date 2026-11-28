@@ -733,3 +733,15 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 ### Fixed
 - `LargeFlexibleTopAppBar`'s expanded height fits one subtitle line; on the Moto g96 the Tools subtitle wraps and its second line touched Choose file / Record. `TitleBarSubtitle` (ui) measures the subtitle and adds the extra lines' height to `expandedHeight`; used on Tools, Activity, tool screens and Live meeting (all now `maxLines = 2` with an ellipsis). Checked on the emulator at font scale 1.3 (Tools expanded and collapsed, Live meeting).
 - 0.5.0 also installed on the Moto g96 over USB (arm64 APK from the release); the earlier failed install on the phone was not caused by the file (nothing was installed before, and the same file installed without error).
+
+## 2026-11-28: notifications row, meeting download progress, refined Settings (`feature/settings-polish`)
+
+### Findings
+- Job downloads already show in the ongoing notification (text and bar update every 0.5 s) and keep running when the app is swiped away from Recents (checked on the emulator). Notifications are hidden when POST_NOTIFICATIONS was never granted: the app asks once, on the first job, so a dismissed prompt on a fresh install (the Moto g96 had just been installed) means no notification at all.
+
+### Added / changed
+- `rememberNotificationAccess()` (expect/actual: `NotificationManager.areNotificationsEnabled`, rechecked on resume; opens `ACTION_APP_NOTIFICATION_SETTINGS`). Settings → Processing → Notifications: "On" with a chevron, or "Off" with a Turn on button.
+- `MainActivity` asks for notifications on the first job or the first live meeting.
+- `MeetingNotice.progress`: download fraction while preparing (text "Downloading model 1 of 2 · 40%"), an indeterminate bar while getting ready or finishing; `MeetingService` draws it.
+- Settings: `RowIcon` (40 dp tonal circle, secondary container) for every row; `GroupFootnote` under the remembered voices; shorter labels.
+- Checked on the emulator in light and dark: notifications on and off (revoked with `pm revoke`), Turn on opens the system page, the row updates on return.
