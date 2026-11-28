@@ -768,3 +768,4 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 
 ### Changed
 - AGENTS.md → Repository rules: user-visible features update `website/` (and the README) in the same pull request; the Website workflow deploys it on `main`. The site was last updated for 0.3.0, so it is behind 0.4–0.6.
+- Website and README brought up to 0.6.1: on-device audio AI tagline, fifteen tools, Live meeting, speaker labels and naming, sentences at pauses, sound suggestions, Kokoro voices, a Languages section (website) and a multilingual bullet (README), voice prints in Privacy, roadmap without the shipped items (speaker labels, sound detection) and with multilingual live captions and NPU. New screenshots from the emulator (demo status bar): Tools, Live meeting, naming speakers, transcript with names; the 0.3-era screenshots were removed. Rendered with headless Chrome to check.
