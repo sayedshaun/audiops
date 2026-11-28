@@ -11,7 +11,7 @@
     <string name="tab_settings">Settings</string>
 
     <!-- Tools tab -->
-    <string name="home_subtitle">Every tool runs on this device. Nothing is uploaded.</string>
+    <string name="home_subtitle">On-device audio AI. Nothing leaves your phone.</string>
     <string name="home_recent">Recently used</string>
     <string name="home_footer">AI models download once, then run on this device. Other tools need no download.</string>
     <string name="banner_processing">Processing %1$d</string>
@@ -94,7 +94,6 @@
     <string name="message_speakers_named">Speakers named</string>
     <string name="error_speakers_named">Could not name the speakers.</string>
     <string name="settings_notifications">Notifications</string>
-    <string name="settings_notifications_on">Progress and downloads show here while Audiops is closed</string>
     <string name="settings_notifications_off">Off, so progress is hidden while Audiops is closed</string>
     <string name="action_turn_on">Turn on</string>
     <string name="settings_section_voices">Remembered voices</string>
@@ -487,6 +486,8 @@
     <string name="license_silero">Silero VAD</string>
     <string name="license_silero_summary">MIT License · Silero Team</string>
     <string name="license_speaker">CAM++ speaker embeddings</string>
+    <string name="license_outfit">Outfit typeface</string>
+    <string name="license_outfit_summary">SIL Open Font License 1.1 · The Outfit Project Authors</string>
     <string name="license_kokoro">Kokoro voices</string>
     <string name="license_kokoro_summary">Apache License 2.0 · hexgrad (int8 export and lexicons: k2-fsa sherpa-onnx)</string>
     <string name="license_sounds">Zipformer sound recognition</string>

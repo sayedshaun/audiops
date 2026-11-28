@@ -756,3 +756,10 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - Typography: title bars use `FontWeight.Medium`; the meeting clock, the speakers option and the remember switch use emphasized styles.
 - Activity job sheet scrolls (long transcripts were cut off).
 - Checked on the emulator (light and dark): tiles, floating toolbar with Name speakers on a 4-voice transcript, inline toolbar in Activity, split Save menu, predictive back mid-gesture. `make ci` passes.
+
+## 2026-11-28: notification prompt on first launch, wordmark (`fix/notification-prompt-first-launch`)
+
+### Changed
+- `MainActivity.askForNotificationsOnFirstLaunch` (was: on the first job or meeting). Settings → Processing shows the Notifications row only while `rememberNotificationAccess().enabled` is false (the "on" summary string was removed).
+- Tools tab title: `Wordmark()`: Outfit SemiBold (`composeResources/font/outfit_semibold.ttf`, Outfit-Fonts at `90277380`, SIL OFL 1.1: `licenses/OUTFIT-OFL-1.1.txt`, notices, NOTICE, licence list), letter spacing −0.02 em, `Brush.linearGradient` with fixed brand colours (light #3F33B5 → #6A4FE0 → #A54BC9, dark #B4ABFF → #CBA8FF → #F1A7E4, chosen by background luminance) so it stays recognisable under dynamic colour. `home_subtitle`: "On-device audio AI. Nothing leaves your phone."
+- Checked on the emulator: first-launch prompt (after resetting the permission and the asked flag), row hidden when on and shown with Turn on when off, wordmark in light, dark and collapsed.

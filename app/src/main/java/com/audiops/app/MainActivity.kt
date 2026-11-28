@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
         // Application-scoped, so jobs keep running when this Activity is destroyed.
         viewModel = (application as AudiopsApplication).viewModel(savedInstanceState?.getBundle(KEY_VIEW_MODEL))
         if (savedInstanceState == null) handleIntent(intent)
-        askForNotificationsOnFirstJob()
+        askForNotificationsOnFirstLaunch()
         // Hold the splash screen until settings load, so the first frame uses the chosen theme.
         splash.setKeepOnScreenCondition { viewModel.settings.value == null }
         enableEdgeToEdge()
@@ -90,24 +90,18 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Android 13+ needs permission to show the progress and "finished" notifications. Ask
-     * once, when the user starts their first job or live meeting, so the request has an obvious
-     * reason. Settings → Notifications opens the system page if it was declined.
+     * Android 13+ needs permission to show the progress and "finished" notifications. Ask on the
+     * first launch, once: Android lets an app ask only once or twice, so a declined prompt is
+     * turned on again from Settings → Notifications (shown only while they are off).
      */
-    private fun askForNotificationsOnFirstJob() {
+    private fun askForNotificationsOnFirstLaunch() {
         if (Build.VERSION.SDK_INT < 33) return
         val permission = Manifest.permission.POST_NOTIFICATIONS
         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
         if (checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED || prefs.getBoolean(KEY_ASKED, false)) return
-        lifecycleScope.launch {
-            merge(
-                viewModel.state.filter { it.activeJobs.isNotEmpty() },
-                viewModel.meetingState.filter { it !is MeetingState.Idle },
-            ).first()
-            prefs.edit().putBoolean(KEY_ASKED, true).apply()
-            // The answer needs no handling: notifications simply show or not.
-            requestPermissions(arrayOf(permission), 0)
-        }
+        prefs.edit().putBoolean(KEY_ASKED, true).apply()
+        // The answer needs no handling: notifications simply show or not.
+        requestPermissions(arrayOf(permission), 0)
     }
 
     /** Status and navigation bar icons follow the in-app theme, not only the system theme. */
