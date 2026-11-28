@@ -10,6 +10,7 @@ import android.provider.OpenableColumns
 import android.provider.Settings
 import android.text.format.Formatter
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.ColorScheme
@@ -25,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import kotlinx.coroutines.CancellationException
 
 @Composable
 actual fun rememberAudioPicker(onPicked: (id: String, name: String) -> Unit): () -> Unit {
@@ -102,5 +104,21 @@ actual fun rememberNotificationAccess(): NotificationAccess {
             .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         runCatching { context.startActivity(intent) }
+    }
+}
+
+@Composable
+actual fun PlatformPredictiveBackHandler(enabled: Boolean, onProgress: (Float) -> Unit, onCancel: () -> Unit, onBack: () -> Unit) {
+    val progress by rememberUpdatedState(onProgress)
+    val cancel by rememberUpdatedState(onCancel)
+    val back by rememberUpdatedState(onBack)
+    PredictiveBackHandler(enabled = enabled) { events ->
+        try {
+            events.collect { progress(it.progress) }
+            back()
+        } catch (e: CancellationException) {
+            cancel()
+            throw e
+        }
     }
 }

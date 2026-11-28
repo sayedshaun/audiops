@@ -17,10 +17,17 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 - **Notifications in Settings.** Settings shows whether Audiops may post notifications (needed to follow progress and downloads while the app is closed) and opens the system page to turn them on. Audiops now also asks when you start your first live meeting, not only your first job.
 
 ### Changed
+- **Material 3 Expressive throughout.**
+  - The AI tools are larger tiles on the Tools tab, each with a line on what it does; a tile left alone in its row lies across it. Tiles give slightly under your finger.
+  - A finished transcript keeps its actions in a floating toolbar (Copy, Save text, Subtitles, and Name speakers as the main button) that stays in reach however long the transcript is. In Activity the same actions sit in one pill under the text.
+  - Save for audio is a split button: one tap saves WAV, the arrow offers M4A and Opus.
+  - Opening a tool grows it out of the Tools tab on a spring, and the back gesture shrinks the tool screen as you swipe (predictive back).
+  - Titles use the bolder emphasized type.
 - **More refined Settings.** Each row's icon sits in a soft tonal circle, shorter labels ("Pure black", "Keep screen on"), and the remembered-voices explanation is a quiet note under the list.
 - **Live meeting download progress.** While a live meeting downloads its models, the notification shows the download and a progress bar instead of only "Getting ready".
 
 ### Fixed
+- **Long transcripts in Activity.** The job sheet now scrolls, so the end of a long transcript and its actions can be reached.
 - **Two-line subtitles.** Where a screen's subtitle wraps to a second line (narrower screens, larger text), the title bar now grows to fit it instead of letting it run into the buttons below.
 
 ## [0.5.0] - 2026-11-27

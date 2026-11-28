@@ -222,12 +222,26 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
         }
     }
 
+    val jobActions = JobCardActions(
+        actions.onCancel,
+        actions.onSave,
+        actions.saveFormats,
+        actions.onSaveAudio,
+        actions.onSaveSubtitles,
+        actions.onCopied,
+        actions.readText,
+        actions.speakers,
+        actions.onNameSpeakers,
+    )
+    // A finished transcript keeps its actions in reach in a floating toolbar, however long it is.
+    val transcript = job?.takeIf { it.status == JobStatus.DONE && it.spec is JobSpec.Transcribe && it.outputPath != null }
     ToolScaffold(
         title = stringResource(tool.title),
         subtitle = stringResource(tool.description),
         busy = false,
         onBack = actions.onBack,
         snackbar = snackbar,
+        floatingToolbar = transcript?.let { { TranscriptToolbar(it, jobActions) } },
     ) {
         // Language tools start with what is spoken, then the model for it.
         val languageSteps = if (tool == Tool.TRANSCRIBE) 2 else 0
@@ -300,17 +314,8 @@ fun ToolScreen(state: ToolScreenState, snackbar: SnackbarHostState, actions: Too
                     Spacer(Modifier.height(24.dp))
                     JobCard(
                         job = job,
-                        actions = JobCardActions(
-                            actions.onCancel,
-                            actions.onSave,
-                            actions.saveFormats,
-                            actions.onSaveAudio,
-                            actions.onSaveSubtitles,
-                            actions.onCopied,
-                            actions.readText,
-                            actions.speakers,
-                            actions.onNameSpeakers,
-                        ),
+                        actions = jobActions,
+                        floatingActions = transcript != null,
                         // The waveform of the recording this job works on, if it is still the one on screen.
                         peaks = state.waveform?.peaks?.takeIf { state.input?.id == job.inputId },
                     )
@@ -345,7 +350,7 @@ private fun SpeakersOption(checked: Boolean, onChange: (Boolean) -> Unit) {
         )
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
-            Text(stringResource(Res.string.speakers_option), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(Res.string.speakers_option), style = MaterialTheme.typography.titleMediumEmphasized)
             Text(
                 stringResource(Res.string.speakers_option_hint),
                 style = MaterialTheme.typography.bodySmall,
@@ -894,7 +899,14 @@ data class JobCardActions(
 /** A job's live progress (over the recording's [peaks] when known), or its result: player and Save, transcript, or report. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun JobCard(job: Job, actions: JobCardActions, modifier: Modifier = Modifier, peaks: FloatArray? = null) {
+fun JobCard(
+    job: Job,
+    actions: JobCardActions,
+    modifier: Modifier = Modifier,
+    peaks: FloatArray? = null,
+    /** True where the screen shows a transcript's actions in a floating toolbar ([TranscriptToolbar]). */
+    floatingActions: Boolean = false,
+) {
     val colors = MaterialTheme.colorScheme
     when (job.status) {
         JobStatus.QUEUED, JobStatus.RUNNING -> Card(
@@ -940,8 +952,8 @@ fun JobCard(job: Job, actions: JobCardActions, modifier: Modifier = Modifier, pe
 
         JobStatus.DONE -> when {
             job.report != null -> ReportCard(job.report)
-            job.spec is JobSpec.Transcribe -> TranscriptCard(job, actions)
-            job.spec is JobSpec.Meeting -> MeetingResultCard(job, actions)
+            job.spec is JobSpec.Transcribe -> TranscriptCard(job, actions, inlineActions = !floatingActions)
+            job.spec is JobSpec.Meeting -> MeetingResultCard(job, actions, floatingActions)
             job.spec is JobSpec.Separate && job.stemPaths != null -> StemsCard(job, actions)
             job.outputPath != null -> AudioResultCard(job, actions)
             else -> Unit
@@ -1010,9 +1022,9 @@ private fun StemsCard(job: Job, actions: JobCardActions) {
 /** A finished meeting: its transcript (with speakers), then the recording to play and save. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun MeetingResultCard(job: Job, actions: JobCardActions) {
+private fun MeetingResultCard(job: Job, actions: JobCardActions, floatingActions: Boolean) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        TranscriptCard(job, actions)
+        TranscriptCard(job, actions, inlineActions = !floatingActions)
         val audio = job.audioPath ?: return@Column
         val recording = job.copy(outputPath = audio)
         val saveWav = rememberFileSaver(SaveFormat.WAV.mimeType) { actions.onSave(recording, it) }
@@ -1055,15 +1067,9 @@ private fun MeetingTranscriptText(text: String) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun TranscriptCard(job: Job, actions: JobCardActions) {
+private fun TranscriptCard(job: Job, actions: JobCardActions, inlineActions: Boolean = true) {
     val path = job.outputPath ?: return
-    val clipboard = LocalClipboardManager.current
-    val haptics = LocalHapticFeedback.current
     val text by produceState<String?>(initialValue = job.preview, path, job.revision) { value = actions.readText(path) ?: job.preview }
-    var naming by rememberSaveable(job.id) { mutableStateOf(false) }
-    val saveAs = rememberFileSaver("text/plain") { actions.onSave(job, it) }
-    val saveSrt = rememberFileSaver("application/x-subrip") { actions.onSaveSubtitles(job, SubtitleFormat.SRT, it) }
-    val saveVtt = rememberFileSaver("text/vtt") { actions.onSaveSubtitles(job, SubtitleFormat.VTT, it) }
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLargeIncreased,
@@ -1074,85 +1080,17 @@ private fun TranscriptCard(job: Job, actions: JobCardActions) {
             Spacer(Modifier.height(8.dp))
             SelectionContainer {
                 if (job.spec is JobSpec.Meeting || job.speakersPath != null) {
-                    MeetingTranscriptText(
-                        text.orEmpty(),
-                    )
+                    MeetingTranscriptText(text.orEmpty())
                 } else {
                     Text(text.orEmpty(), style = MaterialTheme.typography.bodyLarge)
                 }
             }
-            Spacer(Modifier.height(16.dp))
-            if (job.speakersPath != null) {
-                Button(
-                    onClick = { naming = true },
-                    shapes = ButtonDefaults.shapes(),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = PrimaryButtonHeight),
-                ) {
-                    Icon(Icons.Rounded.RecordVoiceOver, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(Res.string.action_name_speakers))
-                }
-                Spacer(Modifier.height(8.dp))
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
-                FilledTonalButton(
-                    onClick = {
-                        clipboard.setText(AnnotatedString(text.orEmpty()))
-                        haptics.performHapticFeedback(HapticFeedbackType.Confirm)
-                        actions.onCopied()
-                    },
-                    shapes = ConnectedLeading,
-                    modifier = Modifier.weight(1f).heightIn(min = PrimaryButtonHeight),
-                ) {
-                    Icon(Icons.Rounded.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(Res.string.action_copy))
-                }
-                FilledTonalButton(
-                    onClick = { saveAs(derivedFileName(job.inputName, "transcript", "txt")) },
-                    shapes = ConnectedTrailing,
-                    modifier = Modifier.weight(1f).heightIn(min = PrimaryButtonHeight),
-                ) {
-                    Icon(Icons.Rounded.Save, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(Res.string.action_save_text))
-                }
-            }
-            if (job.subtitlesPath != null) {
-                Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
-                    FilledTonalButton(
-                        onClick = { saveSrt(derivedFileName(job.inputName, "subtitles", "srt")) },
-                        shapes = ConnectedLeading,
-                        modifier = Modifier.weight(1f).heightIn(min = PrimaryButtonHeight),
-                    ) {
-                        Icon(Icons.Rounded.Subtitles, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(Res.string.action_save_srt))
-                    }
-                    FilledTonalButton(
-                        onClick = { saveVtt(derivedFileName(job.inputName, "subtitles", "vtt")) },
-                        shapes = ConnectedTrailing,
-                        modifier = Modifier.weight(1f).heightIn(min = PrimaryButtonHeight),
-                    ) {
-                        Icon(Icons.Rounded.Subtitles, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(Res.string.action_save_vtt))
-                    }
-                }
+            // On a tool screen the actions float over the screen instead (see TranscriptToolbar).
+            if (inlineActions) {
+                Spacer(Modifier.height(20.dp))
+                TranscriptToolbar(job, actions, Modifier.align(Alignment.CenterHorizontally), floating = false)
             }
         }
-    }
-    if (naming) {
-        SpeakerNamesSheet(
-            job = job,
-            load = actions.speakers,
-            onSave = { names, remember ->
-                naming = false
-                actions.onNameSpeakers(job.id, names, remember)
-            },
-            onDismiss = { naming = false },
-        )
     }
 }
 

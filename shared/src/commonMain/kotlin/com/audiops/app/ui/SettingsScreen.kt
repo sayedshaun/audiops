@@ -89,6 +89,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.audiops.app.AiModel
@@ -384,7 +385,7 @@ private fun SettingsMain(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(stringResource(Res.string.settings_title)) },
+                title = { Text(stringResource(Res.string.settings_title), fontWeight = FontWeight.Medium) },
                 scrollBehavior = scrollBehavior,
             )
         },
@@ -768,7 +769,7 @@ private fun SettingsSubPage(title: String, onBack: () -> Unit, content: LazyList
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(title) },
+                title = { Text(title, fontWeight = FontWeight.Medium) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(Res.string.back))

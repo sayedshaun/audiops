@@ -169,7 +169,7 @@ fun SpeakerNamesSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text(stringResource(Res.string.speakers_remember), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(Res.string.speakers_remember), style = MaterialTheme.typography.titleMediumEmphasized)
                     Text(
                         stringResource(Res.string.speakers_remember_hint),
                         style = MaterialTheme.typography.bodySmall,

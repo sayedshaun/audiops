@@ -42,6 +42,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -81,6 +82,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.audiops.app.FailureKind
@@ -188,11 +190,13 @@ fun MeetingScreen(
     }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val titleSubtitle = rememberTitleBarSubtitle()
+    // The meeting just finished keeps its transcript actions in a floating toolbar.
+    val justFinished = latestJob?.takeIf { it.id == finishedHere && it.outputPath != null }
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(stringResource(tool.title)) },
+                title = { Text(stringResource(tool.title), fontWeight = FontWeight.Medium) },
                 subtitle = { titleSubtitle.Text(stringResource(tool.description)) },
                 expandedHeight = titleSubtitle.expandedHeight(),
                 navigationIcon = {
@@ -204,19 +208,21 @@ fun MeetingScreen(
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },
+        floatingActionButton = { if (justFinished != null) TranscriptToolbar(justFinished, actions.jobCard) },
+        floatingActionButtonPosition = FabPosition.Center,
     ) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Column(
-                Modifier.widthIn(max = 640.dp).fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
+                Modifier.widthIn(max = 640.dp).fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = if (justFinished != null) 104.dp else 24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 if (state is MeetingState.Failed) ErrorCard(state.text())
-                val justFinished = latestJob?.takeIf { it.id == finishedHere }
                 if (justFinished != null) {
-                    JobCard(justFinished, actions.jobCard)
+                    JobCard(justFinished, actions.jobCard, floatingActions = true)
                     Button(
                         onClick = {
                             actions.onDismissError()
@@ -322,7 +328,7 @@ private fun LiveMeeting(state: MeetingState, snackbar: SnackbarHostState, action
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(Tool.MEETING.title)) },
+                title = { Text(stringResource(Tool.MEETING.title), fontWeight = FontWeight.Medium) },
                 navigationIcon = {
                     IconButton(onClick = actions.onBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(Res.string.back))
@@ -449,7 +455,7 @@ private fun LiveHeader(state: MeetingState.Live) {
             Spacer(Modifier.height(4.dp))
             Text(
                 clock,
-                style = MaterialTheme.typography.displaySmall,
+                style = MaterialTheme.typography.displaySmallEmphasized,
                 modifier = Modifier.semantics { contentDescription = elapsedLabel },
             )
             Spacer(Modifier.height(8.dp))

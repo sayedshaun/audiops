@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Block
@@ -59,6 +61,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -118,7 +121,7 @@ fun ActivityTab(jobs: List<Job>, actions: ActivityActions) {
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(stringResource(Res.string.tab_activity)) },
+                title = { Text(stringResource(Res.string.tab_activity), fontWeight = FontWeight.Medium) },
                 subtitle = { titleSubtitle.Text(stringResource(Res.string.activity_subtitle)) },
                 expandedHeight = titleSubtitle.expandedHeight(),
                 actions = {
@@ -250,8 +253,9 @@ private fun JobSheet(job: Job, actions: ActivityActions, onDismiss: () -> Unit) 
     val colors = MaterialTheme.colorScheme
     val (container, content) = job.tool.category.colors(colors)
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+        // Scrolls, so a long transcript and the actions under it can always be reached.
         Column(
-            Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp),
+            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {

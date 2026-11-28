@@ -745,3 +745,14 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - `MeetingNotice.progress`: download fraction while preparing (text "Downloading model 1 of 2 · 40%"), an indeterminate bar while getting ready or finishing; `MeetingService` draws it.
 - Settings: `RowIcon` (40 dp tonal circle, secondary container) for every row; `GroupFootnote` under the remembered voices; shorter labels.
 - Checked on the emulator in light and dark: notifications on and off (revoked with `pm revoke`), Turn on opens the system page, the row updates on return.
+
+## 2026-11-28: Material 3 Expressive pass (`feature/settings-polish`)
+
+### Changed
+- Tools tab: `FeaturedToolTile` for the AI category (148 dp, 52 dp shaped icon, title in titleMediumEmphasized and the tool's description; alone in a row it switches to a horizontal layout), `pressScale` on every tile (0.96 while pressed, fast spatial spring).
+- `TranscriptToolbar`: `HorizontalFloatingToolbar` (vibrant colours) with Copy, Save text and a Subtitles menu (SRT, VTT); the attached `VibrantFloatingActionButton` names speakers (or copies when there are none). `ToolScaffold(floatingToolbar = …)` floats it (Scaffold FAB slot, centred, animated in) on Transcribe, and `MeetingScreen` on a just-finished meeting; content gets 104 dp of bottom room. `JobCard(floatingActions)` hides the inline actions there. Inline (Activity) it is one standard-colour pill without shadow, with a labelled Name speakers button.
+- `SaveButton`: a `SplitButtonLayout` (leading "Save WAV", trailing toggle that flips its arrow and opens M4A/Opus with their hints); a single format stays a plain button.
+- Navigation: opening a tool scales it in from 0.92 on `defaultSpatialSpec` while the tabs scale out to 1.04 (and back on close). `PlatformPredictiveBackHandler` (expect/actual over `PredictiveBackHandler`) drives the tool screen down to 90 % with 32 dp corners as the back gesture progresses.
+- Typography: title bars use `FontWeight.Medium`; the meeting clock, the speakers option and the remember switch use emphasized styles.
+- Activity job sheet scrolls (long transcripts were cut off).
+- Checked on the emulator (light and dark): tiles, floating toolbar with Name speakers on a 4-voice transcript, inline toolbar in Activity, split Save menu, predictive back mid-gesture. `make ci` passes.

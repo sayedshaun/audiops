@@ -120,6 +120,7 @@
     <string name="action_transcribe">Transcribe audio</string>
     <string name="action_speak">Create speech</string>
     <string name="action_save">Save</string>
+    <string name="action_more_formats">More formats</string>
     <string name="format_wav_hint">Lossless, the largest file</string>
     <string name="format_m4a_hint">Small, plays almost everywhere</string>
     <string name="format_opus_hint">Smallest for its quality</string>
@@ -151,6 +152,7 @@
     <string name="format_wav">WAV</string>
     <string name="format_m4a">M4A (AAC)</string>
     <string name="format_opus">Opus</string>
+    <string name="action_subtitles">Save subtitles</string>
     <string name="action_save_srt">Subtitles (SRT)</string>
     <string name="action_save_vtt">Subtitles (VTT)</string>
     <string name="step_text">Text</string>
