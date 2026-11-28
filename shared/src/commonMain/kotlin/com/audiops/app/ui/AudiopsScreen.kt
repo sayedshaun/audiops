@@ -385,12 +385,14 @@ private fun ToolsTab(
     val recorder = rememberRecorder(onChoose, onRecordFailed)
     KeepScreenOn(recorder.state.recording)
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val titleSubtitle = rememberTitleBarSubtitle()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
                 title = { Text(stringResource(Res.string.app_name)) },
-                subtitle = { Text(stringResource(Res.string.home_subtitle), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                subtitle = { titleSubtitle.Text(stringResource(Res.string.home_subtitle)) },
+                expandedHeight = titleSubtitle.expandedHeight(),
                 actions = {
                     if (meeting is MeetingState.Live) MeetingAction(meeting.elapsedMs, onShowMeeting)
                     if (state.activeJobs.isNotEmpty()) ProcessingAction(state.activeJobs.size, onShowActivity)

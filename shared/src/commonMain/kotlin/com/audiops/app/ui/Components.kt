@@ -286,12 +286,14 @@ fun ToolScaffold(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val titleSubtitle = rememberTitleBarSubtitle()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
                 title = { Text(title) },
-                subtitle = { Text(subtitle, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                subtitle = { titleSubtitle.Text(subtitle) },
+                expandedHeight = titleSubtitle.expandedHeight(),
                 navigationIcon = {
                     IconButton(onClick = onBack, enabled = !busy) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(Res.string.back))

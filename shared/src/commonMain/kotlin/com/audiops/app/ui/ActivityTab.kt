@@ -113,12 +113,14 @@ fun ActivityTab(jobs: List<Job>, actions: ActivityActions) {
     val active = jobs.filter { it.status.active }
     val finished = jobs.filter { !it.status.active }
 
+    val titleSubtitle = rememberTitleBarSubtitle()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
                 title = { Text(stringResource(Res.string.tab_activity)) },
-                subtitle = { Text(stringResource(Res.string.activity_subtitle)) },
+                subtitle = { titleSubtitle.Text(stringResource(Res.string.activity_subtitle)) },
+                expandedHeight = titleSubtitle.expandedHeight(),
                 actions = {
                     if (finished.isNotEmpty()) {
                         IconButton(onClick = { confirmClear = true }) {

@@ -727,3 +727,9 @@ Parakeet peak RSS 1.3 GB (Omnilingual 1.2 GB); model 639 MB. Output is punctuate
 - Live meeting (test file, many-language model): correct text, sentences, Ana and Ben named.
 - Kokoro: Heart (US) and Emma (UK) synthesize; the Heart output transcribes back to the typed text ("Audiops", not in the lexicon, spelled by espeak-ng). 5.4 s of speech took about 34 s on the x86_64 emulator including loading; a phone needs timing.
 - Dark theme: Settings → Remembered voices, Downloaded models, the suggestion card. `make ci` passes.
+
+## 2026-11-28: title bars fit a two-line subtitle (`fix/title-subtitle-height`)
+
+### Fixed
+- `LargeFlexibleTopAppBar`'s expanded height fits one subtitle line; on the Moto g96 the Tools subtitle wraps and its second line touched Choose file / Record. `TitleBarSubtitle` (ui) measures the subtitle and adds the extra lines' height to `expandedHeight`; used on Tools, Activity, tool screens and Live meeting (all now `maxLines = 2` with an ellipsis). Checked on the emulator at font scale 1.3 (Tools expanded and collapsed, Live meeting).
+- 0.5.0 also installed on the Moto g96 over USB (arm64 APK from the release); the earlier failed install on the phone was not caused by the file (nothing was installed before, and the same file installed without error).

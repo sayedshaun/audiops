@@ -187,12 +187,14 @@ fun MeetingScreen(
         return
     }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val titleSubtitle = rememberTitleBarSubtitle()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
                 title = { Text(stringResource(tool.title)) },
-                subtitle = { Text(stringResource(tool.description)) },
+                subtitle = { titleSubtitle.Text(stringResource(tool.description)) },
+                expandedHeight = titleSubtitle.expandedHeight(),
                 navigationIcon = {
                     IconButton(onClick = actions.onBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(Res.string.back))

@@ -13,6 +13,9 @@ rename **Unreleased** to the version and date and start a new empty **Unreleased
 
 ## [Unreleased]
 
+### Fixed
+- **Two-line subtitles.** Where a screen's subtitle wraps to a second line (narrower screens, larger text), the title bar now grows to fit it instead of letting it run into the buttons below.
+
 ## [0.5.0] - 2026-11-27
 
 ### Added
