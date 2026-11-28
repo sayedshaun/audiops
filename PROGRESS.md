@@ -1,6 +1,6 @@
 # Progress
 
-Snapshot as of 2026-11-28: v0.6.0 is prepared (Material 3 Expressive pass, notifications row, title bars fit two-line subtitles); v0.5.0 is released (sentences at pauses, speaker labels and names, sound suggestions, Kokoro voices, language-first tools). Updated in place; the history is in `CHANGES.md`.
+Snapshot as of 2026-11-28: v0.6.1 is prepared (notification prompt on first launch, gradient Outfit wordmark); v0.6.0 is released (sentences at pauses, speaker labels and names, sound suggestions, Kokoro voices, language-first tools). Updated in place; the history is in `CHANGES.md`.
 
 ## Status
 
