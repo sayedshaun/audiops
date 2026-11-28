@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Audiops: on-device audio toolkit for Android</title>
-  <meta name="description" content="Enhance, transcribe, speak, separate, edit and analyze audio, entirely on your Android phone. Nothing you open is uploaded. Open source.">
+  <meta name="description" content="On-device audio AI for Android: transcribe files and live meetings with speakers in Bangla and 1,600+ languages, speak text in 37, enhance, separate, edit and analyze audio. Nothing is uploaded. Open source.">
   <meta name="theme-color" content="#5B47C8">
   <meta property="og:title" content="Audiops: on-device audio toolkit">
-  <meta property="og:description" content="Clean up, edit, transcribe, speak and analyze audio on your phone. Nothing is uploaded.">
+  <meta property="og:description" content="On-device audio AI: transcribe meetings with speakers, speak text, clean up and edit audio on your phone. Nothing is uploaded.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="images/screenshots/tools.png">
   <link rel="icon" href="images/logo.svg" type="image/svg+xml">
@@ -25,6 +25,7 @@
     </a>
     <nav class="nav__links" aria-label="Main">
       <a href="#features">Features</a>
+      <a href="#languages">Languages</a>
       <a href="#privacy">Privacy</a>
       <a href="#build">Build</a>
     </nav>
@@ -38,10 +39,11 @@
     <div class="wrap hero__grid">
       <div class="hero__copy">
         <p class="eyebrow">Open source · Android 8.0+</p>
-        <h1>Transform audio,<br>without the cloud.</h1>
+        <h1>On-device audio AI,<br>without the cloud.</h1>
         <p class="lede">
-          Enhance, transcribe, speak, separate, edit and analyze recordings entirely on your phone.
-          Nothing you open is uploaded. The AI models download once, then run offline.
+          Transcribe recordings and live meetings with every speaker named, turn text into natural speech,
+          and enhance, separate, edit and analyze audio, entirely on your phone. In Bangla and well over
+          a thousand other languages. Nothing you open is uploaded; the AI models download once, then run offline.
         </p>
         <div class="actions">
           <a class="btn btn--primary" href="https://github.com/sayedshaun/audiops/releases/latest">
@@ -58,7 +60,7 @@
 
       <div class="hero__visual">
         <figure class="phone">
-          <img src="images/screenshots/tools.png" alt="Audiops Tools screen with a recording loaded and the AI tools" width="540" height="1200" loading="eager">
+          <img src="images/screenshots/tools.png" alt="Audiops Tools tab: the Audiops wordmark, Choose file and Record, and the AI tools as large tiles" width="540" height="1200" loading="eager">
         </figure>
       </div>
     </div>
@@ -68,9 +70,9 @@
   <section class="section" id="features">
     <div class="wrap">
       <header class="section__head">
-        <p class="eyebrow">Fourteen tools, one app</p>
-        <h2>Everything you need for a voice note, a podcast or a lecture.</h2>
-        <p>Pick a tool, choose a file (or record one, or share it from another app), and keep the result. Save it as WAV, M4A or Opus. Open MP3, AAC, FLAC, OGG and anything else your phone can decode.</p>
+        <p class="eyebrow">Fifteen tools, one app</p>
+        <h2>Everything you need for a meeting, a voice note, a podcast or a lecture.</h2>
+        <p>Choose a file (or record one, or share it from another app) and Audiops tells you what it sounds like and which tool to try. Keep the result as WAV, M4A or Opus. Open MP3, AAC, FLAC, OGG and anything else your phone can decode.</p>
       </header>
 
       <div class="categories">
@@ -79,8 +81,9 @@
           <ul class="tools">
             <li><strong>Enhance speech</strong><span>Fast noise removal in seconds, or Studio restoration of voice recordings, on device.</span></li>
             <li><strong>Separate music</strong><span>Split a song into vocals, instrumental, drums, bass and other.</span></li>
-            <li><strong>Transcribe</strong><span>Speech to text with punctuation for English and 24 European languages, plus Bangla, Urdu and over 1,600 more. You pick the model: Parakeet, Omnilingual, Whisper or Bangla. Save subtitles as SRT or VTT.</span></li>
-            <li><strong>Text to speech</strong><span>Turn text into speech in 37 languages, on your phone.</span></li>
+            <li><strong>Transcribe</strong><span>Choose the language, then the model for it: punctuated text for English and 24 European languages, a dedicated Bangla model, and over 1,600 more languages with a sentence at every pause. Tell speakers apart, then name them. Save the text or subtitles (SRT, VTT).</span></li>
+            <li><strong>Live meeting</strong><span>Put the phone on the table and the meeting is written down as people speak, with each speaker told apart, even with the screen off. Name the speakers afterwards and Audiops recognises their voices in later meetings.</span></li>
+            <li><strong>Text to speech</strong><span>Natural voices in 37 languages, plus ten extra English voices (US and UK).</span></li>
           </ul>
         </article>
 
@@ -114,11 +117,29 @@
           <h3><span class="dot dot--utilities"></span>Utilities</h3>
           <ul class="tools">
             <li><strong>Convert</strong><span>Anti-aliased resampling to 8, 16, 22.05, 44.1 or 48 kHz.</span></li>
-            <li><strong>Analyze</strong><span>Integrated loudness, peak, RMS, clipping, silence and DC offset.</span></li>
+            <li><strong>Analyze</strong><span>Integrated loudness, peak, RMS, clipping, silence and DC offset, plus the main sounds heard (speech, music, noise and over 500 more).</span></li>
           </ul>
         </article>
       </div>
 
+    </div>
+  </section>
+
+  <!-- Languages -->
+  <section class="section" id="languages" aria-labelledby="languages-title">
+    <div class="wrap">
+      <header class="section__head section__head--center">
+        <p class="eyebrow">Many languages</p>
+        <h2 id="languages-title">Made for the languages people speak.</h2>
+        <p>Audiops starts with the language, not the model. Pick what is spoken and only the models that handle it are offered, the best one first. Features that would only work in English are left out.</p>
+      </header>
+      <ul class="checks">
+        <li>Bangla has its own speech recognition model.</li>
+        <li>Speech to text in over 1,600 languages, with punctuation for English and 24 European languages.</li>
+        <li>Every language gets sentences: a capital letter and its own full stop (।, 。 or .) at each pause.</li>
+        <li>Text to speech in 37 languages.</li>
+        <li>Speaker labels and names work in every language.</li>
+      </ul>
     </div>
   </section>
 
@@ -131,16 +152,16 @@
       </header>
       <div class="shots">
         <figure>
-          <img src="images/screenshots/tool-enhance.png" alt="Enhance speech tool with Fast and Studio modes and a finished result" width="540" height="1200" loading="lazy">
-          <figcaption>Enhance speech: Fast or Studio</figcaption>
+          <img src="images/screenshots/meeting.png" alt="Live meeting in progress: the running time, a level meter, and what each speaker said as they speak" width="540" height="1200" loading="lazy">
+          <figcaption>Live meeting, written down as people speak</figcaption>
         </figure>
         <figure>
-          <img src="images/screenshots/transcript.png" alt="Transcript screen showing text transcribed from a recording" width="540" height="1200" loading="lazy">
-          <figcaption>Transcription, on the device</figcaption>
+          <img src="images/screenshots/speakers.png" alt="Who is speaking? sheet with the first words of each speaker and a name field for each" width="540" height="1200" loading="lazy">
+          <figcaption>Name the speakers once</figcaption>
         </figure>
         <figure>
-          <img src="images/screenshots/activity.png" alt="Activity tab listing finished jobs" width="540" height="1200" loading="lazy">
-          <figcaption>Activity, with the job queue and history</figcaption>
+          <img src="images/screenshots/transcript.png" alt="Transcript in English, German, Spanish and French with each turn headed by the speaker's name and time, and a floating toolbar" width="540" height="1200" loading="lazy">
+          <figcaption>Transcripts with names, in any language</figcaption>
         </figure>
       </div>
     </div>
@@ -159,6 +180,7 @@
         <li>No accounts, no analytics and no server.</li>
         <li>Every model file is pinned to a fixed revision and checked with SHA-256 before use.</li>
         <li>Models live in app-private storage that is excluded from backups.</li>
+        <li>Voice prints of the speakers you name stay on the phone; forget any of them in Settings.</li>
         <li>Delete any model or processed file from Settings, at any time.</li>
       </ul>
     </div>
@@ -202,8 +224,8 @@
         <p>No dates, no promises. Have a request? <a href="https://github.com/sayedshaun/audiops/issues">Open an issue</a>.</p>
       </header>
       <ul class="roadmap">
-        <li>Speaker labels in transcripts</li>
-        <li>Detect sounds in a recording (speech, music, alarms and more)</li>
+        <li>Live captions word by word, in many languages (not English only)</li>
+        <li>Faster AI on the phone's AI chip (NPU)</li>
         <li>A lighter vocoder, so AI enhancement fits phones with 4 GB of RAM</li>
         <li>Stereo stems for music separation</li>
       </ul>
